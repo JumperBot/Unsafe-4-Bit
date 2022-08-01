@@ -1,26 +1,17 @@
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.util.regex.Pattern;
 
 class Main{
 	/**
-	 * 0	-	0000	-	wvar
-	 * 1	-	0001	-	nvar
-	 * 2	-	0010	-	rvar
-	 * 3	-	0011	-	add
-	 * 4	-	0100	-	sub
-	 * 5	-	0101	-	mul
-	 * 6	-	0110	-	div
-	 * 7	-	0111	-	mod
-	 * 8	-	1000	-	jm
-	 * 9	-	1001	-	jl
-	 * 10	-	1010	-	jz
-	 * 11	-	1011	-	jo
-	 * 12	-	1100	-	je
-	 * 13	-	1101	-	jne
-	 * 14	-	1110	-	print
-	 * 15	-	1111	-	read
+	 * 0	-	0000	-	wvar	|	1		-	0001	-	nvar
+	 * 2	-	0010	-	rvar	|	3		-	0011	-	add
+	 * 4	-	0100	-	sub		| 5		-	0101	-	mul
+	 * 6	-	0110	-	div		| 7		-	0111	-	mod
+	 * 8	-	1000	-	jm		|	9		-	1001	-	jl
+	 * 10	-	1010	-	jz		|	11	-	1011	-	jo
+	 * 12	-	1100	-	je		|	13	-	1101	-	jne
+	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
 	final static Pattern pat1=Pattern.compile("[^a-zA-Z0-9 \n-|,]");
 	final static Pattern pat2=Pattern.compile("[-|, ]+");
@@ -30,7 +21,16 @@ class Main{
 		final String input=
 		new StringBuilder("wvar 38, 8 5 12 12 15 0 23 15 18 12 4 28 28 28 37\n")
 							.append("print 38\n")
-							.append("nvar 38")
+							.append("trim 38, 28 27\n")
+							.append("print 38\n")
+							.append("wvar 38, 38\n")
+							.append("print 37 38\n")
+							.append("print 37 38\n")
+							.append("trim 38, 32\n")
+							.append("print 37 38\n")
+							.append("print 37 38\n")
+							.append("nvar 38\n")
+							.append("jm 27\n")
 		.toString();
 		final String[] arr=pat3.split(
 			pat2.matcher(
@@ -48,31 +48,21 @@ class Main{
 			mem[i]='\u0000';
 		final short[] memInd=new short[256];
 		for(short i=0;i<memInd.length;i++)
-			memInd[i]=i;
-		for(final String s:arr){
-			final String[] temp=pat2.split(s);
+			memInd[i]=0;
+		for(int i=0;i<arr.length;i++){
+			final String[] temp=pat2.split(arr[i]);
 			if(temp.length>1){
-				try{
-					final short sh=Short.parseShort(temp[1]);
-				}catch(Exception e){
-					System.out.println(
-						new StringBuilder("\nMemory Index Expected Instead Of: ")
-											.append(temp[1])
-											.toString()
-					);
+				if(!gate(temp, mem, memInd))
 					return;
-				}
 				switch(temp[0]){
 					case "wvar":
-						if(!wvar(temp, mem, memInd))
-							return;
+						wvar(temp, mem, memInd);
 						break;
 					case "nvar":
 						nvar(temp, mem, memInd);
 						break;
 					case "trim":
-						if(!trim(temp, mem, memInd))
-							return;
+						trim(temp, mem, memInd);
 						break;
 					case "add":
 						break;
@@ -85,6 +75,12 @@ class Main{
 					case "mod":
 						break;
 					case "jm":
+						if(true){
+							final StringBuilder builder=new StringBuilder();
+							for(short j=1;j<temp.length;j++)
+								builder.append(readMem(Short.parseShort(temp[j]), mem, memInd));
+							i=Integer.parseInt(builder.toString());
+						}
 						break;
 					case "jl":
 						break;
@@ -97,8 +93,7 @@ class Main{
 					case "jne":
 						break;
 					case "print":
-						for(short i=1;i<temp.length;i++)
-							System.out.print(readMem(Short.parseShort(temp[1]), mem, memInd));
+						print(temp, mem, memInd);
 						break;
 					case "read":
 						break;
@@ -110,73 +105,113 @@ class Main{
 				}
 			}
 		}
+		System.out.println(
+			new StringBuilder("\n")
+								.append(Arrays.toString(mem))
+								.append("\n")
+								.append(Arrays.toString(memInd))
+								.toString()
+		);
 		for(int i=0;i<memInd.length;i++)
-			if(memInd[i]!=i)
+			if(memInd[i]!=0)
 				System.out.println(
 					new StringBuilder("\nMemory Leak At Index: ")
 										.append(String.valueOf(i))
 										.toString()
 				);
-		System.out.println(Arrays.toString(arr));
-		System.out.println(Arrays.toString(mem));
-		System.out.println(Arrays.toString(memInd));
 	}
-	private static boolean wvar(final String[] temp, final char[] mem, final short[] memInd){
-		short ind=Short.parseShort(temp[1]);
-		if(ind>255){
-			System.out.println(
-				new StringBuilder("\nNonexistent Memory Index: ").append(temp[1]).toString()
-			);
-			return false;
-		}
-		if(ind>37){
-			final short tempInd=ind;
-			for(int i=2;i<temp.length;i++)
-				for(final char c:readMem(Short.parseShort(temp[i]), mem, memInd).toCharArray()){
-					System.out.println(Character.toString(c));
-					mem[ind]=c;
-					ind++;
-				}
-			memInd[tempInd]=ind;
-			return true;
-		}
-		System.out.println(
-			new StringBuilder("\nROM: Can't Write On Memory Index: ")
-								.append(temp[1])
-								.toString()
-		);
-		return false;
-	}
-	private static void nvar(final String[] temp, final char[] mem, final short[] memInd){
-		final short index=Short.parseShort(temp[1]);
-		for(short i=index;i<memInd[index];i++)
-			mem[i]='\u0000';
-		memInd[index]=index;
-	}
-	private static boolean trim(final String[] temp, final char[] mem, final short[] memInd){
-		final short index=Short.parseShort(temp[1]);
+	private static void print(final String[] temp, final char[] mem, final short[] memInd){
 		final StringBuilder builder=new StringBuilder();
-		for(byte i=2;i<temp.length;i++)
-			for(short j=index;j<memInd[index];j++)
-				builder.append(readMem(j, mem, memInd));
-		final String str=builder.toString();
-		if(!pat4.matcher(str).matches()){
-			final short val=Short.parseShort(str);
-			if(memInd[index]>val)
-				memInd[index]=val;
-		}else{
-			System.out.println(
-				new StringBuilder("\nMemory Index Expected Instead Of: ")
-									.append(str)
-									.toString()
+		for(short i=1;i<temp.length;i++)
+			builder.append(readMem(Short.parseShort(temp[i]), mem, memInd));
+		System.out.print(builder.toString());
+	}
+	private static boolean gate(final String[] temp, final char[] mem, final short[] memInd){
+		final boolean isNumGuzzler=(
+			temp[0].equals("trim")||temp[0]=="trim"||
+			temp[0].equals("jm")	||temp[0]=="jm"
+		);
+		if(temp[0].equals("print")||temp[0]=="print")
+			return true;
+		for(int i=1;i<temp.length;i++){
+			if(pat4.matcher(temp[i]).replaceAll("").length()!=temp[i].length()){
+				System.out.println(
+					new StringBuilder("\nMemory Index Expected Instead Of: ")
+										.append(temp[i])
+										.toString()
 				);
-			return false;
+				return false;
+			}
+			final short ind=Short.parseShort(temp[i]);
+			if(ind>255){
+				System.out.println(
+					new StringBuilder("\nNonExistent Memory Index: ")
+										.append(temp[i])
+										.toString()
+				);
+				return false;
+			}
+			if(i==1&&ind<38&&!(temp[0].equals("jm")||temp[0]=="jm")){
+				System.out.println(
+					new StringBuilder("\nROM: Can't Write On Memory Index: ")
+										.append(temp[i])
+										.toString()
+				);
+				return false;
+			}
+			if(i>1&&isNumGuzzler){
+				final String read=readMem(ind, mem, memInd);
+				if(pat4.matcher(read).replaceAll("").length()!=read.length()){
+					System.out.println(
+						new StringBuilder("\nTrim: Int Value Expected On Memory Index: ")
+											.append(temp[i])
+											.append(" Instead Of: ")
+											.append(read)
+											.toString()
+					);
+					return false;
+				}
+			}
 		}
 		return true;
 	}
+	private static void wvar(final String[] temp, final char[] mem, final short[] memInd){
+		short ind=Short.parseShort(temp[1]);
+		final short tempInd=ind;
+		for(int i=2;i<temp.length;i++)
+			for(final char c:readMem(Short.parseShort(temp[i]), mem, memInd).toCharArray()){
+				mem[ind]=c;
+				ind++;
+			}
+		memInd[tempInd]=ind;
+	}
+	private static void nvar(final String[] temp, final char[] mem, final short[] memInd){
+		final short ind=Short.parseShort(temp[1]);
+		for(short i=ind;i-1<memInd[ind];i++)
+			if(memInd[i]==0||i==ind)
+				mem[i]='\u0000';
+		memInd[ind]=0;
+	}
+	private static void trim(final String[] temp, final char[] mem, final short[] memInd){
+		final short ind=Short.parseShort(temp[1]);
+		final StringBuilder builder=new StringBuilder();
+		for(int i=2;i<temp.length;i++)
+			builder.append(readMem(Short.parseShort(temp[i]), mem, memInd));
+		final short max=Short.parseShort(builder.toString());
+		if(memInd[ind]>ind+max-1){
+			final String read=readMem(ind, mem, memInd);
+			nvar(temp, mem, memInd);
+			for(int i=0;i<max;i++){
+				mem[ind+i]=read.charAt(i);
+			}
+			memInd[ind]=(short)(ind+max-1);
+		}
+	}
 	private static String readMem(final short ind, final char[] mem, final short[] memInd){
 		final StringBuilder builder=new StringBuilder();
-		for(short i=ind;i<memInd[ind];i++)
+		if(memInd[ind]==0)
+			return Character.toString(mem[ind]);
+		for(short i=ind;i<memInd[ind]+1;i++)
 			builder.append(mem[i]);
 		return builder.toString();
 	}
