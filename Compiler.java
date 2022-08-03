@@ -10,8 +10,8 @@ class Compiler{
 	 * 2	-	0010	-	trim	|	3		-	0011	-	add
 	 * 4	-	0100	-	sub		| 5		-	0101	-	mul
 	 * 6	-	0110	-	div		| 7		-	0111	-	mod
-	 * 8	-	1000	-	jm		|	9		-	1001	-	jl
-	 * 10	-	1010	-	jz		|	11	-	1011	-	jo
+	 * 8	-	1000	-	rmod	|	9		-	1001	-	nop
+	 * 10	-	1010	-	jm		|	11	-	1011	-	jl
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
@@ -22,18 +22,21 @@ class Compiler{
 	public static void main(final String[]a){	
 		final String input=
 		new StringBuilder("wvar 38, 8 5 12 12 15 0 23 15 18 12 4 28 28 28 37\n")
-							.append("print 38\n")
-							.append("trim 38, 28 27\n")
-							.append("print 38\n")
-							.append("wvar 38, 38\n")
-							.append("print 37 38\n")
-							.append("print 37 38\n")
-							.append("trim 38, 32\n")
-							.append("print 37 38\n")
-							.append("print 37 38\n")
-							.append("nvar 255\n")
-							.append("jm 27\n")
-							.append("lmao\n")
+							.append("trim 38 14\n")
+							.append("add 50 0\n")
+							.append("sub 50 0\n")
+							.append("mul 50 0\n")
+							.append("div 50 0\n")
+							.append("mod 50 0\n")
+							.append("rmod 50 0\n")
+							.append("nop\n")
+							.append("jm 0 0 0\n")
+							.append("jl 0 0 0\n")
+							.append("je 0 0 0\n")
+							.append("jne 0 0 0\n")
+							.append("print 0\n")
+							.append("read 150\n")
+							.append("nvar 38\n")
 		.toString();
 		final long start=System.currentTimeMillis();
 		final String[] arr=pat3.split(
@@ -46,7 +49,7 @@ class Compiler{
 		final ArrayList<String> list=new ArrayList<>();
 		for(final String arrTemp:arr){
 			final String[] temp=pat2.split(arrTemp);
-			if(temp.length<2&&temp.length>0)
+			if(temp.length<2&&temp.length>0&&!temp[0].equals("nop"))
 				warnings.append("Warning: |\n")
 								.append("    Command: |\n")
 								.append("        \"")
@@ -61,12 +64,6 @@ class Compiler{
 				// Command Checker.
 				if(temp[0].startsWith("j"))
 					switch(temp[0]){
-						case "jz":
-							oneMem=true;
-							break;
-						case "jo":
-							oneMem=true;
-							break;
 						case "jm":
 							twoMem=true;
 							break;
@@ -112,11 +109,17 @@ class Compiler{
 						case "mod":
 							twoMem=true;
 							break;
+						case "rmod":
+							twoMem=true;
+							break;
 						case "wvar":
 							infMem=true;
 							break;
 						case "print":
 							infMem=true;
+							break;
+						case "nop":
+							// LMAO Just Do Nothing
 							break;
 						default:
 							error(
@@ -141,16 +144,41 @@ class Compiler{
 					}
 				}
 				if(oneMem){
-					if(temp[0].startsWith("j")&&temp.length!=3)
-						error(
-							errors, "Command", temp[0],
-							"Needs No Less And No More Than Two Arguments To Work", temp
-						);
-					else if(!temp[0].startsWith("j")&&temp.length!=2)
-						error(
-							errors, "Command", temp[0],
-							"Needs No Less And No More Than One Argument To Work", temp
-						);
+					if(temp[0].startsWith("j")){
+						if(temp.length!=3)
+							error(
+								errors, "Command", temp[0],
+								"Needs No Less And No More Than Two Arguments To Work", temp
+							);
+					}else{
+						if(temp[0].equals("trim")&&temp.length!=3)
+							error(
+								errors, "Command", temp[0],
+								"Needs No Less And No More Than Two Arguments To Work", temp
+							);
+						else if(!temp[0].equals("trim")&&temp.length!=2)
+							error(
+								errors, "Command", temp[0],
+								"Needs No Less And No More Than One Argument To Work", temp
+							);
+						else{
+							try{
+								if(Long.parseLong(temp[1])<38){
+									error(
+										errors, "Memory Index", temp[1],
+										"Endangers A Read-Only Memory Index", temp
+									);
+								}
+							}catch(final Exception e){
+								try{
+									error(
+										errors, "Memory Index Expected Instead Of", temp[1],
+										"Should Be Replaced With A Memory Index", temp
+									);
+								}catch(final Exception e2){}
+							}
+						}
+					}
 				}else if(twoMem){
 					if(temp[0].startsWith("j")&&temp.length!=4)
 						error(
@@ -162,9 +190,18 @@ class Compiler{
 							errors, "Command", temp[0],
 							"Needs No Less And No More Than Two Arguments To Work", temp
 						);
-					else{
+					else if(!temp[0].startsWith("j")&&
+					(temp[0].equals("add")||temp[0].equals("sub")||
+					 temp[0].equals("mul")||temp[0].equals("div")||
+					 temp[0].equals("mod")||temp[0].equals("rmod"))){
 						try{
-							if(Long.parseLong(temp[2])>255)
+							final long memArg=Long.parseLong(temp[1]);
+							if(Long.parseLong(temp[1])<38)
+								error(
+									errors, "Memory Index", temp[1],
+									"Endangers A Read-Only Memory Index", temp
+								);
+							else if(memArg>255)
 								error(
 									errors, "Memory Index", temp[1],
 									"Is Larger Than 255 And Will Not Point To Memory", temp
@@ -175,14 +212,53 @@ class Compiler{
 								"Should Be Replaced With A Memory Index", temp
 							);
 						}
+						try{
+							if(Long.parseLong(temp[2])>255)
+								error(
+									errors, "Memory Index", temp[2],
+									"Is Larger Than 255 And Will Not Point To Memory", temp
+								);
+						}catch(final Exception e){
+							error(
+								errors, "Memory Index Expected Instead Of", temp[2],
+								"Should Be Replaced With A Memory Index", temp
+							);
+						}
+					}else{
+						try{
+							if(Long.parseLong(temp[2])>255)
+								error(
+									errors, "Memory Index", temp[2],
+									"Is Larger Than 255 And Will Not Point To Memory", temp
+								);
+						}catch(final Exception e){
+							error(
+								errors, "Memory Index Expected Instead Of", temp[2],
+								"Should Be Replaced With A Memory Index", temp
+							);
+						}
 					}
 				}else if(infMem){
-					if(temp.length>Byte.MAX_VALUE-2)
+					if(temp.length>Byte.MAX_VALUE-1)
 						error(
 							errors, "Command", temp[0],
 							"Has Too Many Arguments", temp
 						);
 					else{
+						if(temp[0].startsWith("w")){
+							try{
+								if(Long.parseLong(temp[1])<38)
+									error(
+										errors, "Memory Index", temp[1],
+										"Endangers A Read-Only Memory Index", temp
+									);
+							}catch(final Exception e){
+								error(
+									errors, "Memory Index Expected Instead Of", temp[1],
+									"Should Be Replaced With A Memory Index", temp
+								);
+							}
+						}
 						for(byte i=2;i<temp.length;i++){
 							try{
 								if(Long.parseLong(temp[i])>255)
@@ -198,6 +274,11 @@ class Compiler{
 							}
 						}
 					}
+				}else if(temp[0].equals("nop")&&temp.length!=1){
+					error(
+						errors, "Command", temp[0],
+						"Needs No Less And No More Than Zero Arguments", temp
+					);
 				}
 			}
 		}
