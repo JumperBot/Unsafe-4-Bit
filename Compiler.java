@@ -1,5 +1,7 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 
 import java.math.BigInteger;
 
@@ -20,30 +22,17 @@ class Compiler{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
-	final static Pattern pat1=Pattern.compile("[^a-zA-Z0-9 \n-|,]");
-	final static Pattern pat2=Pattern.compile("[-|, ]+");
+	final static Pattern pat1=Pattern.compile("[^a-zA-Z0-9 \n-|,\t]");
+	final static Pattern pat2=Pattern.compile("[-|, \t]+");
 	final static Pattern pat3=Pattern.compile(" *\n+ *");
 	final static Pattern pat4=Pattern.compile("[a-zA-Z\u0000]+");
-	public static void main(final String[]a){	
-		final String input=
-		new StringBuilder("wvar 38, 8 5 12 12 15 0 23 15 18 12 4 28 28 28 37\n")
-							.append("trim 38 14\n")
-							.append("add 50 0\n")
-							.append("sub 50 0\n")
-							.append("mul 50 0\n")
-							.append("div 50 0\n")
-							.append("mod 50 0\n")
-							.append("rmod 50 0\n")
-							.append("nop\n")
-							.append("jm 0 0 0\n")
-							.append("jl 0 0 0\n")
-							.append("je 0 0 0\n")
-							.append("jne 0 0 0\n")
-							.append("print 0\n")
-							.append("read 150\n")
-							.append("nvar 38\n")
-		.toString();
-		final long start=System.currentTimeMillis();
+	public static void main(final String[]a)throws Exception{
+		final StringBuilder inBuilder=new StringBuilder();
+		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
+			String temp;
+			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
+		}
+		final String input=inBuilder.toString();
 		final String[] arr=pat3.split(
 			pat2.matcher(
 				pat1.matcher(input).replaceAll("")
@@ -312,7 +301,6 @@ class Compiler{
 					ANSI_RESET, ANSI_BRIGHT_YELLOW, warnings.toString(), ANSI_RESET
 				)
 			);
-		// For Debugging Only
 		final StringBuilder bin=new StringBuilder();
 		for(int i=0;i<list.size();i++){
 			final String[] temp=list.get(i);
@@ -322,6 +310,7 @@ class Compiler{
 			for(int j=1;j<temp.length;j++)
 				bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
 		}
+		while(bin.length()%8!=0)bin.append("111000000000");
 		final byte[] bytes=new BigInteger(bin.toString(), 2).toByteArray();
 		try{
 			final File outFile=new File("Output.ufbb");
