@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class Compiler{
+class UFBC{
 	/**
 	 * 0	-	0000	-	wvar	|	1		-	0001	-	nvar
 	 * 2	-	0010	-	trim	|	3		-	0011	-	add

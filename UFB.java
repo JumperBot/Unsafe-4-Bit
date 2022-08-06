@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.ArrayList;
 
-class Interpreter{
+class UFB{
 	final static char[] mem=new char[256];
 	final static int[] memInd=new int[256];
 	public static void main(final String[]a)throws Exception{
