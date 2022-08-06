@@ -26,6 +26,7 @@ class Compiler{
 	final static Pattern pat2=Pattern.compile("[-|, \t]+");
 	final static Pattern pat3=Pattern.compile(" *\n+ *");
 	final static Pattern pat4=Pattern.compile("[a-zA-Z\u0000]+");
+	final static Pattern pat5=Pattern.compile("//.*\n*");
 	public static void main(final String[]a)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
@@ -35,7 +36,9 @@ class Compiler{
 		final String input=inBuilder.toString();
 		final String[] arr=pat3.split(
 			pat2.matcher(
-				pat1.matcher(input).replaceAll("")
+				pat1.matcher(
+					pat5.matcher(input).replaceAll("\n")
+				).replaceAll("")
 			).replaceAll(" ")
 		);
 		final StringBuilder warnings=new StringBuilder();
@@ -307,8 +310,13 @@ class Compiler{
 			bin.append(getBin(temp[0]));
 			if(temp[0].equals("wvar")||temp[0].equals("print"))
 				bin.append(manPadding(Integer.toBinaryString(temp.length-1), 8));
-			for(int j=1;j<temp.length;j++)
-				bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
+			if(temp[0].startsWith("j")){
+				for(int j=1;j<temp.length-1;j++)
+					bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
+				bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[temp.length-1])), 16));
+			}else
+				for(int j=1;j<temp.length;j++)
+					bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
 		}
 		while(bin.length()%8!=0)bin.append("111000000000");
 		final byte[] bytes=new BigInteger(bin.toString(), 2).toByteArray();
