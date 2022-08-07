@@ -3,6 +3,17 @@ print	38
 nvar	38
 wvar	38,	8		5		12	12	15	0		23	15	18	12	4		28	28	28 // Woohoooo
 trim	38,	5
-// This is a comment out of nowhere...
 wvar	38,	38	37
 print	38
+add		38	38
+print	38	37
+sub		38	38
+print	38	37
+mul		38	38
+print	38	37
+div		38	38
+print	38	37
+mod		38	38
+print	38	37
+rmod	38	38
+print	38	37
