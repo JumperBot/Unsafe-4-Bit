@@ -304,27 +304,31 @@ class UFBC{
 					ANSI_RESET, ANSI_BRIGHT_YELLOW, warnings.toString(), ANSI_RESET
 				)
 			);
-		final StringBuilder bin=new StringBuilder();
-		for(int i=0;i<list.size();i++){
-			final String[] temp=list.get(i);
-			bin.append(getBin(temp[0]));
-			if(temp[0].equals("wvar")||temp[0].equals("print"))
-				bin.append(manPadding(Integer.toBinaryString(temp.length-1), 8));
-			if(temp[0].startsWith("j")){
-				for(int j=1;j<temp.length-1;j++)
-					bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
-				bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[temp.length-1])), 16));
-			}else
-				for(int j=1;j<temp.length;j++)
-					bin.append(manPadding(Integer.toBinaryString(Integer.parseInt(temp[j])), 8));
-		}
-		while(bin.length()%8!=0)bin.append("111000000000");
-		final byte[] bytes=new BigInteger(bin.toString(), 2).toByteArray();
 		try{
 			final File outFile=new File("Output.ufbb");
 			outFile.createNewFile();
 			try(final FileOutputStream stream=new FileOutputStream(outFile)){
-				stream.write(bytes);
+				for(int i=0;i<list.size();i++){
+					final String[] temp=list.get(i);
+					stream.write(getBin(temp[0]));
+					if(temp[0].equals("wvar")||temp[0].equals("print"))
+						stream.write(temp.length-1);
+					if(temp[0].startsWith("j")){
+						for(int j=1;j<temp.length-1;j++)
+							stream.write(Integer.parseInt(temp[j]));
+						final int line=Integer.parseInt(temp[temp.length-1]);
+						final String bin=manPadding(Integer.toBinaryString(line), 16);
+						final String bin1=bin.substring(0, 8);
+						if(!bin1.contains("0"))
+							stream.write(0);
+						else
+							stream.write(Integer.parseInt(bin1, 2));
+						stream.write(Integer.parseInt(bin.substring(8), 2));
+					}else
+						for(int j=1;j<temp.length;j++)
+							stream.write(Integer.parseInt(temp[j]));
+		
+				}
 			}
 		}catch(final Exception e){
 			System.out.println(e.toString());
@@ -342,10 +346,8 @@ class UFBC{
 	}
 	private static String manPadding(final String str, final int i){
     final StringBuilder reverse=new StringBuilder(str).reverse();
-    while(reverse.length()<i)
-      reverse.append("0");
-    while(reverse.length()>i)
-      reverse.delete(0, 1);
+    while(reverse.length()<i)reverse.append("0");
+    while(reverse.length()>i)reverse.delete(0, 1);
     return reverse.reverse().toString();
   }
 	/**
@@ -358,41 +360,41 @@ class UFBC{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
-	private static String getBin(final String com){
-		switch(com){
+	private static int getBin(final String com){
+		switch(com.trim()){
 			case "wvar":
-				return "0000";
+				return 0;
 			case "nvar":
-				return "0001";
+				return 1;
 			case "trim":
-				return "0010";
+				return 2;
 			case "add":
-				return "0011";
+				return 3;
 			case "sub":
-				return "0100";
+				return 4;
 			case "mul":
-				return "0101";
+				return 5;
 			case "div":
-				return "0110";
+				return 6;
 			case "mod":
-				return "0111";
+				return 7;
 			case "rmod":
-				return "1000";
+				return 8;
 			case "nop":
-				return "1001";
+				return 9;
 			case "jm":
-				return "1010";
+				return 10;
 			case "jl":
-				return "1011";
+				return 11;
 			case "je":
-				return "1100";
+				return 12;
 			case "jne":
-				return "1101";
+				return 13;
 			case "print":
-				return "1110";
+				return 14;
 			case "read":
-				return "1111";
+				return 15;
 		}
-		return null;
+		return 0;
 	}
 }

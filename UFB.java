@@ -12,9 +12,15 @@ import java.util.ArrayList;
 class UFB{
 	final static char[] mem=new char[256];
 	final static int[] memInd=new int[256];
-	static byte[] bytes;
+	static short[] bytes;
 	public static void main(final String[]a)throws Exception{
-		bytes=Files.readAllBytes(Paths.get(a[0].trim()));
+		final byte[] tempBytes=Files.readAllBytes(Paths.get(a[0].trim()));
+		final int size=tempBytes.length;
+		bytes=new short[size];
+		for(int i=0;i<size;i++)bytes[i]=(short)(tempBytes[i]&0xff);
+		run();
+	}
+	public static void run()throws Exception{
 		final String[] commands={
 			"wvar" , "nvar",
 			"trim" , "add",
@@ -30,24 +36,19 @@ class UFB{
 		for(int i=1;i<27;i++)mem[i]=(char)('A'+(i-1));
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-		final ArrayList<int[]> lines=new ArrayList<>();
-		for(;ind[0]<bytes.length-1;){
+		final ArrayList<Integer> lines=new ArrayList<>();
+		final int size=bytes.length;
+		for(;byteInd<size;){
 			try{
-				boolean isNewLine=true;
-				for(final int[] i:lines)
-					if(i[0]==ind[0]&&i[1]==ind[1]){
-						isNewLine=false;
-						break;
-					}
-				if(isNewLine)lines.add(new int[]{ind[0], ind[1]});
-				final String com=commands[next(4)];
-				System.out.println(com);
+				if(!lines.contains(byteInd))lines.add(byteInd);
+				final String com=commands[next(8)];
+				//System.out.println(com);
 				switch(com){
 					case "wvar":
 						wvar();
 						break;
 					case "nvar":
-						nvar(next(4));
+						nvar(next(8));
 						break;
 					case "trim":
 						trim();
@@ -97,21 +98,17 @@ class UFB{
 				//System.out.println(e.toString());
 			}
 		}
-		System.out.println(Arrays.toString(mem));
-		System.out.println(Arrays.toString(memInd));
+		//System.out.println(Arrays.toString(mem));
+		//System.out.println(Arrays.toString(memInd));
 	}
-	static byte[] ind={0, 0};
+	static int byteInd=0;
 	private static int next(final int len){
-		if(len==4){
-			if(ind[1]==0){
-				ind[1]++;
-				return bytes[ind[0]]>>>4&0x0f;
-			}
-			ind[1]--;
-			ind[0]++;
-			return bytes[ind[0]]&0x0f;
-		}
-		return (next(4)&0x0f<<4)|(next(4)&0x0f);
+		byteInd++;
+		if(len==8)return bytes[byteInd-1];
+		return Integer.parseInt(
+			manPadding(Integer.toBinaryString(next(8)), 8)+
+			manPadding(Integer.toBinaryString(next(8)), 8)
+		);
 	}
 	private static String rvar(final int ind){
 		if(memInd[ind]==0)return Character.toString(mem[ind]);
@@ -123,7 +120,7 @@ class UFB{
 		final int argCount=next(8);
 		if(argCount<1)return;
 		final int memIndex=next(8);
-		System.out.println(argCount+"|"+memIndex);
+		//System.out.println(argCount+"|"+memIndex);
 		final char[] temp=rvar(memIndex).toCharArray();
 		int curInd=memIndex;
 		nvar(memIndex);
