@@ -22,11 +22,11 @@ class UFBC{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
-	final static Pattern pat1=Pattern.compile("[^a-zA-Z0-9 \n-|,\t]");
-	final static Pattern pat2=Pattern.compile("[-|, \t]+");
-	final static Pattern pat3=Pattern.compile(" *\n+ *");
-	final static Pattern pat4=Pattern.compile("[a-zA-Z\u0000]+");
-	final static Pattern pat5=Pattern.compile("//.*\n*");
+	final static Pattern allowed=Pattern.compile("[^a-zA-Z0-9 \n-|,\t]");
+	final static Pattern divider=Pattern.compile("[-|, \t]+");
+	final static Pattern empties=Pattern.compile(" *\n+ *");
+	final static Pattern comment=Pattern.compile("//.*\n*");
+	final static Pattern morecom=Pattern.compile("/\\*.*\\*/", Pattern.DOTALL);
 	public static void main(final String[]a)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
@@ -34,10 +34,12 @@ class UFBC{
 			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
 		}
 		final String input=inBuilder.toString();
-		final String[] arr=pat3.split(
-			pat2.matcher(
-				pat1.matcher(
-					pat5.matcher(input).replaceAll("\n")
+		final String[] arr=empties.split(
+			divider.matcher(
+				allowed.matcher(
+					comment.matcher(
+						morecom.matcher(input).replaceAll("\n")
+					).replaceAll("\n")
 				).replaceAll("")
 			).replaceAll(" ")
 		);
@@ -45,7 +47,7 @@ class UFBC{
 		final StringBuilder errors=new StringBuilder();
 		final ArrayList<String[]> list=new ArrayList<>();
 		for(final String arrTemp:arr){
-			final String[] temp=pat2.split(arrTemp);
+			final String[] temp=divider.split(arrTemp);
 			if(temp.length<2&&temp.length>0&&!temp[0].equals("nop"))
 				warnings.append("Warning: |\n")
 								.append("    Command: |\n")
@@ -305,7 +307,7 @@ class UFBC{
 				)
 			);
 		try{
-			final File outFile=new File("Output.ufbb");
+			final File outFile=new File(a[0].substring(0, a[0].indexOf("."))+".ufbb");
 			outFile.createNewFile();
 			try(final FileOutputStream stream=new FileOutputStream(outFile)){
 				for(int i=0;i<list.size();i++){
