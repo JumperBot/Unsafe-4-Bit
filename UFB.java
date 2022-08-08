@@ -2,9 +2,14 @@ import java.math.BigInteger;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import java.nio.channels.FileChannel;
+
+import java.nio.MappedByteBuffer;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -14,23 +19,19 @@ class UFB{
 	final static int[] memInd=new int[256];
 	static short[] bytes;
 	public static void main(final String[]a)throws Exception{
-		final byte[] tempBytes=Files.readAllBytes(Paths.get(a[0].trim()));
-		final int size=tempBytes.length;
-		bytes=new short[size];
-		for(int i=0;i<size;i++)bytes[i]=(short)(tempBytes[i]&0xff);
+		try(final FileChannel fileChannel=new RandomAccessFile(a[0], "r").getChannel()){
+			final MappedByteBuffer buffer=fileChannel.map(
+				FileChannel.MapMode.READ_ONLY, 0, fileChannel.size()
+			);
+			final byte[] tempBytes=new byte[buffer.remaining()];
+			buffer.get(tempBytes);
+			final int size=tempBytes.length;
+			bytes=new short[size];
+			for(int i=0;i<size;i++)bytes[i]=(short)(tempBytes[i]&0xff);
+		}
 		run();
 	}
 	public static void run()throws Exception{
-		final String[] commands={
-			"wvar" , "nvar",
-			"trim" , "add",
-			"sub"  , "mul",
-			"div"  , "mod",
-			"rmod" , "nop",
-			"jm"   , "jl",
-			"je"   , "jne",
-			"print", "read"
-		};
 		for(int i=0;i<256;i++)memInd[i]=0;
 		mem[0]=' ';
 		for(int i=1;i<27;i++)mem[i]=(char)('A'+(i-1));
@@ -41,53 +42,53 @@ class UFB{
 		for(;byteInd<size;){
 			try{
 				if(!lines.contains(byteInd))lines.add(byteInd);
-				final String com=commands[next(8)];
+				final int com=next(8);
 				//System.out.println(com);
 				switch(com){
-					case "wvar":
+					case 0:
 						wvar();
 						break;
-					case "nvar":
+					case 1:
 						nvar(next(8));
 						break;
-					case "trim":
+					case 2:
 						trim();
 						break;
-					case "add":
+					case 3:
 						math(0);
 						break;
-					case "sub":
+					case 4:
 						math(1);
 						break;
-					case "mul":
+					case 5:
 						math(2);
 						break;
-					case "div":
+					case 6:
 						math(3);
 						break;
-					case "mod":
+					case 7:
 						math(4);
 						break;
-					case "rmod":
+					case 8:
 						math(5);
 						break;
-					case "nop":
+					case 9:
 						try{
 							Thread.sleep(10);
 						}catch(final Exception nop){}
 						break;
-					case "jm":
+					case 10:
 						break;
-					case "jl":
+					case 11:
 						break;
-					case "je":
+					case 12:
 						break;
-					case "jne":
+					case 13:
 						break;
-					case "print":
+					case 14:
 						print();
 						break;
-					case "read":
+					case 15:
 						read();
 						break;
 					default:
