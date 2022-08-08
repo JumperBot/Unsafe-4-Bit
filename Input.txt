@@ -1,0 +1,7 @@
+This Is So Long!
+
+Do: |
+    java UFB Main.ufbb < Input.txt
+
+Or: |
+    {for x in {1..50}; time java UFB Main.ufbb < Input.txt; }| grep -G "java"

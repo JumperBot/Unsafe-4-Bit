@@ -3,12 +3,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 
-import java.math.BigInteger;
-
 import java.util.Arrays;
 import java.util.ArrayList;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class UFBC{
@@ -26,7 +23,7 @@ class UFBC{
 	final static Pattern divider=Pattern.compile("[-|, \t]+");
 	final static Pattern empties=Pattern.compile(" *\n+ *");
 	final static Pattern comment=Pattern.compile("//.*\n*");
-	final static Pattern morecom=Pattern.compile("/\\*.*\\*/", Pattern.DOTALL);
+	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 	public static void main(final String[]a)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
