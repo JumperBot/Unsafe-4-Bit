@@ -35,7 +35,9 @@ class UFBC{
 			divider.matcher(
 				allowed.matcher(
 					comment.matcher(
-						morecom.matcher(input).replaceAll("\n")
+						morecom.matcher(
+							input.toLowerCase()
+						).replaceAll("\n")
 					).replaceAll("\n")
 				).replaceAll("")
 			).replaceAll(" ")
@@ -57,7 +59,6 @@ class UFBC{
 				boolean oneMem=false;
 				boolean twoMem=false;
 				boolean infMem=false;
-				// Command Checker.
 				if(temp[0].startsWith("j"))
 					switch(temp[0]){
 						case "jm":
@@ -115,7 +116,6 @@ class UFBC{
 							infMem=true;
 							break;
 						case "nop":
-							// LMAO Just Do Nothing
 							break;
 						default:
 							error(
@@ -124,7 +124,6 @@ class UFBC{
 							);
 							break;
 					}
-				// Argument Checker.
 				if(oneMem||twoMem||infMem){
 					try{
 						if(Long.parseLong(temp[1])>255)
@@ -279,7 +278,6 @@ class UFBC{
 				list.add(temp);
 			}
 		}
-		// Warnings && Errors.
 		final String ANSI_RESET="\u001B[0m";
 		final String ANSI_BRIGHT_YELLOW="\u001B[93m";
 		if(errors.length()!=0){

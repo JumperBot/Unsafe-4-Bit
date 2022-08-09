@@ -16,6 +16,17 @@ class UFB{
 	final static int[] memInd=new int[256];
 	static int[] bytes;
 	public static void main(final String[]a)throws Exception{
+		final Thread memInit=new Thread(new Runnable(){
+			@Override
+			public void run(){
+				mem[0]=' ';
+				for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
+				for(int i=0;i<10;i++)mem[i+27]=Character.forDigit(i, 10);
+				mem[37]='\n';
+				for(int i=38;i<256;i++)mem[i]='\u0000';
+			}
+		});
+		memInit.start();
 		try(final FileChannel fileChannel=new RandomAccessFile(a[0], "r").getChannel()){
 			final MappedByteBuffer buffer=fileChannel.map(
 				FileChannel.MapMode.READ_ONLY, 0, fileChannel.size()
@@ -26,89 +37,74 @@ class UFB{
 			bytes=new int[size];
 			for(int i=0;i<size;i++)bytes[i]=tempBytes[i]&0xff;
 		}
-		mem[0]=' ';
-		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
-		for(int i=0;i<10;i++)mem[i+27]=Character.forDigit(i, 10);
-		mem[37]='\n';
-		for(int i=38;i<256;i++)mem[i]='\u0000';
+		memInit.join();
 		run();
 	}
 	public static void run()throws Exception{
 		final ArrayList<Integer> lines=new ArrayList<>();
 		final int size=bytes.length;
 		for(;byteInd<size;){
-			try{
-				if(!lines.contains(byteInd))lines.add(byteInd);
-				final int com=next(8);
-				//System.out.println(com);
-				switch(com){
-					case 0:
-						wvar();
+			if(!lines.contains(byteInd))lines.add(byteInd);
+			final int com=next(8);
+			switch(com){
+				case 0:
+					wvar();
+					break;
+				case 1:
+					nvar(next(8));
+					break;
+				case 2:
+					trim();
+					break;
+				case 3:
+					math(0);
+					break;
+				case 4:
+					math(1);
+					break;
+				case 5:
+					math(2);
+					break;
+				case 6:
+					math(3);
+					break;
+				case 7:
+					math(4);
+					break;
+				case 8:
+					math(5);
+					break;
+				case 9:
+					try{
+						Thread.sleep(10);
+					}catch(final Exception nop){}
+					break;
+				case 10:
+					jump(0, lines);
+					break;
+				case 11:
+					jump(1, lines);
+					break;
+				case 12:
+					jump(2, lines);
+					break;
+				case 13:
+					jump(3, lines);
+					break;
+				case 14:
+					print();
+					break;
+				case 15:
+					read();
 						break;
-					case 1:
-						nvar(next(8));
+				default:
 						break;
-					case 2:
-						trim();
-						break;
-					case 3:
-						math(0);
-						break;
-					case 4:
-						math(1);
-						break;
-					case 5:
-						math(2);
-						break;
-					case 6:
-						math(3);
-						break;
-					case 7:
-						math(4);
-						break;
-					case 8:
-						math(5);
-						break;
-					case 9:
-						try{
-							Thread.sleep(10);
-						}catch(final Exception nop){}
-						break;
-					case 10: // jm, jl, je, jne
-						jump(0, lines);
-						break;
-					case 11:
-						jump(1, lines);
-						break;
-					case 12:
-						jump(2, lines);
-						break;
-					case 13:
-						jump(3, lines);
-						break;
-					case 14:
-						print();
-						break;
-					case 15:
-						read();
-						break;
-					default:
-						break;
-				}
-				System.out.println(com);
-				System.out.println(Arrays.toString(mem));
-				System.out.println(Arrays.toString(memInd));
-			}catch(final Exception e){
-				throw e;
-				//System.out.println(e.toString());
 			}
 		}
 		for(int i=0;i<256;i++){
 			if(memInd[i]!=0)
 				System.out.println("Memory Leak At Index: "+String.valueOf(i));
 		}
-		System.out.println(Arrays.toString(mem));
-		System.out.println(Arrays.toString(memInd));
 	}
 	static int byteInd=0;
 	private static int next(final int len){
@@ -216,22 +212,22 @@ class UFB{
 				System.arraycopy(out, 0, mem, ind1, out.length);
 				memInd[ind1]=ind1+out.length-1;
 			}
-		}catch(final Exception e){ //Divided By Zero, Mate?
+		}catch(final Exception e){
 			mem[ind1]='i';
 			memInd[ind1]=ind1;
 		}
 	}
 	private static void jump(final int op, final ArrayList<Integer> lines){
-		final long arg1=toNum(new String(rvar(next(8))));
-		final long arg2=toNum(new String(rvar(next(8))));
+		final String arg1=new String(rvar(next(8)));
+		final String arg2=new String(rvar(next(8)));
+		final int com=next(16);
 		if(
-			(op==0&&arg1>arg2)||
-			(op==1&&arg1<arg2)||
-			(op==2&&arg1==arg2)||
-			(op==3&&arg1!=arg2)
+			(op==0&&toNum(arg1)>toNum(arg2))||
+			(op==1&&toNum(arg1)<toNum(arg2))||
+			(op==2&&arg1.equals(arg2))||
+			(op==3&&!arg1.equals(arg2))
 		){
-			final int com=next(16);
-			if(com<lines.size()+1){
+			if(com<lines.size()){
 				byteInd=lines.get(com);
 				return;
 			}
@@ -259,7 +255,6 @@ class UFB{
 						final int temp=next(8);
 						for(int i=0;i<temp;i++)
 							next(8);
-						// Complicated situation.
 					}
 				}
 			}else if(curByte==1)
