@@ -10,6 +10,7 @@ wvar	38,	8		5		12	12	15	0		23	15	18	12	4		28	28	28 // Woohoooo
 	 multi-line
 	 comments.
 */
+/* 4| */
 trim	38,	5
 wvar	38,	38	37
 print	38
@@ -26,8 +27,19 @@ print	38	37
 rmod	38	38
 print	38	37
 nvar	38
+/*
 read	251
 print	251	37
 nvar	251
-// We do not want memory leaks...
-// ...right?
+*/
+/* 20| */
+wvar	254	27
+wvar	252	28	27
+print	14	21	13	2		5		18	0		254	37
+add		254	28
+jl		254	252	22
+je		28	28	26
+print	8		5		12	12	15	37
+print	7		15	15	4		2		25	5		28	37
+nvar	252
+nvar	254
