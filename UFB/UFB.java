@@ -12,37 +12,36 @@ import java.util.Arrays;
 import java.util.ArrayList;
 
 class UFB{
-	final static char[] mem=new char[256];
-	final static int[] memInd=new int[256];
-	static int[] bytes;
 	public static void main(final String[]a)throws Exception{
-		final Thread memInit=new Thread(new Runnable(){
-			@Override
-			public void run(){
-				mem[0]=' ';
-				for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
-				for(int i=0;i<10;i++)mem[i+27]=Character.forDigit(i, 10);
-				mem[37]='\n';
-				for(int i=38;i<256;i++)mem[i]='\u0000';
-			}
-		});
-		memInit.start();
-		try(final FileChannel fileChannel=new RandomAccessFile(a[0], "r").getChannel()){
-			final MappedByteBuffer buffer=fileChannel.map(
-				FileChannel.MapMode.READ_ONLY, 0, fileChannel.size()
-			);
-			final int size=(int)fileChannel.size();
-			final byte[] tempBytes=new byte[size];
-			buffer.get(tempBytes);
-			bytes=new int[size];
-			for(int i=0;i<size;i++)bytes[i]=tempBytes[i]&0xff;
-		}
-		memInit.join();
-		run();
+		final Runner runner=new Runner(a[0]);
 	}
-	public static void run()throws Exception{
+}
+class Runner{
+	final char[] mem=new char[256];
+	final int[] memInd=new int[256];
+	final FileChannel channel;
+	final MappedByteBuffer buffer;
+	final int size;
+	public Runner(final String file)throws Exception{
+		mem[0]=' ';
+		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
+		for(int i=0;i<10;i++)mem[i+27]=Character.forDigit(i, 10);
+		mem[37]='\n';
+		for(int i=38;i<256;i++)mem[i]='\u0000';
+		channel=new RandomAccessFile(file, "r").getChannel();
+		try{
+			size=(int)channel.size();
+			buffer=channel.map(
+				FileChannel.MapMode.READ_ONLY, 0, size
+			);
+			run();
+		}catch(final Exception e){
+			channel.close();
+			throw new RuntimeException(e);
+		}
+	}
+	public void run()throws Exception{
 		final ArrayList<Integer> lines=new ArrayList<>();
-		final int size=bytes.length;
 		for(;byteInd<size;){
 			if(!lines.contains(byteInd))lines.add(byteInd);
 			final int com=next(8);
@@ -106,21 +105,21 @@ class UFB{
 				System.out.println("Memory Leak At Index: "+String.valueOf(i));
 		}
 	}
-	static int byteInd=0;
-	private static int next(final int len){
+	int byteInd=0;
+	private int next(final int len){
 		if(len==8){
 			byteInd++;
-			return bytes[byteInd-1];
+			return ((byte)buffer.get(byteInd-1))&0xff;
 		}
 		return (next(8)<<8)|next(8);
 	}
-	private static char[] rvar(final int ind){
+	private char[] rvar(final int ind){
 		if(memInd[ind]==0)return new char[]{mem[ind]};
 		final char[] temp=new char[memInd[ind]-ind+1];
 		System.arraycopy(mem, ind, temp, 0, temp.length);
 		return temp;
 	}
-	private static void wvar(){
+	private void wvar(){
 		final int argCount=next(8);
 		final int memIndex=next(8);
 		final char[] temp=rvar(memIndex);
@@ -151,7 +150,7 @@ class UFB{
 		}
 		memInd[memIndex]=curInd-1;
 	}
-	private static void nvar(final int ind){
+	private void nvar(final int ind){
 		if(memInd[ind]==0)
 			mem[ind]='\u0000';
 		else
@@ -160,7 +159,7 @@ class UFB{
 					mem[i]='\u0000';
 		memInd[ind]=0;
 	}
-	private static void trim(){
+	private void trim(){
 		final int ind=next(8);
 		final int max=next(8);
 		if(max==0){
@@ -173,14 +172,14 @@ class UFB{
 		System.arraycopy(temp, 0, mem, ind, max);
 		memInd[ind]=ind+max-1;
 	}
-	private static long toNum(final String in){
+	private long toNum(final String in){
 		try{
 			return Long.parseLong(in);
 		}catch(final Exception e){
 			return in.hashCode();
 		}
 	}
-	private static void math(final int op){
+	private void math(final int op){
 		final int ind1=next(8);
 		final int ind2=next(8);
 		final char[] str1=rvar(ind1);
@@ -217,7 +216,7 @@ class UFB{
 			memInd[ind1]=ind1;
 		}
 	}
-	private static void jump(final int op, final ArrayList<Integer> lines){
+	private void jump(final int op, final ArrayList<Integer> lines){
 		final String arg1=new String(rvar(next(8)));
 		final String arg2=new String(rvar(next(8)));
 		final int com=next(16);
@@ -234,12 +233,12 @@ class UFB{
 			skip(com, lines);
 		}
 	}
-	private static void skip(final int ind, final ArrayList<Integer> lines){
-		if(ind>bytes.length){
-			byteInd=bytes.length;
+	private void skip(final int ind, final ArrayList<Integer> lines){
+		if(ind>size){
+			byteInd=size;
 			return;
 		}
-		for(;lines.size()<ind&&byteInd<bytes.length;){
+		for(;lines.size()<ind&&byteInd<size;){
 			lines.add(byteInd);
 			final int curByte=next(8);
 			if(curByte>1){
@@ -266,13 +265,13 @@ class UFB{
 			}
 		}
 	}
-	private static void print(){
+	private void print(){
 		final int argCount=next(8);
 		final StringBuilder builder=new StringBuilder();
 		for(int i=0;i<argCount;i++)builder.append(rvar(next(8)));
 		System.out.print(builder.toString());
 	}
-	private static void read()throws Exception{
+	private void read()throws Exception{
 		final int ind=next(8);
 		final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 		System.out.print("=>");
