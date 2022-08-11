@@ -25,15 +25,12 @@ class Runner{
 	public Runner(final String file)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
-		for(int i=0;i<10;i++)mem[i+27]=Character.forDigit(i, 10);
+		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-		for(int i=38;i<256;i++)mem[i]='\u0000';
 		channel=new RandomAccessFile(file, "r").getChannel();
 		try{
 			size=(int)channel.size();
-			buffer=channel.map(
-				FileChannel.MapMode.READ_ONLY, 0, size
-			);
+			buffer=channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
 			run();
 		}catch(final Exception e){
 			channel.close();
