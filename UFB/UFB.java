@@ -259,27 +259,14 @@ class Runner{
 			lines.add(byteInd);
 			final int curByte=next(8);
 			if(curByte>1){
-				if(curByte<9)
-					next(16);
+				if(curByte<9)byteInd+=2;
 				else if(curByte>9){
-					if(curByte<14){
-						next(16);
-						next(16);
-					}else if(curByte==15)
-						next(8);
-					else{
-						final int temp=next(8);
-						for(int i=0;i<temp;i++)
-							next(8);
-					}
+					if(curByte<14)byteInd+=4;
+					else if(curByte==15)byteInd++;
+					else byteInd+=next(8)+1;
 				}
-			}else if(curByte==1)
-				next(8);
-			else{
-				final int temp=next(8);
-				for(int i=0;i<temp;i++)
-					next(8);
-			}
+			}else if(curByte==1)byteInd++;
+			else byteInd+=next(8)+1;
 		}
 	}
 	private void print(){
