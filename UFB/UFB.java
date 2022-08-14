@@ -73,48 +73,31 @@ class Runner{
 					trim();
 					break;
 				case 3:
-					math(0);
-					break;
 				case 4:
-					math(1);
-					break;
 				case 5:
-					math(2);
-					break;
 				case 6:
-					math(3);
-					break;
 				case 7:
-					math(4);
-					break;
 				case 8:
-					math(5);
+					math(com-3);
 					break;
 				case 9:
-					try{
-						Thread.sleep(10);
-					}catch(final Exception nop){}
+					Thread.sleep(10);
 					break;
 				case 10:
-					jump(0, lines);
-					break;
 				case 11:
-					jump(1, lines);
-					break;
 				case 12:
-					jump(2, lines);
-					break;
 				case 13:
-					jump(3, lines);
+					jump(com-10, lines);
 					break;
 				case 14:
 					print();
 					break;
 				case 15:
 					read();
-						break;
+					break;
 				default:
-						break;
+					System.out.println(String.format("\nCommandIndex: %d Is Not Recognized By The Interpreter...", com));
+					break;
 			}
 		}
 		for(int i=0;i<256;i++){
