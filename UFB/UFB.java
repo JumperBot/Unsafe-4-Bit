@@ -18,17 +18,16 @@
  *
 **/
 
-import java.math.BigInteger;
-
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
 
 import java.nio.channels.FileChannel;
 
 import java.nio.MappedByteBuffer;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 
 class UFB{
@@ -39,21 +38,23 @@ class UFB{
 class Runner{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
-	final FileChannel channel;
-	final MappedByteBuffer buffer;
+	final BufferedInputStream buffer;
 	final int size;
 	public Runner(final String file)throws Exception{
+		final long start=System.currentTimeMillis();
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-		channel=new RandomAccessFile(file, "r").getChannel();
+		final File f=new File(file);
+		buffer=new BufferedInputStream(new FileInputStream(f));
+		size=(int)f.length();
+		buffer.mark(Integer.MAX_VALUE);
 		try{
-			size=(int)channel.size();
-			buffer=channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
 			run();
+			buffer.close();
 		}catch(final Exception e){
-			channel.close();
+			buffer.close();
 			throw new RuntimeException(e);
 		}
 	}
@@ -62,6 +63,7 @@ class Runner{
 		for(;byteInd<size;){
 			if(!lines.contains(byteInd))lines.add(byteInd);
 			final int com=next(8);
+			//final long start=System.currentTimeMillis();
 			switch(com){
 				case 0:
 					wvar();
@@ -96,22 +98,38 @@ class Runner{
 					read();
 					break;
 				default:
-					System.out.println(String.format("\nCommandIndex: %d Is Not Recognized By The Interpreter...", com));
+					System.out.println(
+						String.format("\nCommand Index: %d Is Not Recognized By The Interpreter...", com)
+					);
 					break;
 			}
+			/* Performance Testing Only
+			System.out.println(
+				String.format("Time Spent By %d: %d", com, System.currentTimeMillis()-start)
+			);
+			// Mostly 0 -> 2ms, `print` being the WORST!
+			*/
 		}
-		for(int i=0;i<256;i++){
-			if(memInd[i]!=0)
-				System.out.println("Memory Leak At Index: "+String.valueOf(i));
+		for(int i=0;i<128;i++){
+			if(memInd[i]!=0)System.out.println(String.format("Memory Leak At Index: %d", i));
+			if(memInd[i+128]!=0)System.out.println(String.format("Memory Leak At Index: %d", i+128));
 		}
 	}
 	int byteInd=0;
+	final byte[] byteArr=new byte[1];
 	private int next(final int len){
-		if(len==8){
-			byteInd++;
-			return ((byte)buffer.get(byteInd-1))&0xff;
+		try{
+			if(len==8){
+				byteInd++;
+				buffer.skip(byteInd-1);
+				buffer.read(byteArr, 0, 1);
+				buffer.reset();
+				return byteArr[0]&0xff;
+			}
+			return (next(8)<<8)|next(8);
+		}catch(final Exception e){
+			throw new RuntimeException(e);
 		}
-		return (next(8)<<8)|next(8);
 	}
 	private char[] rvar(final int ind){
 		if(memInd[ind]==0)return new char[]{mem[ind]};
@@ -258,11 +276,11 @@ class Runner{
 		for(int i=0;i<argCount;i++)builder.append(rvar(next(8)));
 		System.out.print(builder.toString());
 	}
+	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 	private void read()throws Exception{
 		final int ind=next(8);
-		final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 		System.out.print("=>");
-		final char[] in=scan.readLine().toCharArray();
+    final char[] in=scan.readLine().toCharArray();
 		nvar(ind);
 		if(ind+in.length-1>255){
 			System.arraycopy(in, 0, mem, ind, 255-ind+1);
