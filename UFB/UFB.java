@@ -20,19 +20,20 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-
-import java.nio.channels.FileChannel;
-
-import java.nio.MappedByteBuffer;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 import java.util.ArrayList;
 
 class UFB{
 	public static void main(final String[]a)throws Exception{
-		final Runner runner=new Runner(a);
+		new Runner(a);
 	}
 }
 class Runner{
@@ -54,13 +55,14 @@ class Runner{
 				buffer.mark(Integer.MAX_VALUE);
 				size=(int)f.length();
 				try{
-					long start=0;
-					if(performance)start=System.currentTimeMillis();
-					run();
-					if(performance)
+					if(performance){
+						final long start=System.currentTimeMillis();
+						run();
 						System.out.println(
 							String.format("Program Took %dms To Run.", System.currentTimeMillis()-start)
 						);
+					}else
+						run();
 					buffer.close();
 				}catch(final Exception e){
 					buffer.close();
@@ -157,20 +159,18 @@ class Runner{
 					System.arraycopy(temp, 0, mem, curInd, 255-ind+1);
 					memInd[ind]=255;
 					return;
-				}else{
-					System.arraycopy(temp, 0, mem, curInd, temp.length);
-					curInd+=temp.length;
 				}
+				System.arraycopy(temp, 0, mem, curInd, temp.length);
+				curInd+=temp.length;
 			}else{
 				final char[] tempty=rvar(ind);
 				if(ind+tempty.length-1>255){
 					System.arraycopy(tempty, 0, mem, curInd, 255-ind+1);
 					memInd[ind]=255;
 					return;
-				}else{
-					System.arraycopy(tempty, 0, mem, curInd, tempty.length);
-					curInd+=tempty.length;
 				}
+				System.arraycopy(tempty, 0, mem, curInd, tempty.length);
+				curInd+=tempty.length;
 			}
 		}
 		memInd[memIndex]=curInd-1;
@@ -197,12 +197,18 @@ class Runner{
 		System.arraycopy(temp, 0, mem, ind, max);
 		memInd[ind]=ind+max-1;
 	}
+
 	private long toNum(final String in){
-		try{
-			return Long.parseLong(in);
-		}catch(final Exception e){
-			return in.hashCode();
+		final char[] arr=in.toCharArray();
+		// BeCoz Long#parseLong() is slow and try-catch is expensive.
+		long result=0;
+		for(final char c:arr){
+			final int num=c-48;
+			if(num<0||num>9)return in.hashCode();
+			result+=num;
+			result*=10;
 		}
+		return result/10;
 	}
 	private void math(final int op){
 		final int ind1=next(8);
@@ -215,10 +221,10 @@ class Runner{
 			if(ind1+str2.length-1>255){
 				System.arraycopy(str2, 0, mem, ind1, 255-ind1+1);
 				memInd[ind1]=255;
-			}else{
-				System.arraycopy(str2, 0, mem, ind1, str2.length);
-				memInd[ind1]=ind1+str2.length-1;
+				return;
 			}
+			System.arraycopy(str2, 0, mem, ind1, str2.length);
+			memInd[ind1]=ind1+str2.length-1;
 			return;
 		}
 		final long num1=toNum(new String(str1));
@@ -232,10 +238,10 @@ class Runner{
 			if(ind1+out.length-1>255){
 				System.arraycopy(out, 0, mem, ind1, 255-ind1+1);
 				memInd[ind1]=255;
-			}else{
-				System.arraycopy(out, 0, mem, ind1, out.length);
-				memInd[ind1]=ind1+out.length-1;
+				return;
 			}
+			System.arraycopy(out, 0, mem, ind1, out.length);
+			memInd[ind1]=ind1+out.length-1;
 		}catch(final Exception e){
 			mem[ind1]='i';
 			memInd[ind1]=ind1;
@@ -277,11 +283,13 @@ class Runner{
 			else byteInd+=next(8)+1;
 		}
 	}
+	final PrintWriter out=new PrintWriter(new BufferedWriter(
+		new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "UTF-8"), 512
+	));
 	private void print(){
 		final int argCount=next(8);
-		final StringBuilder builder=new StringBuilder();
-		for(int i=0;i<argCount;i++)builder.append(rvar(next(8)));
-		System.out.print(builder.toString());
+		for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
+		out.flush();
 	}
 	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 	private void read()throws Exception{
