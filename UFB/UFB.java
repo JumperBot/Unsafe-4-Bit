@@ -32,7 +32,7 @@ import java.util.ArrayList;
 
 class UFB{
 	public static void main(final String[]a)throws Exception{
-		final Runner runner=new Runner(a[0]);
+		final Runner runner=new Runner(a);
 	}
 }
 class Runner{
@@ -40,30 +40,43 @@ class Runner{
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
 	final int size;
-	public Runner(final String file)throws Exception{
-		final long start=System.currentTimeMillis();
+	public Runner(final String[] args)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-		final File f=new File(file);
-		buffer=new BufferedInputStream(new FileInputStream(f));
-		size=(int)f.length();
-		buffer.mark(Integer.MAX_VALUE);
-		try{
-			run();
-			buffer.close();
-		}catch(final Exception e){
-			buffer.close();
-			throw new RuntimeException(e);
+		boolean performance=false;
+		for(final String s:args){
+			if(s.equals("-p"))performance=true;
+			if(s.contains(".ufbb")){
+				final File f=new File(s);
+				buffer=new BufferedInputStream(new FileInputStream(f));
+				buffer.mark(Integer.MAX_VALUE);
+				size=(int)f.length();
+				try{
+					long start=0;
+					if(performance)start=System.currentTimeMillis();
+					run();
+					if(performance)
+						System.out.println(
+							String.format("Program Took %dms To Run.", System.currentTimeMillis()-start)
+						);
+					buffer.close();
+				}catch(final Exception e){
+					buffer.close();
+					throw new RuntimeException(e);
+				}
+				return;
+			}
 		}
+		buffer=null;
+		size=0;
 	}
 	public void run()throws Exception{
 		final ArrayList<Integer> lines=new ArrayList<>();
 		for(;byteInd<size;){
 			if(!lines.contains(byteInd))lines.add(byteInd);
 			final int com=next(8);
-			//final long start=System.currentTimeMillis();
 			switch(com){
 				case 0:
 					wvar();
@@ -103,12 +116,6 @@ class Runner{
 					);
 					break;
 			}
-			/* Performance Testing Only
-			System.out.println(
-				String.format("Time Spent By %d: %d", com, System.currentTimeMillis()-start)
-			);
-			// Mostly 0 -> 2ms, `print` being the WORST!
-			*/
 		}
 		for(int i=0;i<128;i++){
 			if(memInd[i]!=0)System.out.println(String.format("Memory Leak At Index: %d", i));
@@ -121,7 +128,7 @@ class Runner{
 		try{
 			if(len==8){
 				byteInd++;
-				buffer.skip(byteInd-1);
+				for(long skipped=buffer.skip(byteInd-1);skipped<byteInd-1;skipped+=buffer.skip(1));
 				buffer.read(byteArr, 0, 1);
 				buffer.reset();
 				return byteArr[0]&0xff;
@@ -132,7 +139,7 @@ class Runner{
 		}
 	}
 	private char[] rvar(final int ind){
-		if(memInd[ind]==0)return new char[]{mem[ind]};
+		if(memInd[ind]==0||memInd[ind]==ind)return new char[]{mem[ind]};
 		final char[] temp=new char[memInd[ind]-ind+1];
 		System.arraycopy(mem, ind, temp, 0, temp.length);
 		return temp;
