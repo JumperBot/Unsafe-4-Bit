@@ -82,14 +82,8 @@ class UFBC{
 				if(temp[0].startsWith("j"))
 					switch(temp[0]){
 						case "jm":
-							twoMem=true;
-							break;
 						case "jl":
-							twoMem=true;
-							break;
 						case "je":
-							twoMem=true;
-							break;
 						case "jne":
 							twoMem=true;
 							break;
@@ -103,35 +97,19 @@ class UFBC{
 				else
 					switch(temp[0]){
 						case "nvar":
-							oneMem=true;
-							break;
 						case "trim":
-							oneMem=true;
-							break;
 						case "read":
 							oneMem=true;
 							break;
 						case "add":
-							twoMem=true;
-							break;
 						case "sub":
-							twoMem=true;
-							break;
 						case "mul":
-							twoMem=true;
-							break;
 						case "div":
-							twoMem=true;
-							break;
 						case "mod":
-							twoMem=true;
-							break;
 						case "rmod":
 							twoMem=true;
 							break;
 						case "wvar":
-							infMem=true;
-							break;
 						case "print":
 							infMem=true;
 							break;
@@ -211,7 +189,7 @@ class UFBC{
 					 temp[0].equals("mod")||temp[0].equals("rmod"))){
 						try{
 							final long memArg=Long.parseLong(temp[1]);
-							if(Long.parseLong(temp[1])<38)
+							if(memArg<38)
 								error(
 									errors, "Memory Index", temp[1],
 									"Endangers A Read-Only Memory Index", temp
@@ -289,12 +267,11 @@ class UFBC{
 							}
 						}
 					}
-				}else if(temp[0].equals("nop")&&temp.length!=1){
+				}else if(temp[0].equals("nop")&&temp.length!=1)
 					error(
 						errors, "Command", temp[0],
 						"Needs No Less And No More Than Zero Arguments", temp
 					);
-				}
 				list.add(temp);
 			}
 		}
@@ -322,7 +299,7 @@ class UFBC{
 				)
 			);
 		try{
-			final File outFile=new File(a[0].substring(0, a[0].indexOf("."))+".ufbb");
+			final File outFile=new File(a[0].substring(0, a[0].lastIndexOf("."))+".ufbb");
 			outFile.createNewFile();
 			try(final FileOutputStream stream=new FileOutputStream(outFile)){
 				for(int i=0;i<list.size();i++){
