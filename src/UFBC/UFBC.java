@@ -76,168 +76,99 @@ class UFBC{
 								.append("            ")
 								.append(lineGen(temp));
 			else{
-				boolean oneMem=false;
-				boolean twoMem=false;
-				boolean infMem=false;
-				if(temp[0].startsWith("j"))
-					switch(temp[0]){
-						case "jm":
-						case "jl":
-						case "je":
-						case "jne":
-							twoMem=true;
-							break;
-						default:
-							error(
-								errors, "Command", temp[0],
-								"Does Not Exist", temp
-							);
-							break;
-					}
-				else
-					switch(temp[0]){
-						case "nvar":
-						case "trim":
-						case "read":
-							oneMem=true;
-							break;
-						case "add":
-						case "sub":
-						case "mul":
-						case "div":
-						case "mod":
-						case "rmod":
-							twoMem=true;
-							break;
-						case "wvar":
-						case "print":
-							infMem=true;
-							break;
-						case "nop":
-							break;
-						default:
-							error(
-								errors, "Command", temp[0],
-								"Does Not Exist", temp
-							);
-							break;
-					}
-				if(oneMem||twoMem||infMem){
-					try{
-						if(Long.parseLong(temp[1])>255)
-							error(
-								errors, "Memory Index", temp[1],
-								"Is Larger Than 255 And Will Not Point To Memory", temp
-							);
-					}catch(final Exception e){
-						error(
-							errors, "Memory Index Expected Instead Of", temp[1],
-							"Should Be Replaced With A Memory Index", temp
-						);
-					}
-				}
-				if(oneMem){
-					if(temp[0].startsWith("j")){
+				boolean isCommand=true;
+				switch(temp[0]){
+					case "trim":
 						if(temp.length!=3)
 							error(
 								errors, "Command", temp[0],
 								"Needs No Less And No More Than Two Arguments To Work", temp
 							);
-					}else{
-						if(temp[0].equals("trim")&&temp.length!=3)
-							error(
-								errors, "Command", temp[0],
-								"Needs No Less And No More Than Two Arguments To Work", temp
-							);
-						else if(!temp[0].equals("trim")&&temp.length!=2)
+					case "nvar":
+					case "read":
+						if(temp.length!=2&&!temp[0].startsWith("t")){
 							error(
 								errors, "Command", temp[0],
 								"Needs No Less And No More Than One Argument To Work", temp
 							);
-						else{
-							try{
-								if(Long.parseLong(temp[1])<38){
-									error(
-										errors, "Memory Index", temp[1],
-										"Endangers A Read-Only Memory Index", temp
-									);
-								}
-							}catch(final Exception e){
-								try{
-									error(
-										errors, "Memory Index Expected Instead Of", temp[1],
-										"Should Be Replaced With A Memory Index", temp
-									);
-								}catch(final Exception e2){}
-							}
+							break;
 						}
-					}
-				}else if(twoMem){
-					if(temp[0].startsWith("j")&&temp.length!=4)
-						error(
-							errors, "Command", temp[0],
-							"Needs No Less And No More Than Three Arguments To Work", temp
-						);
-					else if(!temp[0].startsWith("j")&&temp.length!=3)
-						error(
-							errors, "Command", temp[0],
-							"Needs No Less And No More Than Two Arguments To Work", temp
-						);
-					else if(!temp[0].startsWith("j")&&
-					(temp[0].equals("add")||temp[0].equals("sub")||
-					 temp[0].equals("mul")||temp[0].equals("div")||
-					 temp[0].equals("mod")||temp[0].equals("rmod"))){
 						try{
-							final long memArg=Long.parseLong(temp[1]);
-							if(memArg<38)
+							if(Long.parseLong(temp[1])<38){
 								error(
 									errors, "Memory Index", temp[1],
 									"Endangers A Read-Only Memory Index", temp
 								);
-							else if(memArg>255)
-								error(
-									errors, "Memory Index", temp[1],
-									"Is Larger Than 255 And Will Not Point To Memory", temp
-								);
+							}
 						}catch(final Exception e){
-							error(
-								errors, "Memory Index Expected Instead Of", temp[1],
-								"Should Be Replaced With A Memory Index", temp
-							);
-						}
-						try{
-							if(Long.parseLong(temp[2])>255)
+							try{
 								error(
-									errors, "Memory Index", temp[2],
-									"Is Larger Than 255 And Will Not Point To Memory", temp
+									errors, "Memory Index Expected Instead Of", temp[1],
+									"Should Be Replaced With A Memory Index", temp
 								);
-						}catch(final Exception e){
-							error(
-								errors, "Memory Index Expected Instead Of", temp[2],
-								"Should Be Replaced With A Memory Index", temp
-							);
+							}catch(final Exception e2){}
 						}
-					}else{
-						try{
-							if(Long.parseLong(temp[2])>255)
+						break;
+					case "jm":
+					case "jl":
+					case "je":
+					case "jne":
+						if(temp.length!=4)
+							error(
+								errors, "Command", temp[0],
+								"Needs No Less And No More Than Three Arguments To Work", temp
+							);
+					case "add":
+					case "sub":
+					case "mul":
+					case "div":
+					case "mod":
+					case "rmod":
+						if(!temp[0].startsWith("j")){
+							if(temp.length!=3){
 								error(
-									errors, "Memory Index", temp[2],
-									"Is Larger Than 255 And Will Not Point To Memory", temp
+									errors, "Command", temp[0],
+									"Needs No Less And No More Than Two Arguments To Work", temp
 								);
-						}catch(final Exception e){
-							error(
-								errors, "Memory Index Expected Instead Of", temp[2],
-								"Should Be Replaced With A Memory Index", temp
-							);
+								break;
+							}
+							try{
+								if(Long.parseLong(temp[1])<38)
+									error(
+										errors, "Memory Index", temp[1],
+										"Endangers A Read-Only Memory Index", temp
+									);
+							}catch(final Exception e){
+								error(
+									errors, "Memory Index Expected Instead Of", temp[1],
+									"Should Be Replaced With A Memory Index", temp
+								);
+							}
 						}
-					}
-				}else if(infMem){
-					if(temp.length>Byte.MAX_VALUE-1)
-						error(
-							errors, "Command", temp[0],
-							"Has Too Many Arguments", temp
-						);
-					else{
+						for(byte i=1;i<3;i++){
+							try{
+								if(Long.parseLong(temp[i])>255)
+									error(
+										errors, "Memory Index", temp[i],
+										"Is Larger Than 255 And Will Not Point To Memory", temp
+									);
+							}catch(final Exception e){
+								error(
+									errors, "Memory Index Expected Instead Of", temp[1],
+									"Should Be Replaced With A Memory Index", temp
+								);
+							}
+						}
+						break;
+					case "wvar":
+					case "print":
+						if(temp.length>Byte.MAX_VALUE-1){
+							error(
+								errors, "Command", temp[0],
+								"Has Too Many Arguments", temp
+							);
+							break;
+						}
 						if(temp[0].startsWith("w")){
 							try{
 								if(Long.parseLong(temp[1])<38)
@@ -266,12 +197,36 @@ class UFBC{
 								);
 							}
 						}
+						break;
+					case "nop":
+						if(temp.length!=1)
+							error(
+								errors, "Command", temp[0],
+								"Needs No Less And No More Than Zero Arguments", temp
+							);
+						break;
+					default:
+						error(
+							errors, "Command", temp[0],
+							"Does Not Exist", temp
+						);
+						isCommand=false;
+						break;
+				}
+				if(!temp[0].equals("nop")&&isCommand){
+					try{
+						if(Long.parseLong(temp[1])>255)
+							error(
+								errors, "Memory Index", temp[1],
+								"Is Larger Than 255 And Will Not Point To Memory", temp
+							);
+					}catch(final Exception e){
+						error(
+							errors, "Memory Index Expected Instead Of", temp[1],
+							"Should Be Replaced With A Memory Index", temp
+						);
 					}
-				}else if(temp[0].equals("nop")&&temp.length!=1)
-					error(
-						errors, "Command", temp[0],
-						"Needs No Less And No More Than Zero Arguments", temp
-					);
+				}
 				list.add(temp);
 			}
 		}
