@@ -30,4 +30,4 @@ Write your first program full of commands,
 
 get disgusted by the colored warning and error messages,
 
-and [compile](./UFBC/UFBC.java) and [run](./UFB/UFB.java) the program!
+and [compile](./src/README.md#UFBC) and [run](./src/README.md#UFB) the program!
