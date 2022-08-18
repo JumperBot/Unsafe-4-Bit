@@ -41,6 +41,7 @@ class Runner{
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
 	final int size;
+	final ArrayList<Integer> lines=new ArrayList<>();
 	public Runner(final String[] args)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
@@ -75,7 +76,6 @@ class Runner{
 		size=0;
 	}
 	public void run()throws Exception{
-		final ArrayList<Integer> lines=new ArrayList<>();
 		for(;byteInd<size;){
 			if(!lines.contains(byteInd))lines.add(byteInd);
 			final int com=next(8);
@@ -104,7 +104,7 @@ class Runner{
 				case 11:
 				case 12:
 				case 13:
-					jump(com-10, lines);
+					jump(com-10);
 					break;
 				case 14:
 					print();
@@ -119,9 +119,14 @@ class Runner{
 					break;
 			}
 		}
-		for(int i=0;i<128;i++){
+		for(int i=0;i<64;i++){
 			if(memInd[i]!=0)System.out.println(String.format("Memory Leak At Index: %d", i));
-			if(memInd[i+128]!=0)System.out.println(String.format("Memory Leak At Index: %d", i+128));
+			final int plus=i+64;
+			if(memInd[plus]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus));
+			final int plus2=i+128;
+			if(memInd[plus2]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus2));
+			final int plus3=i+192;
+			if(memInd[plus3]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus3));
 		}
 	}
 	int byteInd=0;
@@ -156,7 +161,7 @@ class Runner{
 			final int ind=next(8);
 			if(memIndex==ind){
 				if(curInd+temp.length-1>255){
-					System.arraycopy(temp, 0, mem, curInd, 255-ind+1);
+					System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
 					memInd[ind]=255;
 					return;
 				}
@@ -164,8 +169,8 @@ class Runner{
 				curInd+=temp.length;
 			}else{
 				final char[] tempty=rvar(ind);
-				if(ind+tempty.length-1>255){
-					System.arraycopy(tempty, 0, mem, curInd, 255-ind+1);
+				if(curInd+tempty.length-1>255){
+					System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
 					memInd[ind]=255;
 					return;
 				}
@@ -247,7 +252,7 @@ class Runner{
 			memInd[ind1]=ind1;
 		}
 	}
-	private void jump(final int op, final ArrayList<Integer> lines){
+	private void jump(final int op){
 		final String arg1=new String(rvar(next(8)));
 		final String arg2=new String(rvar(next(8)));
 		final int com=next(16);
@@ -261,10 +266,10 @@ class Runner{
 				byteInd=lines.get(com);
 				return;
 			}
-			skip(com, lines);
+			skip(com);
 		}
 	}
-	private void skip(final int ind, final ArrayList<Integer> lines){
+	private void skip(final int ind){
 		if(ind>size){
 			byteInd=size;
 			return;
