@@ -25,6 +25,7 @@ import java.io.FileReader;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import java.util.regex.Pattern;
 
@@ -44,6 +45,7 @@ class UFBC{
 	final static Pattern empties=Pattern.compile(" *\n+ *");
 	final static Pattern comment=Pattern.compile("//.*\n*");
 	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
+	final static StringBuilder errors=new StringBuilder();
 	public static void main(final String[]a)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
@@ -63,7 +65,6 @@ class UFBC{
 			).replaceAll(" ")
 		);
 		final StringBuilder warnings=new StringBuilder();
-		final StringBuilder errors=new StringBuilder();
 		final ArrayList<String[]> list=new ArrayList<>();
 		for(final String arrTemp:arr){
 			final String[] temp=divider.split(arrTemp);
@@ -79,45 +80,19 @@ class UFBC{
 				boolean isCommand=true;
 				switch(temp[0]){
 					case "trim":
-						if(temp.length!=3)
-							error(
-								errors, "Command", temp[0],
-								"Needs No Less And No More Than Two Arguments To Work", temp
-							);
+						if(checkLength(temp, 3))break;
 					case "nvar":
 					case "read":
-						if(temp.length!=2&&!temp[0].startsWith("t")){
-							error(
-								errors, "Command", temp[0],
-								"Needs No Less And No More Than One Argument To Work", temp
-							);
-							break;
-						}
-						try{
-							if(Long.parseLong(temp[1])<38){
-								error(
-									errors, "Memory Index", temp[1],
-									"Endangers A Read-Only Memory Index", temp
-								);
-							}
-						}catch(final Exception e){
-							try{
-								error(
-									errors, "Memory Index Expected Instead Of", temp[1],
-									"Should Be Replaced With A Memory Index", temp
-								);
-							}catch(final Exception e2){}
+						if(!temp[0].startsWith("t")){
+							if(checkLength(temp, 2))break;
+							checkIfMemSafe(temp, temp[1]);
 						}
 						break;
 					case "jm":
 					case "jl":
 					case "je":
 					case "jne":
-						if(temp.length!=4)
-							error(
-								errors, "Command", temp[0],
-								"Needs No Less And No More Than Three Arguments To Work", temp
-							);
+						if(checkLength(temp, 4))break;
 					case "add":
 					case "sub":
 					case "mul":
@@ -125,108 +100,35 @@ class UFBC{
 					case "mod":
 					case "rmod":
 						if(!temp[0].startsWith("j")){
-							if(temp.length!=3){
-								error(
-									errors, "Command", temp[0],
-									"Needs No Less And No More Than Two Arguments To Work", temp
-								);
-								break;
-							}
-							try{
-								if(Long.parseLong(temp[1])<38)
-									error(
-										errors, "Memory Index", temp[1],
-										"Endangers A Read-Only Memory Index", temp
-									);
-							}catch(final Exception e){
-								error(
-									errors, "Memory Index Expected Instead Of", temp[1],
-									"Should Be Replaced With A Memory Index", temp
-								);
-							}
+							if(checkLength(temp, 3))break;
+							checkIfMemSafe(temp, temp[1]);
 						}
-						for(byte i=1;i<3;i++){
-							try{
-								if(Long.parseLong(temp[i])>255)
-									error(
-										errors, "Memory Index", temp[i],
-										"Is Larger Than 255 And Will Not Point To Memory", temp
-									);
-							}catch(final Exception e){
-								error(
-									errors, "Memory Index Expected Instead Of", temp[1],
-									"Should Be Replaced With A Memory Index", temp
-								);
-							}
-						}
+						for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
 						break;
 					case "wvar":
 					case "print":
 						if(temp.length>Byte.MAX_VALUE-1){
 							error(
-								errors, "Command", temp[0],
-								"Has Too Many Arguments", temp
+								temp, "Command", temp[0],
+								"Has Too Many Arguments"
 							);
 							break;
 						}
-						if(temp[0].startsWith("w")){
-							try{
-								if(Long.parseLong(temp[1])<38)
-									error(
-										errors, "Memory Index", temp[1],
-										"Endangers A Read-Only Memory Index", temp
-									);
-							}catch(final Exception e){
-								error(
-									errors, "Memory Index Expected Instead Of", temp[1],
-									"Should Be Replaced With A Memory Index", temp
-								);
-							}
-						}
-						for(byte i=2;i<temp.length;i++){
-							try{
-								if(Long.parseLong(temp[i])>255)
-									error(
-										errors, "Memory Index", temp[i],
-										"Is Larger Than 255 And Will Not Point To Memory", temp
-									);
-							}catch(final Exception e){
-								error(
-									errors, "Memory Index Expected Instead Of", temp[i],
-									"Should Be Replaced With A Memory Index", temp
-								);
-							}
-						}
+						if(temp[0].startsWith("w"))checkIfMemSafe(temp, temp[1]);
+						for(byte i=2;i<temp.length;i++)checkIfMem(temp, temp[i]);
 						break;
 					case "nop":
-						if(temp.length!=1)
-							error(
-								errors, "Command", temp[0],
-								"Needs No Less And No More Than Zero Arguments", temp
-							);
+						checkLength(temp, 1);
 						break;
 					default:
 						error(
-							errors, "Command", temp[0],
-							"Does Not Exist", temp
+							temp, "Command", temp[0],
+							"Does Not Exist"
 						);
 						isCommand=false;
 						break;
 				}
-				if(!temp[0].equals("nop")&&isCommand){
-					try{
-						if(Long.parseLong(temp[1])>255)
-							error(
-								errors, "Memory Index", temp[1],
-								"Is Larger Than 255 And Will Not Point To Memory", temp
-							);
-					}catch(final Exception e){
-						error(
-							errors, "Memory Index Expected Instead Of", temp[1],
-							"Should Be Replaced With A Memory Index", temp
-						);
-					}
-				}
+				if(!temp[0].equals("nop")&&isCommand)checkIfMem(temp, temp[1]);
 				list.add(temp);
 			}
 		}
@@ -283,14 +185,53 @@ class UFBC{
 			System.out.println(e.toString());
 		}
 	}
+	private static void checkIfMem(final String[] temp, final String s){
+		try{
+			if(Long.parseLong(s)>255)
+				error(
+					temp, "Memory Index", s,
+					"Is Larger Than 255 And Will Not Point To Memory"
+				);
+		}catch(final Exception e){
+			error(
+				temp, "Memory Index Expected Instead Of", s,
+				"Should Be Replaced With A Memory Index"
+			);
+		}
+	}
+	private static void checkIfMemSafe(final String[] temp, final String s){
+		try{
+			if(Long.parseLong(s)<38)
+				error(
+					temp, "Memory Index", s,
+					"Endangers A Read-Only Memory Index"
+				);
+		}catch(final Exception e){
+			error(
+				temp, "Memory Index Expected Instead Of", s,
+				"Should Be Replaced With A Memory Index"
+			);
+		}
+	}
+	// false if error is not thrown. Misleading eh?
+	private static boolean checkLength(final String[] temp, final int length){
+		if(temp.length!=length){
+			final String num=(length<1)?"Zero":(length==1)?"One":(length==2)?"Two":"Three";
+			error(
+				temp, "Command", temp[0],
+				String.format("Needs No Less And No More Than %s Argument To Work", num)
+			);
+			return true;
+		}
+		return false;
+	}
 	private static String lineGen(final String[]temp){
 		return Arrays.toString(temp).substring(1).replace(", ", " ").replace("]", "\n\n");
 	}
-	private static void error(final StringBuilder errors,
-	final String in1, final String in2, final String in3, final String[] temp){
+	private static void error(final String[] temp, final String... in){
 		errors.append("Error: |\n")
-					.append(String.format("    %s: |\n", in1))
-					.append(String.format("        \"%s\" %s: |\n", in2, in3))
+					.append(String.format("    %s: |\n", in[0]))
+					.append(String.format("        \"%s\" %s: |\n", in[1], in[2]))
 					.append(String.format("            %s", lineGen(temp)));
 	}
 	private static String manPadding(final String str, final int i){
@@ -299,51 +240,25 @@ class UFBC{
     while(reverse.length()>i)reverse.delete(0, 1);
     return reverse.reverse().toString();
   }
-	/**
-	 * 0	-	0000	-	wvar	|	1		-	0001	-	nvar
-	 * 2	-	0010	-	trim	|	3		-	0011	-	add
-	 * 4	-	0100	-	sub		| 5		-	0101	-	mul
-	 * 6	-	0110	-	div		| 7		-	0111	-	mod
-	 * 8	-	1000	-	rmod	|	9		-	1001	-	nop
-	 * 10	-	1010	-	jm		|	11	-	1011	-	jl
-	 * 12	-	1100	-	je		|	13	-	1101	-	jne
-	 * 14	-	1110	-	print	|	15	-	1111	-	read
-	 **/
+	final static HashMap<String, Integer> binaryMap=new HashMap<>(){{
+		put("wvar" , 0 );
+		put("nvar" , 1 );
+		put("trim" , 2 );
+		put("add"  , 3 );
+		put("sub"  , 4 );
+		put("mul"  , 5 );
+		put("div"  , 6 );
+		put("mod"  , 7 );
+		put("rmod" , 8 );
+		put("nop"  , 9 );
+		put("jm"   , 10);
+		put("jl"   , 11);
+		put("je"   , 12);
+		put("jne"  , 13);
+		put("print", 14);
+		put("read" , 15);
+	}};
 	private static int getBin(final String com){
-		switch(com.trim()){
-			case "wvar":
-				return 0;
-			case "nvar":
-				return 1;
-			case "trim":
-				return 2;
-			case "add":
-				return 3;
-			case "sub":
-				return 4;
-			case "mul":
-				return 5;
-			case "div":
-				return 6;
-			case "mod":
-				return 7;
-			case "rmod":
-				return 8;
-			case "nop":
-				return 9;
-			case "jm":
-				return 10;
-			case "jl":
-				return 11;
-			case "je":
-				return 12;
-			case "jne":
-				return 13;
-			case "print":
-				return 14;
-			case "read":
-				return 15;
-		}
-		return 0;
+		return binaryMap.get(com.trim());
 	}
 }
