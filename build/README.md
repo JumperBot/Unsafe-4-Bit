@@ -14,6 +14,18 @@ java UFB [ -flags ] /directory/Compiled.ufbb
 ## Flags
 
 - "-p" -> Performance measurement flag -> ms
+- "-n" -> Accurately use the "-p" flag -> ns
+- "-v" -> Display semantic version tag
+- "-h" -> Display links and then leave
+
+Example:
+
+```sh
+java UFB -pnv
+java UFB -p
+java UFB -nvp
+java UFB -pnhv
+```
 
 # UFBC
 

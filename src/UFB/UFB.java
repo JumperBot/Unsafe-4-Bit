@@ -37,6 +37,16 @@ class UFB{
 	}
 }
 class Runner{
+	//----------------------------------------------------------------------//
+	/**TODO: ALWAYS CHANGE VERSION TAG.
+	 * DO NOT Change '1' in "1.*.*".
+	 * MINOR CHANGES should go in "1.MINOR.*".
+	 * PATCH CHANGES should go in "1.*.PATCH".
+	 * MINOR CHANGES should give new commands/major features.
+	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
+	**/
+	final String version_tag="v1.0.0";
+	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
@@ -48,19 +58,24 @@ class Runner{
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
 		boolean performance=false;
+		boolean nanoseconds=false; // Java doesn't mess with the CPU/Scheduler/Timer/...
 		for(final String s:args){
-			if(s.equals("-p"))performance=true;
-			if(s.contains(".ufbb")){
+			final String str=s.trim();
+			if(str.endsWith(".ufbb")){
 				final File f=new File(s);
 				buffer=new BufferedInputStream(new FileInputStream(f));
 				buffer.mark(Integer.MAX_VALUE);
 				size=(int)f.length();
 				try{
 					if(performance){
-						final long start=System.currentTimeMillis();
+						final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
 						run();
 						System.out.println(
-							String.format("Program Took %dms To Run.", System.currentTimeMillis()-start)
+							String.format(
+								"Program Took %d%s To Run.",
+								((!nanoseconds)?System.currentTimeMillis():System.nanoTime())-start,
+								(!nanoseconds)?"ms":"ns"
+							)
 						);
 					}else
 						run();
@@ -70,6 +85,27 @@ class Runner{
 					throw new RuntimeException(e);
 				}
 				return;
+			}else if(str.startsWith("-")){
+				if(str.contains("p"))performance=true;
+				if(str.contains("n"))nanoseconds=true;
+				if(str.contains("v")){
+					System.out.println(version_tag);
+					buffer=null;
+					size=0;
+					return;
+				}
+				if(str.contains("h")){
+					System.out.println(
+						String.format(
+							"Go To These Links:\n%s\n%s",
+							"https://github.com/JumperBot/Unsafe-4-Bit/tree/master/src#ufb",
+							"https://github.com/JumperBot/Unsafe-4-Bit/tree/master/test#commands"
+						)
+					);
+					buffer=null;
+					size=0;
+					return;
+				}
 			}
 		}
 		buffer=null;
