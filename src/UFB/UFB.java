@@ -29,7 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 class UFB{
 	public static void main(final String[]a)throws Exception{
@@ -45,13 +45,13 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.0.0";
+	final String version_tag="v1.0.1";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
 	final int size;
-	final ArrayList<Integer> lines=new ArrayList<>();
+	final HashMap<Integer, Integer> lines=new HashMap<>(); // We don't need a sorted list.
 	public Runner(final String[] args)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
@@ -113,7 +113,8 @@ class Runner{
 	}
 	public void run()throws Exception{
 		for(;byteInd<size;){
-			if(!lines.contains(byteInd))lines.add(byteInd);
+			if(lines.size()>0&&lines.get(lines.size()-1)<byteInd)lines.put(lines.size(), byteInd);
+			else if(lines.size()==0)lines.put(0, byteInd);
 			final int com=next(8);
 			switch(com){
 				case 0:
@@ -217,9 +218,7 @@ class Runner{
 		memInd[memIndex]=curInd-1;
 	}
 	private void nvar(final int ind){
-		if(memInd[ind]==0)
-			mem[ind]='\u0000';
-		else
+		if(memInd[ind]!=0)
 			for(int i=ind;i<memInd[ind]+1;i++)
 				if(memInd[i]==0||i==ind)
 					mem[i]='\u0000';
@@ -311,7 +310,7 @@ class Runner{
 			return;
 		}
 		for(;lines.size()<ind&&byteInd<size;){
-			lines.add(byteInd);
+			lines.put(lines.size(), byteInd);
 			final int curByte=next(8);
 			if(curByte>1){
 				if(curByte<9)byteInd+=2;
