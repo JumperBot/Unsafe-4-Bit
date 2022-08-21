@@ -29,8 +29,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-import java.util.HashMap;
-
 class UFB{
 	public static void main(final String[]a)throws Exception{
 		new Runner(a);
@@ -45,13 +43,14 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.0.1";
+	final String version_tag="v1.0.2";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
 	final int size;
-	final HashMap<Integer, Integer> lines=new HashMap<>(); // We don't need a sorted list.
+	final int[] lines;
+	int furthestLine=-1;
 	public Runner(final String[] args)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
@@ -66,6 +65,7 @@ class Runner{
 				buffer=new BufferedInputStream(new FileInputStream(f));
 				buffer.mark(Integer.MAX_VALUE);
 				size=(int)f.length();
+				lines=new int[size];
 				try{
 					if(performance){
 						final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
@@ -92,6 +92,7 @@ class Runner{
 					System.out.println(version_tag);
 					buffer=null;
 					size=0;
+					lines=null;
 					return;
 				}
 				if(str.contains("h")){
@@ -104,17 +105,24 @@ class Runner{
 					);
 					buffer=null;
 					size=0;
+					lines=null;
 					return;
 				}
 			}
 		}
 		buffer=null;
 		size=0;
+		lines=null;
 	}
 	public void run()throws Exception{
 		for(;byteInd<size;){
-			if(lines.size()>0&&lines.get(lines.size()-1)<byteInd)lines.put(lines.size(), byteInd);
-			else if(lines.size()==0)lines.put(0, byteInd);
+			if(furthestLine>-1&&lines[furthestLine]<byteInd){
+				furthestLine++;
+				lines[furthestLine]=byteInd;
+			}else if(furthestLine<0){
+				furthestLine=0;
+				lines[0]=byteInd;
+			}
 			final int com=next(8);
 			switch(com){
 				case 0:
@@ -218,10 +226,9 @@ class Runner{
 		memInd[memIndex]=curInd-1;
 	}
 	private void nvar(final int ind){
-		if(memInd[ind]!=0)
-			for(int i=ind;i<memInd[ind]+1;i++)
-				if(memInd[i]==0||i==ind)
-					mem[i]='\u0000';
+		if(memInd[ind]==0)return;
+		final char[] temp=new char[memInd[ind]-ind+1]; // To Avoid For-Loops.
+		System.arraycopy(temp, 0, mem, ind, temp.length);
 		memInd[ind]=0;
 	}
 	private void trim(){
@@ -297,8 +304,8 @@ class Runner{
 			(op==2&&arg1.equals(arg2))||
 			(op==3&&!arg1.equals(arg2))
 		){
-			if(com<lines.size()){
-				byteInd=lines.get(com);
+			if(com<furthestLine+1){
+				byteInd=lines[com];
 				return;
 			}
 			skip(com);
@@ -309,8 +316,8 @@ class Runner{
 			byteInd=size;
 			return;
 		}
-		for(;lines.size()<ind&&byteInd<size;){
-			lines.put(lines.size(), byteInd);
+		for(;furthestLine++<ind&&byteInd<size;){
+			lines[furthestLine]=byteInd;
 			final int curByte=next(8);
 			if(curByte>1){
 				if(curByte<9)byteInd+=2;
