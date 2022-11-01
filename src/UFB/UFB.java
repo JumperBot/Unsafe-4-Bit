@@ -43,7 +43,7 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.0.2";
+	final String version_tag="v1.1.0";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];

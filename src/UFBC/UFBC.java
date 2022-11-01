@@ -18,10 +18,18 @@
  *
 **/
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -47,6 +55,9 @@ class UFBC{
 	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 	final static StringBuilder errors=new StringBuilder();
 	public static void main(final String[]a)throws Exception{
+		compile(a, true);
+	}
+	public static void compile(final String[]a, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
 			String temp;
@@ -66,6 +77,7 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<String[]> list=new ArrayList<>();
+		boolean cancelOptimization=false;
 		for(final String arrTemp:arr){
 			final String[] temp=divider.split(arrTemp);
 			if(temp.length<2&&temp.length>0&&!temp[0].equals("nop"))
@@ -80,13 +92,16 @@ class UFBC{
 				boolean isCommand=true;
 				switch(temp[0]){
 					case "trim":
-						if(checkLength(temp, 3))break;
+						checkLength(temp, 3);
+						break;
 					case "nvar":
+						if(checkLength(temp, 2))break;
+						checkIfMemSafe(temp, temp[1]);
+						break;
 					case "read":
-						if(!temp[0].startsWith("t")){
-							if(checkLength(temp, 2))break;
-							checkIfMemSafe(temp, temp[1]);
-						}
+						if(checkLength(temp, 2))break;
+						checkIfMemSafe(temp, temp[1]);
+						cancelOptimization=true;
 						break;
 					case "jm":
 					case "jl":
@@ -155,8 +170,9 @@ class UFBC{
 					ANSI_RESET, ANSI_BRIGHT_YELLOW, warnings.toString(), ANSI_RESET
 				)
 			);
+		final String outName=a[0].substring(0, a[0].lastIndexOf("."))+".ufbb";
 		try{
-			final File outFile=new File(a[0].substring(0, a[0].lastIndexOf("."))+".ufbb");
+			final File outFile=new File(outName);
 			outFile.createNewFile();
 			try(final FileOutputStream stream=new FileOutputStream(outFile)){
 				for(int i=0;i<list.size();i++){
@@ -178,12 +194,13 @@ class UFBC{
 					}else
 						for(int j=1;j<temp.length;j++)
 							stream.write(Integer.parseInt(temp[j]));
-		
 				}
 			}
 		}catch(final Exception e){
 			System.out.println(e.toString());
 		}
+		if(!cancelOptimization&&recompile)new Optimizer(outName);
+		if(cancelOptimization)System.out.println("Code cannot be optimized, but compilation is a success!");
 	}
 	private static void checkIfMem(final String[] temp, final String s){
 		try{
@@ -260,5 +277,301 @@ class UFBC{
 	}};
 	private static int getBin(final String com){
 		return binaryMap.get(com.trim());
+	}
+}
+
+class Optimizer{
+	final char[] mem=new char[256];
+	final int[] memInd=new int[256];
+	final BufferedInputStream buffer;
+	final int size;
+	final int[] lines;
+	int furthestLine=-1;
+	final StringBuilder printProxy=new StringBuilder();
+	final StringBuilder newCommands=new StringBuilder();
+	public Optimizer(final String file)throws Exception{
+		mem[0]=' ';
+		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
+		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
+		mem[37]='\n';
+		final File f=new File(file);
+		buffer=new BufferedInputStream(new FileInputStream(f));
+		buffer.mark(Integer.MAX_VALUE);
+		size=(int)f.length();
+		lines=new int[size];
+		try{
+			run();
+			buffer.close();
+			final String newFileName=file.substring(0, file.lastIndexOf("."))+".optimized.ufb";
+			try(final FileWriter writer=new FileWriter(new File(newFileName))){
+				writer.write(newCommands.toString().trim());
+			}
+			UFBC.compile(new String[]{newFileName}, false);
+		}catch(final Exception e){
+			buffer.close();
+			if(!e.toString().contains("Code cannot be optimized"))throw new RuntimeException(e);
+			else System.out.println("Code cannot be optimized, but compilation is a success!");
+		}
+	}
+	public void run()throws Exception{
+		for(;byteInd<size;){
+			if(furthestLine>-1&&lines[furthestLine]<byteInd){
+				furthestLine++;
+				lines[furthestLine]=byteInd;
+			}else if(furthestLine<0){
+				furthestLine=0;
+				lines[0]=byteInd;
+			}
+			final int com=next(8);
+			switch(com){
+				case 0:
+					wvar();
+					break;
+				case 1:
+					nvar(next(8));
+					break;
+				case 2:
+					trim();
+					break;
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					math(com-3);
+					break;
+				case 9:
+					// Need to dump printProxy when called to preserve no-op.
+					if(printProxy.length()!=0){
+						newCommands.append("print ").append(convertToMemory(printProxy.toString())).append("\n");
+						printProxy.setLength(0);
+					}
+					newCommands.append("nop\n");
+					break;
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+					if(jump(com-10))throw new Exception("Code cannot be optimized, but compilation is a success!");
+					break;
+				case 14:
+					print();
+					break;
+				// Read not supported for optimization.
+			}
+		}
+		if(printProxy.length()!=0){
+			newCommands.append("print ").append(convertToMemory(printProxy.toString())).append("\n");
+			printProxy.setLength(0);
+		}
+	}
+	final HashMap<Character, Integer> memMap=new HashMap<>(){{
+		put(' ', 0);
+		put('A', 1);
+		put('B', 2);
+		put('C', 3);
+		put('D', 4);
+		put('E', 5);
+		put('F', 6);
+		put('G', 7);
+		put('H', 8);
+		put('I', 9);
+		put('J', 10);
+		put('K', 11);
+		put('L', 12);
+		put('M', 13);
+		put('N', 14);
+		put('O', 15);
+		put('P', 16);
+		put('Q', 17);
+		put('R', 18);
+		put('S', 19);
+		put('T', 20);
+		put('U', 21);
+		put('V', 22);
+		put('W', 23);
+		put('X', 24);
+		put('Y', 25);
+		put('Z', 26);
+		put('0', 27);
+		put('1', 28);
+		put('2', 29);
+		put('3', 30);
+		put('4', 31);
+		put('5', 32);
+		put('6', 33);
+		put('7', 34);
+		put('8', 35);
+		put('9', 36);
+		put('\n', 37);
+		put('\u0000', 38);
+	}};
+	private String convertToMemory(final String in){
+		final StringBuilder output=new StringBuilder();
+		for(final char c:in.toCharArray()){
+			output.append(memMap.get(c)).append(" ");
+		}
+		return output.toString();
+	}
+	int byteInd=0;
+	final byte[] byteArr=new byte[1];
+	private int next(final int len){
+		try{
+			if(len==8){
+				byteInd++;
+				for(long skipped=buffer.skip(byteInd-1);skipped<byteInd-1;skipped+=buffer.skip(1));
+				buffer.read(byteArr, 0, 1);
+				buffer.reset();
+				return byteArr[0]&0xff;
+			}
+			return (next(8)<<8)|next(8);
+		}catch(final Exception e){
+			throw new RuntimeException(e);
+		}
+	}
+	private char[] rvar(final int ind){
+		if(memInd[ind]==0||memInd[ind]==ind)return new char[]{mem[ind]};
+		final char[] temp=new char[memInd[ind]-ind+1];
+		System.arraycopy(mem, ind, temp, 0, temp.length);
+		return temp;
+	}
+	private void wvar(){
+		final int argCount=next(8);
+		final int memIndex=next(8);
+		final char[] temp=rvar(memIndex);
+		int curInd=memIndex;
+		nvar(memIndex);
+		for(int i=0;i<argCount-1;i++){
+			final int ind=next(8);
+			if(memIndex==ind){
+				if(curInd+temp.length-1>255){
+					System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
+					memInd[ind]=255;
+					return;
+				}
+				System.arraycopy(temp, 0, mem, curInd, temp.length);
+				curInd+=temp.length;
+			}else{
+				final char[] tempty=rvar(ind);
+				if(curInd+tempty.length-1>255){
+					System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
+					memInd[ind]=255;
+					return;
+				}
+				System.arraycopy(tempty, 0, mem, curInd, tempty.length);
+				curInd+=tempty.length;
+			}
+		}
+		memInd[memIndex]=curInd-1;
+	}
+	private void nvar(final int ind){
+		if(memInd[ind]==0)return;
+		final char[] temp=new char[memInd[ind]-ind+1]; // To Avoid For-Loops.
+		System.arraycopy(temp, 0, mem, ind, temp.length);
+		memInd[ind]=0;
+	}
+	private void trim(){
+		final int ind=next(8);
+		final int max=next(8);
+		if(max==0){
+			nvar(ind);
+			return;
+		}
+		if(max>memInd[ind]-ind)return;
+		final char[] temp=rvar(ind);
+		nvar(ind);
+		System.arraycopy(temp, 0, mem, ind, max);
+		memInd[ind]=ind+max-1;
+	}
+
+	private long toNum(final String in){
+		final char[] arr=in.toCharArray();
+		// BeCoz Long#parseLong() is slow and try-catch is expensive.
+		long result=0;
+		for(final char c:arr){
+			final int num=c-48;
+			if(num<0||num>9)return in.hashCode();
+			result+=num;
+			result*=10;
+		}
+		return result/10;
+	}
+	private void math(final int op){
+		final int ind1=next(8);
+		final int ind2=next(8);
+		final char[] str1=rvar(ind1);
+		final char[] str2=rvar(ind2);
+		if(str2.length<1)return;
+		nvar(ind1);
+		if(str1.length<1&&str2.length>0){
+			if(ind1+str2.length-1>255){
+				System.arraycopy(str2, 0, mem, ind1, 255-ind1+1);
+				memInd[ind1]=255;
+				return;
+			}
+			System.arraycopy(str2, 0, mem, ind1, str2.length);
+			memInd[ind1]=ind1+str2.length-1;
+			return;
+		}
+		final long num1=toNum(new String(str1));
+		final long num2=toNum(new String(str2));
+		try{
+			final char[] out=String.valueOf(
+				(op==0)?num1+num2:(op==1)?num1-num2:
+				(op==2)?num1*num2:(op==3)?num1/num2:
+				(op==4)?num1%num2:(long) (num1/num2)
+			).toCharArray();
+			if(ind1+out.length-1>255){
+				System.arraycopy(out, 0, mem, ind1, 255-ind1+1);
+				memInd[ind1]=255;
+				return;
+			}
+			System.arraycopy(out, 0, mem, ind1, out.length);
+			memInd[ind1]=ind1+out.length-1;
+		}catch(final Exception e){
+			mem[ind1]='i';
+			memInd[ind1]=ind1;
+		}
+	}
+	private boolean jump(final int op){ // Returns true if optimization should stop.
+		final String arg1=new String(rvar(next(8)));
+		final String arg2=new String(rvar(next(8)));
+		final int com=next(16);
+		if(
+			(op==0&&toNum(arg1)>toNum(arg2))||
+			(op==1&&toNum(arg1)<toNum(arg2))||
+			(op==2&&arg1.equals(arg2))||
+			(op==3&&!arg1.equals(arg2))
+		){
+			if(com<furthestLine+1){
+				return true;
+			}
+			skip(com);
+		}
+		return false;
+	}
+	private void skip(final int ind){
+		if(ind>size){
+			byteInd=size;
+			return;
+		}
+		for(;furthestLine++<ind&&byteInd<size;){
+			lines[furthestLine]=byteInd;
+			final int curByte=next(8);
+			if(curByte>1){
+				if(curByte<9)byteInd+=2;
+				else if(curByte>9){
+					if(curByte<14)byteInd+=4;
+					else if(curByte==15)byteInd++;
+					else byteInd+=next(8)+1;
+				}
+			}else if(curByte==1)byteInd++;
+			else byteInd+=next(8)+1;
+		}
+	}
+	private void print(){
+		final int argCount=next(8);
+		for(int i=0;i<argCount;i++)printProxy.append(rvar(next(8)));
 	}
 }

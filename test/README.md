@@ -2,17 +2,17 @@
 
 ## Default-16
 
-|Command           |Expanded Meaning        |Argument Count |Argument Type(s)					 |
-|:----------------:|:----------------------:|:-------------:|:------------------------:|
-|nop							 |no operation						|0							|													 |
-|nvar	\| read	     |null memory			        |1							|memory index					 		 |
-|trim              |trim memory			        |2							|memory indexes, number	 	 |
-|add  \| sub       |add \| subtract         |2							|memory indexes						 |
-|mul  \| div       |multiply \| divide			|2							|memory indexes						 |
-|mod  \| rmod		   |modulus \| reverse mod	|2							|memory indexes						 |
-|jm   \| jl		 		 |jump if more/less than  |3							|memory indexes, command no|
-|je	  \| jne		   |jump if equal/not equal	|3							|memory indexes, command no|
-|wvar \| print     |write to memory	\| print|\*							|memory indexes						 |
+|Command           |Expanded Meaning					|Argument Count |Argument Type(s)						|
+|:----------------:|:------------------------:|:-------------:|:-------------------------:|
+|nop							 |no operation							|0							|														|
+|nvar	\| read	     |null memory	\| read input |1							|memory index								|
+|trim              |trim memory index					|2							|memory indexes, number			|
+|add  \| sub       |add \| subtract						|2							|memory indexes							|
+|mul  \| div       |multiply \| divide				|2							|memory indexes							|
+|mod  \| rmod		   |modulus \| reverse mod		|2							|memory indexes							|
+|jm   \| jl		 		 |jump if more/less than		|3							|memory indexes, command no	|
+|je	  \| jne		   |jump if equal/not equal		|3							|memory indexes, command no	|
+|wvar \| print     |write to memory	\| print	|\*							|memory indexes							|
 
 ---
 
@@ -34,7 +34,7 @@
 
 - Only the compiler will stop you from writing to the `ROM`.
 
-- Manually compiling to a `.ufbb` file is not recommended.
+- Manually compiling to a `.ufbb` file is NOT recommended.
 
 ---
 
@@ -44,7 +44,8 @@
 |:-----:|:-------:|:---:|
 |0			|' '			|Yes	|
 |1-26		|'A'-'Z'	|Yes	|
-|27-37	|'0'-'9'	|Yes	|
+|27-36	|'0'-'9'	|Yes	|
+|37			|'\n'			|Yes	|
 |38-255	|'\u0000'	|No		|
 
 ---
