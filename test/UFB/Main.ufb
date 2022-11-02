@@ -44,21 +44,35 @@ print	7		15	15	4		2		25	5		28	37
 nvar	252
 nvar	254
 
-wvar 38 27
-div 38 27
-print 38
-nvar 38
+wvar	38	27
+div		38	27
+print	38
+nvar	38
 
-wvar 38 27
-sub 38 28
-trim 38 1
-print 38
-nvar 38
+wvar	38	27
+sub		38	28
+trim	38	1
+print	38
+nvar	38
 
-wvar 38 29
-div 38 31
-print 39 37
-nvar 38
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+
+wvar	38	29
+div		38	31
+print	39	37
+print	38	37
+add		38	38
+print	38	37
+nvar	38
 
 /* 30|
 wvar	248	13	1		18	11

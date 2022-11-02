@@ -43,7 +43,7 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.1.1";
+	final String version_tag="v1.1.2";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
@@ -250,15 +250,32 @@ class Runner{
 	
 	private double toNum(final String in){
 		final char[] arr=in.toCharArray();
-		// BeCoz Long#parseLong() is slow and try-catch is expensive.
-		double result=0;
-		for(final char c:arr){
-			final int num=c-48;
-			if(num<0||num>9)return in.hashCode();
-			result+=num;
-			result*=10;
+		final int decimalInd=in.indexOf(".");
+		if(decimalInd!=-1){
+			double result=0;
+			for(int i=0;i<decimalInd;i++){
+				final int num=arr[i]-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result*=10;
+			}
+			for(int i=decimalInd+1;i<arr.length;i++){
+				final int num=arr[i]-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result/=10;
+			}
+			return result;
+		}else{ // BeCoz Long#parseLong() is slow and try-catch is expensive.
+			double result=0;
+			for(final char c:arr){
+				final int num=c-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result*=10;
+			}
+			return result/10;
 		}
-		return result/10;
 	}
 	private void math(final int op){
 		final int ind1=next(8);

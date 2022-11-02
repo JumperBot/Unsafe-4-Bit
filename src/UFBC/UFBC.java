@@ -299,7 +299,7 @@ class Optimizer{
 			buffer.close();
 			final String newFileName=file.substring(0, file.lastIndexOf("."))+".optimized.ufb";
 			try(final FileWriter writer=new FileWriter(new File(newFileName))){
-				writer.write(newCommands.toString().trim());
+				writer.write(newCommands.toString().trim().replaceAll("\n{2,}", "\n"));
 			}
 			UFBC.compile(new String[]{newFileName}, false);
 		}catch(final Exception e){
@@ -309,14 +309,15 @@ class Optimizer{
 		}
 	}
 	void addToCommands(){
-		newCommands.append("print ").append(
-			convertToMemory(
-				printProxy.toString() // i == -255, - == -254, . == -253
-			).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nnvar 38\nprint 255")
-			 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\n nvar 38\nprint 255")
-			 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nnvar 38\nprint 255")
-		).append("\n");
+		final String converted=convertToMemory(
+			printProxy.toString() // i == -255, - == -254, . == -253
+		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nnvar 38\nprint 255")
+		 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\n nvar 38\nprint 255")
+	 	 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nnvar 38\nprint 255")
+ 		 .replace("\n ", "\n");
 		printProxy.setLength(0);
+		if(!converted.startsWith("\n"))newCommands.append("print ");
+		newCommands.append(converted).append("\n");
 	}
 	public void run()throws Exception{
 		for(;byteInd<size;){
@@ -490,15 +491,32 @@ class Optimizer{
 
 	private double toNum(final String in){
 		final char[] arr=in.toCharArray();
-		// BeCoz Long#parseLong() is slow and try-catch is expensive.
-		double result=0;
-		for(final char c:arr){
-			final int num=c-48;
-			if(num<0||num>9)return in.hashCode();
-			result+=num;
-			result*=10;
+		final int decimalInd=in.indexOf(".");
+		if(decimalInd!=-1){
+			double result=0;
+			for(int i=0;i<decimalInd;i++){
+				final int num=arr[i]-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result*=10;
+			}
+			for(int i=decimalInd+1;i<arr.length;i++){
+				final int num=arr[i]-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result/=10;
+			}
+			return result;
+		}else{ // BeCoz Long#parseLong() is slow and try-catch is expensive.
+			double result=0;
+			for(final char c:arr){
+				final int num=c-48;
+				if(num<0||num>9)return in.hashCode();
+				result+=num;
+				result*=10;
+			}
+			return result/10;
 		}
-		return result/10;
 	}
 	private void math(final int op){
 		final int ind1=next(8);

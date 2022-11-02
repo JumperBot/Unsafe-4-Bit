@@ -19,10 +19,25 @@ wvar 38 27
 sub 38 28
 trim 38 1
 print 38
- nvar 38
-print 255 
+nvar 38
+print 255
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
 wvar 38 28
 div 38 29
 print 39
 nvar 38
-print 255 37
+print 255 37 27 
+wvar 38 28
+div 38 29
+print 39
+nvar 38
+print 255 32 37 28 37
