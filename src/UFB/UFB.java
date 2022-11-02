@@ -43,7 +43,7 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.1.0";
+	final String version_tag="v1.1.1";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
@@ -80,8 +80,10 @@ class Runner{
 					}else
 						run();
 					buffer.close();
+					scan.close();
 				}catch(final Exception e){
 					buffer.close();
+					scan.close();
 					throw new RuntimeException(e);
 				}
 				return;
@@ -106,6 +108,7 @@ class Runner{
 					buffer=null;
 					size=0;
 					lines=null;
+					scan.close();
 					return;
 				}
 			}
@@ -244,11 +247,11 @@ class Runner{
 		System.arraycopy(temp, 0, mem, ind, max);
 		memInd[ind]=ind+max-1;
 	}
-
-	private long toNum(final String in){
+	
+	private double toNum(final String in){
 		final char[] arr=in.toCharArray();
 		// BeCoz Long#parseLong() is slow and try-catch is expensive.
-		long result=0;
+		double result=0;
 		for(final char c:arr){
 			final int num=c-48;
 			if(num<0||num>9)return in.hashCode();
@@ -274,14 +277,16 @@ class Runner{
 			memInd[ind1]=ind1+str2.length-1;
 			return;
 		}
-		final long num1=toNum(new String(str1));
-		final long num2=toNum(new String(str2));
+		final double num1=toNum(new String(str1));
+		final double num2=toNum(new String(str2));
 		try{
-			final char[] out=String.valueOf(
+			final String val=String.valueOf(
 				(op==0)?num1+num2:(op==1)?num1-num2:
 				(op==2)?num1*num2:(op==3)?num1/num2:
-				(op==4)?num1%num2:(long) (num1/num2)
-			).toCharArray();
+				(op==4)?num1%num2:(int)	 (num1/num2)
+			);
+			if(val.equals("NaN"))throw new Exception("");
+			final char[] out=((val.endsWith(".0"))?val.substring(0, val.length()-2):val).toCharArray();
 			if(ind1+out.length-1>255){
 				System.arraycopy(out, 0, mem, ind1, 255-ind1+1);
 				memInd[ind1]=255;

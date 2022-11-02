@@ -43,7 +43,24 @@ print	8		5		12	12	15	37
 print	7		15	15	4		2		25	5		28	37
 nvar	252
 nvar	254
-/* 30| */
+
+wvar 38 27
+div 38 27
+print 38
+nvar 38
+
+wvar 38 27
+sub 38 28
+trim 38 1
+print 38
+nvar 38
+
+wvar 38 29
+div 38 31
+print 39 37
+nvar 38
+
+/* 30|
 wvar	248	13	1		18	11
 read	252
 jne		248	252	35
@@ -55,3 +72,4 @@ print	14	15	20	0		13	1		18	11	37
 nvar	248
 nvar	252
 nvar	254
+*/

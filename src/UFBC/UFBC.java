@@ -20,16 +20,11 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -313,6 +308,16 @@ class Optimizer{
 			else System.out.println("Code cannot be optimized, but compilation is a success!");
 		}
 	}
+	void addToCommands(){
+		newCommands.append("print ").append(
+			convertToMemory(
+				printProxy.toString() // i == -255, - == -254, . == -253
+			).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nnvar 38\nprint 255")
+			 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\n nvar 38\nprint 255")
+			 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nnvar 38\nprint 255")
+		).append("\n");
+		printProxy.setLength(0);
+	}
 	public void run()throws Exception{
 		for(;byteInd<size;){
 			if(furthestLine>-1&&lines[furthestLine]<byteInd){
@@ -343,10 +348,7 @@ class Optimizer{
 					break;
 				case 9:
 					// Need to dump printProxy when called to preserve no-op.
-					if(printProxy.length()!=0){
-						newCommands.append("print ").append(convertToMemory(printProxy.toString())).append("\n");
-						printProxy.setLength(0);
-					}
+					if(printProxy.length()!=0)addToCommands();
 					newCommands.append("nop\n");
 					break;
 				case 10:
@@ -361,10 +363,7 @@ class Optimizer{
 				// Read not supported for optimization.
 			}
 		}
-		if(printProxy.length()!=0){
-			newCommands.append("print ").append(convertToMemory(printProxy.toString())).append("\n");
-			printProxy.setLength(0);
-		}
+		if(printProxy.length()!=0)addToCommands();
 	}
 	final HashMap<Character, Integer> memMap=new HashMap<>(){{
 		put(' ', 0);
@@ -406,13 +405,17 @@ class Optimizer{
 		put('9', 36);
 		put('\n', 37);
 		put('\u0000', 38);
+		//hack-characters
+		put('i', -255);
+		put('-', -254);
+		put('.', -253);
 	}};
 	private String convertToMemory(final String in){
 		final StringBuilder output=new StringBuilder();
 		for(final char c:in.toCharArray()){
 			output.append(memMap.get(c)).append(" ");
 		}
-		return output.toString();
+		return output.toString().trim();
 	}
 	int byteInd=0;
 	final byte[] byteArr=new byte[1];
@@ -485,10 +488,10 @@ class Optimizer{
 		memInd[ind]=ind+max-1;
 	}
 
-	private long toNum(final String in){
+	private double toNum(final String in){
 		final char[] arr=in.toCharArray();
 		// BeCoz Long#parseLong() is slow and try-catch is expensive.
-		long result=0;
+		double result=0;
 		for(final char c:arr){
 			final int num=c-48;
 			if(num<0||num>9)return in.hashCode();
@@ -514,14 +517,16 @@ class Optimizer{
 			memInd[ind1]=ind1+str2.length-1;
 			return;
 		}
-		final long num1=toNum(new String(str1));
-		final long num2=toNum(new String(str2));
+		final double num1=toNum(new String(str1));
+		final double num2=toNum(new String(str2));
 		try{
-			final char[] out=String.valueOf(
+			final String val=String.valueOf(
 				(op==0)?num1+num2:(op==1)?num1-num2:
 				(op==2)?num1*num2:(op==3)?num1/num2:
-				(op==4)?num1%num2:(long) (num1/num2)
-			).toCharArray();
+				(op==4)?num1%num2:(int)	 (num1/num2)
+			);
+			if(val.equals("NaN"))throw new Exception("");
+			final char[] out=((val.endsWith(".0"))?val.substring(0, val.length()-2):val).toCharArray();
 			if(ind1+out.length-1>255){
 				System.arraycopy(out, 0, mem, ind1, 255-ind1+1);
 				memInd[ind1]=255;
@@ -534,6 +539,7 @@ class Optimizer{
 			memInd[ind1]=ind1;
 		}
 	}
+	final HashMap<Integer, Integer> jumpBackFrequency=new HashMap<Integer, Integer>();
 	private boolean jump(final int op){ // Returns true if optimization should stop.
 		final String arg1=new String(rvar(next(8)));
 		final String arg2=new String(rvar(next(8)));
@@ -545,9 +551,10 @@ class Optimizer{
 			(op==3&&!arg1.equals(arg2))
 		){
 			if(com<furthestLine+1){
-				return true;
-			}
-			skip(com);
+				byteInd=lines[com];
+				jumpBackFrequency.put(byteInd, jumpBackFrequency.getOrDefault(byteInd, 0)+1);
+				if(jumpBackFrequency.get(byteInd)==1001)return true;
+			}else skip(com);
 		}
 		return false;
 	}
@@ -572,6 +579,9 @@ class Optimizer{
 	}
 	private void print(){
 		final int argCount=next(8);
-		for(int i=0;i<argCount;i++)printProxy.append(rvar(next(8)));
+		for(int i=0;i<argCount;i++){
+			printProxy.append(rvar(next(8)));
+			if(printProxy.length()>100)addToCommands();
+		}
 	}
 }
