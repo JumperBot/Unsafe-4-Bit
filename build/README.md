@@ -15,6 +15,7 @@ java UFB [ -flags ] /directory/Compiled.ufbb
 
 - "-p" -> Performance measurement flag -> ms
 - "-n" -> Accurately use the "-p" flag -> ns
+- "-m" -> Time all commands being run
 - "-v" -> Display semantic version tag
 - "-h" -> Display links and then leave
 
@@ -23,8 +24,10 @@ Example:
 ```sh
 java UFB -pnv
 java UFB -p
+java UFB -m
 java UFB -nvp
 java UFB -pnhv
+java UFB -mn
 ```
 
 # UFBC

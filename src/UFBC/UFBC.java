@@ -308,7 +308,7 @@ class Optimizer{
 			else System.out.println("Code cannot be optimized, but compilation is a success!");
 		}
 	}
-	void addToCommands(){
+	private void addToCommands(){
 		final String converted=convertToMemory(
 			printProxy.toString() // i == -255, - == -254, . == -253
 		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nnvar 38\nprint 255")
@@ -319,7 +319,7 @@ class Optimizer{
 		if(!converted.startsWith("\n"))newCommands.append("print ");
 		newCommands.append(converted).append("\n");
 	}
-	public void run()throws Exception{
+	private void run()throws Exception{
 		final long start=System.currentTimeMillis();
 		for(;byteInd<size;){
 			if(System.currentTimeMillis()-start>5000){

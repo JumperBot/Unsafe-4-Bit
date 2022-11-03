@@ -43,7 +43,7 @@ class Runner{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
 	**/
-	final String version_tag="v1.1.2";
+	final String version_tag="v1.1.3";
 	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
@@ -51,13 +51,14 @@ class Runner{
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
+	boolean timeMethods=false;
+	boolean nanoseconds=false; // Java doesn't mess with the CPU/Scheduler/Timer/...
 	public Runner(final String[] args)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
 		boolean performance=false;
-		boolean nanoseconds=false; // Java doesn't mess with the CPU/Scheduler/Timer/...
 		for(final String s:args){
 			final String str=s.trim();
 			if(str.endsWith(".ufbb")){
@@ -70,15 +71,14 @@ class Runner{
 					if(performance){
 						final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
 						run();
+						final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
 						System.out.println(
 							String.format(
 								"Program Took %d%s To Run.",
-								((!nanoseconds)?System.currentTimeMillis():System.nanoTime())-start,
-								(!nanoseconds)?"ms":"ns"
+								end-start, (!nanoseconds)?"ms":"ns"
 							)
 						);
-					}else
-						run();
+					}else run();
 					buffer.close();
 					scan.close();
 				}catch(final Exception e){
@@ -89,12 +89,20 @@ class Runner{
 				return;
 			}else if(str.startsWith("-")){
 				if(str.contains("p"))performance=true;
-				if(str.contains("n"))nanoseconds=true;
+				if(str.contains("n")){
+					performance=true;
+					nanoseconds=true;
+				}
+				if(str.contains("m")){
+					performance=true;
+					timeMethods=true;
+				}
 				if(str.contains("v")){
 					System.out.println(version_tag);
 					buffer=null;
 					size=0;
 					lines=null;
+					scan.close();
 					return;
 				}
 				if(str.contains("h")){
@@ -116,55 +124,39 @@ class Runner{
 		buffer=null;
 		size=0;
 		lines=null;
+		scan.close();
 	}
-	public void run()throws Exception{
-		for(;byteInd<size;){
-			if(furthestLine>-1&&lines[furthestLine]<byteInd){
-				furthestLine++;
-				lines[furthestLine]=byteInd;
-			}else if(furthestLine<0){
-				furthestLine=0;
-				lines[0]=byteInd;
+	private void run()throws Exception{
+		if(timeMethods){
+			for(;byteInd<size;){
+				if(furthestLine>-1&&lines[furthestLine]<byteInd){
+					furthestLine++;
+					lines[furthestLine]=byteInd;
+				}else if(furthestLine<0){
+					furthestLine=0;
+					lines[0]=byteInd;
+				}
+				final int com=next(8);
+				final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+				runCommand(com);
+				final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+				System.out.println(
+					String.format(
+						"\nCommand Index: %d Took %d%s To Run.",
+						com, end-start, (!nanoseconds)?"ms":"ns"
+					)
+				);
 			}
-			final int com=next(8);
-			switch(com){
-				case 0:
-					wvar();
-					break;
-				case 1:
-					nvar(next(8));
-					break;
-				case 2:
-					trim();
-					break;
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-					math(com-3);
-					break;
-				case 9:
-					Thread.sleep(10);
-					break;
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-					jump(com-10);
-					break;
-				case 14:
-					print();
-					break;
-				case 15:
-					read();
-					break;
-				default:
-					System.out.println(
-						String.format("\nCommand Index: %d Is Not Recognized By The Interpreter...", com)
-					);
-					break;
+		}else{
+			for(;byteInd<size;){
+				if(furthestLine>-1&&lines[furthestLine]<byteInd){
+					furthestLine++;
+					lines[furthestLine]=byteInd;
+				}else if(furthestLine<0){
+					furthestLine=0;
+					lines[0]=byteInd;
+				}
+				runCommand(next(8));
 			}
 		}
 		for(int i=0;i<64;i++){
@@ -175,6 +167,39 @@ class Runner{
 			if(memInd[plus2]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus2));
 			final int plus3=i+192;
 			if(memInd[plus3]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus3));
+		}
+	}
+	private void runCommand(final int com)throws Exception{
+		switch(com){
+			case 0:
+				wvar();
+				break;
+			case 1:
+				nvar(next(8));
+				break;
+			case 2:
+				trim();
+				break;
+			case 3: case 4: case 5: case 6: case 7: case 8:
+				math(com-3);
+				break;
+			case 9:
+				Thread.sleep(10);
+				break;
+			case 10: case 11: case 12: case 13:
+				jump(com-10);
+				break;
+			case 14:
+				print();
+				break;
+			case 15:
+				read();
+				break;
+			default:
+				System.out.println(
+					String.format("\nCommand Index: %d Is Not Recognized By The Interpreter...", com)
+				);
+				break;
 		}
 	}
 	int byteInd=0;
