@@ -320,7 +320,12 @@ class Optimizer{
 		newCommands.append(converted).append("\n");
 	}
 	public void run()throws Exception{
+		final long start=System.currentTimeMillis();
 		for(;byteInd<size;){
+			if(System.currentTimeMillis()-start>5000){
+				System.out.println("Optimizer: \"Timeout!\"");
+				throw new Exception("Code cannot be optimized, but compilation is a success!");
+			}
 			if(furthestLine>-1&&lines[furthestLine]<byteInd){
 				furthestLine++;
 				lines[furthestLine]=byteInd;
@@ -356,7 +361,8 @@ class Optimizer{
 				case 11:
 				case 12:
 				case 13:
-					if(jump(com-10))throw new Exception("Code cannot be optimized, but compilation is a success!");
+					if(jump(com-10))
+						throw new Exception("Code cannot be optimized, but compilation is a success!");
 					break;
 				case 14:
 					print();
@@ -434,47 +440,66 @@ class Optimizer{
 			throw new RuntimeException(e);
 		}
 	}
+	
 	private char[] rvar(final int ind){
 		if(memInd[ind]==0||memInd[ind]==ind)return new char[]{mem[ind]};
 		final char[] temp=new char[memInd[ind]-ind+1];
 		System.arraycopy(mem, ind, temp, 0, temp.length);
 		return temp;
 	}
+
+	final char[] emptyArr={};
 	private void wvar(){
-		final int argCount=next(8);
-		final int memIndex=next(8);
-		final char[] temp=rvar(memIndex);
-		int curInd=memIndex;
-		nvar(memIndex);
-		for(int i=0;i<argCount-1;i++){
-			final int ind=next(8);
-			if(memIndex==ind){
-				if(curInd+temp.length-1>255){
-					System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
-					memInd[ind]=255;
-					return;
-				}
-				System.arraycopy(temp, 0, mem, curInd, temp.length);
-				curInd+=temp.length;
-			}else{
-				final char[] tempty=rvar(ind);
-				if(curInd+tempty.length-1>255){
-					System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
-					memInd[ind]=255;
-					return;
-				}
-				System.arraycopy(tempty, 0, mem, curInd, tempty.length);
-				curInd+=tempty.length;
-			}
-		}
-		memInd[memIndex]=curInd-1;
+		write(next(8), next(8), true, emptyArr);
 	}
+	private void write(final int argCount, final int memIndex,
+										 final boolean fromMem, final char[] chars){
+		if(fromMem){
+			final char[] temp=rvar(memIndex);
+			int curInd=memIndex;
+			nvar(memIndex);
+			for(int i=0;i<argCount-1;i++){
+				final int ind=next(8);
+				if(memIndex==ind){
+					if(curInd+temp.length-1>255){
+						System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
+						memInd[ind]=255;
+						return;
+					}
+					System.arraycopy(temp, 0, mem, curInd, temp.length);
+					curInd+=temp.length;
+				}else{
+					final char[] tempty=rvar(ind);
+					if(curInd+tempty.length-1>255){
+						System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
+						memInd[ind]=255;
+						return;
+					}
+					System.arraycopy(tempty, 0, mem, curInd, tempty.length);
+					curInd+=tempty.length;
+				}
+			}
+			memInd[memIndex]=curInd-1;
+			return;
+		}
+		nvar(memIndex);
+		final int memEndPoint=memIndex+chars.length-1;
+		if(memEndPoint>255){
+			System.arraycopy(chars, 0, mem, memIndex, 255-memIndex+1);
+			memInd[memIndex]=255;
+			return;
+		}
+		System.arraycopy(chars, 0, mem, memIndex, chars.length);
+		memInd[memIndex]=memEndPoint;
+	}
+
 	private void nvar(final int ind){
 		if(memInd[ind]==0)return;
 		final char[] temp=new char[memInd[ind]-ind+1]; // To Avoid For-Loops.
 		System.arraycopy(temp, 0, mem, ind, temp.length);
 		memInd[ind]=0;
 	}
+
 	private void trim(){
 		final int ind=next(8);
 		final int max=next(8);
@@ -489,20 +514,27 @@ class Optimizer{
 		memInd[ind]=ind+max-1;
 	}
 
-	private double toNum(final String in){
-		final char[] arr=in.toCharArray();
-		final int decimalInd=in.indexOf(".");
+	private int findPeriod(final char[] arr){
+		final int half=arr.length/2;
+		for(int i=0;i<half+1;i++){
+			if(arr[i]=='.')return i;
+			if(arr[arr.length-1-i]=='.')return arr.length-i;
+		}
+		return -1;
+	}
+	private double toNum(final char[] arr){
+		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			double result=0;
 			for(int i=0;i<decimalInd;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return in.hashCode();
+				if(num<0||num>9)return new String(arr).hashCode();
 				result+=num;
 				result*=10;
 			}
 			for(int i=decimalInd+1;i<arr.length;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return in.hashCode();
+				if(num<0||num>9)return new String(arr).hashCode();
 				result+=num;
 				result/=10;
 			}
@@ -511,7 +543,7 @@ class Optimizer{
 			double result=0;
 			for(final char c:arr){
 				final int num=c-48;
-				if(num<0||num>9)return in.hashCode();
+				if(num<0||num>9)return new String(arr).hashCode();
 				result+=num;
 				result*=10;
 			}
@@ -520,58 +552,53 @@ class Optimizer{
 	}
 	private void math(final int op){
 		final int ind1=next(8);
-		final int ind2=next(8);
+		final char[] str2=rvar(next(8));
+		if(str2.length==0)return; // The earlier the call, the better.
 		final char[] str1=rvar(ind1);
-		final char[] str2=rvar(ind2);
-		if(str2.length<1)return;
-		nvar(ind1);
 		if(str1.length<1&&str2.length>0){
-			if(ind1+str2.length-1>255){
-				System.arraycopy(str2, 0, mem, ind1, 255-ind1+1);
-				memInd[ind1]=255;
-				return;
-			}
-			System.arraycopy(str2, 0, mem, ind1, str2.length);
-			memInd[ind1]=ind1+str2.length-1;
+			write(0, ind1, false, str2);
 			return;
 		}
-		final double num1=toNum(new String(str1));
-		final double num2=toNum(new String(str2));
+		final double num1=toNum(str1);
+		final double num2=toNum(str2);
 		try{
 			final String val=String.valueOf(
 				(op==0)?num1+num2:(op==1)?num1-num2:
 				(op==2)?num1*num2:(op==3)?num1/num2:
 				(op==4)?num1%num2:(int)	 (num1/num2)
 			);
-			if(val.equals("NaN"))throw new Exception("");
-			final char[] out=((val.endsWith(".0"))?val.substring(0, val.length()-2):val).toCharArray();
-			if(ind1+out.length-1>255){
-				System.arraycopy(out, 0, mem, ind1, 255-ind1+1);
-				memInd[ind1]=255;
+			if(val.equals("NaN")){
+				nvar(ind1);
+				mem[ind1]='i';
+				memInd[ind1]=ind1;
 				return;
 			}
-			System.arraycopy(out, 0, mem, ind1, out.length);
-			memInd[ind1]=ind1+out.length-1;
+			final char[] out=(
+				(val.endsWith(".0"))?val.substring(0, val.length()-2):val
+			).toCharArray();
+			write(0, ind1, false, out);
 		}catch(final Exception e){
+			nvar(ind1);
 			mem[ind1]='i';
 			memInd[ind1]=ind1;
 		}
 	}
+	
 	final HashMap<Integer, Integer> jumpBackFrequency=new HashMap<Integer, Integer>();
 	private boolean jump(final int op){ // Returns true if optimization should stop.
-		final String arg1=new String(rvar(next(8)));
-		final String arg2=new String(rvar(next(8)));
+		final char[] arg1=rvar(next(8));
+		final char[] arg2=rvar(next(8));
 		final int com=next(16);
 		if(
 			(op==0&&toNum(arg1)>toNum(arg2))||
 			(op==1&&toNum(arg1)<toNum(arg2))||
-			(op==2&&arg1.equals(arg2))||
-			(op==3&&!arg1.equals(arg2))
+			(op==2&&new String(arg1).equals(new String(arg2)))||
+			(op==3&&!new String(arg1).equals(new String(arg2)))
 		){
 			if(com<furthestLine+1){
 				byteInd=lines[com];
 				jumpBackFrequency.put(byteInd, jumpBackFrequency.getOrDefault(byteInd, 0)+1);
-				if(jumpBackFrequency.get(byteInd)==1001)return true;
+				if(jumpBackFrequency.get(byteInd)==10001)return true;
 			}else skip(com);
 		}
 		return false;
@@ -595,6 +622,7 @@ class Optimizer{
 			else byteInd+=next(8)+1;
 		}
 	}
+
 	private void print(){
 		final int argCount=next(8);
 		for(int i=0;i<argCount;i++){
