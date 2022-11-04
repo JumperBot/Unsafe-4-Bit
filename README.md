@@ -1,33 +1,21 @@
-[![Banner.png](./Banner.png)](./Banner.png)
+[![License Type Badge](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)]()
+[![Version Tag  Badge](https://img.shields.io/github/v/release/JumperBot/Unsafe-4-Bit?color=green&style=for-the-badge)]()
+[![Code Size    Badge](https://img.shields.io/github/languages/code-size/JumperBot/Unsafe-4-Bit?color=orange&style=for-the-badge)]()
+[![Repo Size    Badge](https://img.shields.io/github/repo-size/JumperBot/Unsafe-4-Bit?color=red&style=for-the-badge)]()
 
-**`Unsafe Four Bit`** is a
+[![Banner.png](./ShortenedBanner.png)](./ShortenedBanner.png)
 
-- *fast-paced*
-- compiled-interpreted
-- dynamically-typed
-- imperative-procedural
-- programming language on top of another programming language.
+[![UFBDesc.apng](UFBDesc.apng)](UFBDesc.apng)
+---
+
+UFB reminds you of its ***lower-level counterparts*** as you manage your theoretical *256 bytes of memory*.
+
+The [256 bytes of memory](./test/README.md#memory) includes two parts: ROM (38 bytes) and non-ROM (218 bytes).
+
+The ***"freedom"*** of managing them yourself lets you ***"shoot yourself in the foot"***.
 
 ---
 
-UFB is *"kind of"* similar to its lower-level counterparts because it tries to manage its memory even if it technically does not.
-
-With UFB- you can manage your 1-by-256 byte memory tape.
-
-The freedom of using the non-ROM 218 bytes gives you the ability to shoot yourself in the foot like how you would manually manage memory in lower-level languages.
-
----
-
-The built-in ROM includes the space literal,
-
-capital A-to-Z, numbers from 0 to 9, and the linefeed.
-
-UFB includes [16 default commands](./EXAMPLES/README.md#default-16).
-
----
-
-Write your first program full of commands,
-
-get disgusted by the colored warning and error messages,
+Write your first program full of [commands](./test/README.md#default-16), warnings and errors...
 
 and [compile](./src/README.md#UFBC) and [run](./src/README.md#UFB) the program!
