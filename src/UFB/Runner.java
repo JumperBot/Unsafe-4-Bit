@@ -46,17 +46,42 @@ class Runner{
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
-
-  final FlagManager flags=FlagManager();
-	boolean timeMethods=false;
-	boolean nanoseconds=false; // Java doesn't mess with the CPU/Scheduler/Timer/...
-	protected Runner(final String[]a)throws Exception{
+  final FlagManager flags;
+  final boolean nanoseconds;
+  final boolean timeMethods;
+	public Runner(final String[]a)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-		boolean performance=false;
-    String fileName="";
+    flags=new FlagManager(a);
+    nanoseconds=flags.isFlagActivated('n');
+    timeMethods=flags.isFlagActivated('m');
+    final String fileName=flags.getFileName();
+    final boolean performance=flags.isFlagActivated('p');
+    final boolean version=flags.isFlagActivated('v');
+    final boolean help=flags.isFlagActivated('h');
+    if(version){
+      System.out.printf(
+        "UFB version: %s (master)\n%s\n\n",
+        version_tag,
+        "Flag triggered, continuing anyway..."
+      );
+    }
+    if(help){
+      final String repo="https://github.com/JumperBot/Unsafe-4-Bit";
+      final String master="/tree/master/";
+      System.out.printf(
+        "%s\n%s\n%s%s%s\n%s%s%s\n%s\n%s\n%s\n\n",
+        "Need help? Either visit these links:",
+        repo,
+        repo, master, "src#ufb",
+        repo, master, "test#commands",
+        "or visit the examples in the 'test' folder...",
+        "only if you fully cloned the repository.",
+        "Flag triggered, continuing anyway..."
+      );
+    }
     if(fileName.length()!=0){
       final File f=new File(fileName);
       buffer=new BufferedInputStream(new FileInputStream(f));
@@ -65,9 +90,11 @@ class Runner{
       lines=new int[size];
       try{
         if(performance){
-          final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+          final long start=(!nanoseconds)?
+            System.currentTimeMillis():System.nanoTime();
           run();
-          final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+          final long end=(!nanoseconds)?
+            System.currentTimeMillis():System.nanoTime();
           System.out.println(
             String.format(
               "Program Took %d%s To Run.",

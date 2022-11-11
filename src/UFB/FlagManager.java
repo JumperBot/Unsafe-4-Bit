@@ -29,7 +29,7 @@ class FlagManager{
   final String file;
   final Pattern flags=Pattern.compile("[pnmhv]");
   final Pattern repeats=Pattern.compile("(\\w)\\1+");
-  protected FlagManager(final String[]a){
+  public FlagManager(final String[]a){
     String fileName="";
 		for(final String s:a){
 			final String arg=s.trim();
@@ -40,8 +40,9 @@ class FlagManager{
         if(shouldBeEmpty.length()!=0){
           final String joined=Arrays.toString(shouldBeEmpty.split("")).substring(1);
           System.out.printf(
-            "Unrecognized flags found: %s\nContinuing anyway...\n",
-            joined.substring(0, joined.length()-1)
+            "Unrecognized flags found: %s\n%s\n\n",
+            joined.substring(0, joined.length()-1),
+            "Continuing anyway..."
           );
         }
 				if(str.contains("p"))isActivated[0]=true;
@@ -56,7 +57,7 @@ class FlagManager{
 				if(str.contains("v"))isActivated[3]=true;
 				if(str.contains("h"))isActivated[4]=true;
 			}else System.out.printf(
-        "Unrecognized argument: %s\nContinuing anyway...\n", arg
+        "Unrecognized argument: %s\nContinuing anyway...\n\n", arg
       );
 		}
     file=fileName;
