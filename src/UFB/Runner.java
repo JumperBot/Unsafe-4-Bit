@@ -29,10 +29,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-import java.util.Arrays;
-
-import java.util.regex.Pattern;
-
 class Runner{
 	//----------------------------------------------------------------------//
 	/**TODO: ALWAYS CHANGE VERSION TAG.
@@ -50,65 +46,17 @@ class Runner{
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
+
+  final FlagManager flags=FlagManager();
 	boolean timeMethods=false;
 	boolean nanoseconds=false; // Java doesn't mess with the CPU/Scheduler/Timer/...
-  final Pattern flags=Pattern.compile("[pnmhv]");
-  final Pattern repeats=Pattern.compile("(\\w)\\1+");
-	public Runner(final String[]a)throws Exception{
+	protected Runner(final String[]a)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
 		boolean performance=false;
     String fileName="";
-		for(final String s:a){
-			final String arg=s.trim();
-			if(arg.endsWith(".ufbb"))fileName=arg;
-			else if(arg.startsWith("-")){
-        final String str=repeats.matcher(arg.replace("-", "")).replaceAll("$1");
-        final String shouldBeEmpty=flags.matcher(str).replaceAll("");
-        if(shouldBeEmpty.length()!=0){
-          final String joined=Arrays.toString(shouldBeEmpty.split("")).substring(1);
-          System.out.printf(
-            "Unrecognized flags found: %s\nContinuing anyway...\n",
-            joined.substring(0, joined.length()-1)
-          );
-        }
-				if(str.contains("p"))performance=true;
-				if(str.contains("n")){
-					performance=true;
-					nanoseconds=true;
-				}
-				if(str.contains("m")){
-					performance=true;
-					timeMethods=true;
-				}
-				if(str.contains("v")){
-					System.out.println(version_tag);
-					buffer=null;
-					size=0;
-					lines=null;
-					scan.close();
-					return;
-				}
-				if(str.contains("h")){
-					System.out.println(
-						String.format(
-							"Go To These Links:\n%s\n%s",
-							"https://github.com/JumperBot/Unsafe-4-Bit/tree/master/src#ufb",
-							"https://github.com/JumperBot/Unsafe-4-Bit/tree/master/test#commands"
-						)
-					);
-					buffer=null;
-					size=0;
-					lines=null;
-					scan.close();
-					return;
-				}
-			}else System.out.printf(
-        "Unrecognized argument: %s\nContinuing anyway...\n", arg
-      );
-		}
     if(fileName.length()!=0){
       final File f=new File(fileName);
       buffer=new BufferedInputStream(new FileInputStream(f));
