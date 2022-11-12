@@ -299,7 +299,7 @@ class Runner{
         memInd[ind1]=ind1;
         return;
       }
-			if(result%1==0) write(0, ind1, false, Integer.toString((int)result).toCharArray());
+			if(result%1==0) write(0, ind1, false, Long.toString((long)result).toCharArray());
       else write(0, ind1, false, Double.toString(result).toCharArray());
 		}catch(final Exception e){
 			nvar(ind1);
