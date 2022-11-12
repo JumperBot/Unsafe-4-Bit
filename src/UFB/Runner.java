@@ -30,23 +30,12 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 class Runner{
-	//----------------------------------------------------------------------//
-	/**TODO: ALWAYS CHANGE VERSION TAG.
-	 * DO NOT Change '1' in "1.*.*".
-	 * MINOR CHANGES should go in "1.MINOR.*".
-	 * PATCH CHANGES should go in "1.*.PATCH".
-	 * MINOR CHANGES should give new commands/major features.
-	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
-	**/
-	final String version_tag="v1.1.3";
-	//----------------------------------------------------------------------//
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
 	final BufferedInputStream buffer;
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
-  final FlagManager flags;
   final boolean nanoseconds;
   final boolean timeMethods;
 	public Runner(final String fileName, final boolean performance,
@@ -55,13 +44,8 @@ class Runner{
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
-    flags=new FlagManager(a);
-    nanoseconds=flags.isFlagActivated('n');
-    timeMethods=flags.isFlagActivated('m');
-    final String fileName=flags.getFileName();
-    final boolean performance=flags.isFlagActivated('p');
-    final boolean version=flags.isFlagActivated('v');
-    final boolean help=flags.isFlagActivated('h');
+    this.nanoseconds=nanoseconds;
+    this.timeMethods=timeMethods;
     if(fileName.length()!=0){
       final File f=new File(fileName);
       buffer=new BufferedInputStream(new FileInputStream(f));
@@ -93,7 +77,6 @@ class Runner{
 		size=0;
 		lines=null;
 		scan.close();
-    System.out.println("No File Input Found, Exitting.");
 	}
 	private void run()throws Exception{
 		if(timeMethods){

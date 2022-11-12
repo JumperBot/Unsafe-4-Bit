@@ -24,16 +24,16 @@ import java.util.regex.Pattern;
 
 class FlagManager{
   final boolean[] isActivated={
-    false, false, false, false, false
+    false, false, false, false, false, false
   };
   final String file;
-  final Pattern flags=Pattern.compile("[pnmhv]");
+  final Pattern flags=Pattern.compile("[pnmhvc]");
   final Pattern repeats=Pattern.compile("(\\w)\\1+");
   public FlagManager(final String[]a){
     String fileName="";
 		for(final String s:a){
 			final String arg=s.trim();
-			if(arg.endsWith(".ufbb"))fileName=arg;
+			if(arg.endsWith(".ufbb")||arg.endsWith(".ufb"))fileName=arg;
 			else if(arg.startsWith("-")){
         final String str=repeats.matcher(arg.replace("-", "")).replaceAll("$1");
         final String shouldBeEmpty=flags.matcher(str).replaceAll("");
@@ -56,6 +56,7 @@ class FlagManager{
 				}
 				if(str.contains("v"))isActivated[3]=true;
 				if(str.contains("h"))isActivated[4]=true;
+				if(str.contains("c"))isActivated[5]=true;
 			}else System.out.printf(
         "Unrecognized argument: %s\nContinuing anyway...\n\n", arg
       );
@@ -74,6 +75,8 @@ class FlagManager{
         return isActivated[3];
       case 'h':
         return isActivated[4];
+      case 'c':
+        return isActivated[5];
     }
     return false;
   }

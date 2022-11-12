@@ -19,6 +19,16 @@
 **/
 
 class UFB{
+	//----------------------------------------------------------------------//
+	/**TODO: ALWAYS CHANGE VERSION TAG.
+	 * DO NOT Change '1' in "1.*.*".
+	 * MINOR CHANGES should go in "1.MINOR.*".
+	 * PATCH CHANGES should go in "1.*.PATCH".
+	 * MINOR CHANGES should give new commands/major features.
+	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
+	**/
+	final static String version_tag="v1.1.3";
+	//----------------------------------------------------------------------//
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
     if(flagManager.isFlagActivated('v')){
@@ -42,6 +52,30 @@ class UFB{
         "Flag triggered, continuing anyway..."
       );
     }
-		new Runner(a);
+    if(flagManager.getFileName().length()==0){
+      System.out.println("No file input found, terminating.");
+      System.exit(1);
+      return;
+    }
+    if(flagManager.isFlagActivated('c')){
+      if(flagManager.getFileName().endsWith(".ufbb")){
+        System.out.println("Could not compile an already compiled source code.");
+        System.out.println("Remove the compilation flag to run the compiled program.");
+        return;
+      }
+      new UFBC(new String[]{flagManager.getFileName()});
+      return;
+    }
+    if(flagManager.getFileName().endsWith(".ufb")){
+      System.out.println("Could not run uncompiled source code.");
+      System.out.println("Add the compilation flag to compile the program.");
+      return;
+    }
+    new Runner(
+      flagManager.getFileName(),
+      flagManager.isFlagActivated('p'),
+      flagManager.isFlagActivated('n'),
+      flagManager.isFlagActivated('m')
+    );
 	}
 }
