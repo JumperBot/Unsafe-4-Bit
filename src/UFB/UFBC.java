@@ -344,12 +344,7 @@ class Optimizer{
 				case 2:
 					trim();
 					break;
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
+				case 3: case 4: case 5: case 6: case 7: case 8:
 					math(com-3);
 					break;
 				case 9:
@@ -357,10 +352,7 @@ class Optimizer{
 					if(printProxy.length()!=0)addToCommands();
 					newCommands.append("nop\n");
 					break;
-				case 10:
-				case 11:
-				case 12:
-				case 13:
+				case 10: case 11: case 12: case 13:
 					if(jump(com-10))
 						throw new Exception("Code cannot be optimized, but compilation is a success!");
 					break;
@@ -557,24 +549,20 @@ class Optimizer{
 			write(0, ind1, false, str2);
 			return;
 		}
-		final double num1=toNum(str1);
-		final double num2=toNum(str2);
 		try{
-			final String val=String.valueOf(
-				(op==0)?num1+num2:(op==1)?num1-num2:
-				(op==2)?num1*num2:(op==3)?num1/num2:
-				(op==4)?num1%num2:(int)	 (num1/num2)
-			);
-			if(val.equals("NaN")){
-				nvar(ind1);
-				mem[ind1]='i';
-				memInd[ind1]=ind1;
-				return;
-			}
-			final char[] out=(
-				(val.endsWith(".0"))?val.substring(0, val.length()-2):val
-			).toCharArray();
-			write(0, ind1, false, out);
+      final double num1=toNum(str1);
+      final double num2=toNum(str2);
+      final double result=(op==0)?num1+num2:(op==1)?num1-num2:
+                          (op==2)?num1*num2:(op==3)?num1/num2:
+                          (op==4)?num1%num2:(int)	 (num1/num2);
+      if(result!=result){ // Refer to Double#isNan(double v)
+        nvar(ind1);
+        mem[ind1]='i';
+        memInd[ind1]=ind1;
+        return;
+      }
+			if(result%1==0) write(0, ind1, false, Integer.toString((int)result).toCharArray());
+      else write(0, ind1, false, Double.toString(result).toCharArray());
 		}catch(final Exception e){
 			nvar(ind1);
 			mem[ind1]='i';

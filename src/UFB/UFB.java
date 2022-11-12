@@ -25,7 +25,7 @@ class UFB{
 	 * MINOR CHANGES should go in "1.MINOR.*".
 	 * PATCH CHANGES should go in "1.*.PATCH".
 	 * MINOR CHANGES should give new commands/major features.
-	 * PATCH CHANGES should give new flags/performance boosts/bug fixes/etc.
+	 * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
 	**/
 	final static String version_tag="v1.1.3";
 	//----------------------------------------------------------------------//
