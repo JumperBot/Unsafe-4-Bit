@@ -20,6 +20,28 @@
 
 class UFB{
 	public static void main(final String[]a)throws Exception{
+    final FlagManager flagManager=new FlagManager(a);
+    if(flagManager.isFlagActivated('v')){
+      System.out.printf(
+        "UFB version: %s (master)\n%s\n\n",
+        version_tag,
+        "Flag triggered, continuing anyway..."
+      );
+    }
+    if(flagManager.isFlagActivated('h')){
+      final String repo="https://github.com/JumperBot/Unsafe-4-Bit";
+      final String master="/tree/master/";
+      System.out.printf(
+        "%s\n%s\n%s%s%s\n%s%s%s\n%s\n%s\n%s\n\n",
+        "Need help? Either visit these links:",
+        repo,
+        repo, master, "src#ufb",
+        repo, master, "test#commands",
+        "or visit the examples in the 'test' folder...",
+        "only if you fully cloned the repository.",
+        "Flag triggered, continuing anyway..."
+      );
+    }
 		new Runner(a);
 	}
 }

@@ -49,7 +49,8 @@ class Runner{
   final FlagManager flags;
   final boolean nanoseconds;
   final boolean timeMethods;
-	public Runner(final String[]a)throws Exception{
+	public Runner(final String fileName, final boolean performance,
+                final boolean nanoseconds, final boolean timeMethods)throws Exception{
 		mem[0]=' ';
 		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
@@ -61,27 +62,6 @@ class Runner{
     final boolean performance=flags.isFlagActivated('p');
     final boolean version=flags.isFlagActivated('v');
     final boolean help=flags.isFlagActivated('h');
-    if(version){
-      System.out.printf(
-        "UFB version: %s (master)\n%s\n\n",
-        version_tag,
-        "Flag triggered, continuing anyway..."
-      );
-    }
-    if(help){
-      final String repo="https://github.com/JumperBot/Unsafe-4-Bit";
-      final String master="/tree/master/";
-      System.out.printf(
-        "%s\n%s\n%s%s%s\n%s%s%s\n%s\n%s\n%s\n\n",
-        "Need help? Either visit these links:",
-        repo,
-        repo, master, "src#ufb",
-        repo, master, "test#commands",
-        "or visit the examples in the 'test' folder...",
-        "only if you fully cloned the repository.",
-        "Flag triggered, continuing anyway..."
-      );
-    }
     if(fileName.length()!=0){
       final File f=new File(fileName);
       buffer=new BufferedInputStream(new FileInputStream(f));
@@ -95,11 +75,9 @@ class Runner{
           run();
           final long end=(!nanoseconds)?
             System.currentTimeMillis():System.nanoTime();
-          System.out.println(
-            String.format(
-              "Program Took %d%s To Run.",
-              end-start, (!nanoseconds)?"ms":"ns"
-            )
+          System.out.printf(
+            "Program Took %d%s To Run.\n",
+            end-start, (!nanoseconds)?"ms":"ns"
           );
         }else run();
         buffer.close();
@@ -115,7 +93,7 @@ class Runner{
 		size=0;
 		lines=null;
 		scan.close();
-    System.out.println("No file input found, exitting.");
+    System.out.println("No File Input Found, Exitting.");
 	}
 	private void run()throws Exception{
 		if(timeMethods){
@@ -131,11 +109,9 @@ class Runner{
 				final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
 				runCommand(com);
 				final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
-				System.out.println(
-					String.format(
-						"\nCommand Index: %d Took %d%s To Run.",
-						com, end-start, (!nanoseconds)?"ms":"ns"
-					)
+				System.out.printf(
+					"\nCommand Index: %d Took %d%s To Run.\n",
+          com, end-start, (!nanoseconds)?"ms":"ns"
 				);
 			}
 		}else{
@@ -151,13 +127,13 @@ class Runner{
 			}
 		}
 		for(int i=0;i<64;i++){
-			if(memInd[i]!=0)System.out.println(String.format("Memory Leak At Index: %d", i));
+			if(memInd[i]!=0)System.out.printf("Memory Leak At Index: %d\n", i);
 			final int plus=i+64;
-			if(memInd[plus]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus));
+			if(memInd[plus]!=0)System.out.printf("Memory Leak At Index: %d\n", plus);
 			final int plus2=i+128;
-			if(memInd[plus2]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus2));
+			if(memInd[plus2]!=0)System.out.printf("Memory Leak At Index: %d\n", plus2);
 			final int plus3=i+192;
-			if(memInd[plus3]!=0)System.out.println(String.format("Memory Leak At Index: %d", plus3));
+			if(memInd[plus3]!=0)System.out.printf("Memory Leak At Index: %d\n", plus3);
 		}
 	}
 	private void runCommand(final int com)throws Exception{
@@ -187,8 +163,8 @@ class Runner{
 				read();
 				break;
 			default:
-				System.out.println(
-					String.format("\nCommand Index: %d Is Not Recognized By The Interpreter...", com)
+				System.out.printf(
+          "\nCommand Index: %d Is Not Recognized By The Interpreter...\n", com
 				);
 				break;
 		}

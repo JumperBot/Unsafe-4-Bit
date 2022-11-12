@@ -311,10 +311,10 @@ class Optimizer{
 	private void addToCommands(){
 		final String converted=convertToMemory(
 			printProxy.toString() // i == -255, - == -254, . == -253
-		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nnvar 38\nprint 255")
-		 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\n nvar 38\nprint 255")
-	 	 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nnvar 38\nprint 255")
- 		 .replace("\n ", "\n");
+		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nprint 255")
+		 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\nprint 255")
+	 	 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nprint 255")
+ 		 .replace("\n ", "\n")+"\nnvar 38";
 		printProxy.setLength(0);
 		if(!converted.startsWith("\n"))newCommands.append("print ");
 		newCommands.append(converted).append("\n");
@@ -419,9 +419,7 @@ class Optimizer{
 	}};
 	private String convertToMemory(final String in){
 		final StringBuilder output=new StringBuilder();
-		for(final char c:in.toCharArray()){
-			output.append(memMap.get(c)).append(" ");
-		}
+		for(final char c:in.toCharArray())output.append(memMap.get(c)).append(" ");
 		return output.toString().trim();
 	}
 	int byteInd=0;
@@ -440,7 +438,7 @@ class Optimizer{
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private char[] rvar(final int ind){
 		if(memInd[ind]==0||memInd[ind]==ind)return new char[]{mem[ind]};
 		final char[] temp=new char[memInd[ind]-ind+1];
@@ -583,7 +581,7 @@ class Optimizer{
 			memInd[ind1]=ind1;
 		}
 	}
-	
+
 	final HashMap<Integer, Integer> jumpBackFrequency=new HashMap<Integer, Integer>();
 	private boolean jump(final int op){ // Returns true if optimization should stop.
 		final char[] arg1=rvar(next(8));
