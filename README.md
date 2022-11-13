@@ -22,27 +22,59 @@ This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
 ---
 
-# <div align="center">:heavy_plus_sign: Installation :arrow_down:</div>
+<div align="center">
 
-Download the archived .zip file of the **current** version:
+# :heavy_plus_sign: Installation :arrow_down:
 
-https://github.com/JumperBot/Unsafe-4-Bit/archive/master.zip
+Download the ***latest*** `.jar` file:
+
+https://github.com/JumperBot/Unsafe-4-Bit/blob/master/build/UFB.jar
 
 Or clone the repository and get continous updates:
 
-```python
+```bash
 git clone https://github.com/JumperBot/Unsafe-4-Bit.git
 ```
 
+</div>
+
 ---
 
-# <div align="center">:technologist: Tutorial :monocle_face:</div>
+<div align="center">
+
+# :construction: Contributing :construction_worker:
+
+> Good at **designing** homepages?
+
+Try *redesigining* this README!
+
+---
+
+> You think that the code is ***slow***?
+
+*Reconstruct* the code and open a [pull request](https://github.com/JumperBot/Unsafe-4-Bit/compare)!
+
+---
+
+> Want a **new feature** to be added?
+
+*Submit* an [issue](https://github.com/JumperBot/Unsafe-4-Bit/issues/new/choose) or *code* it yourself!
+
+</div>
+
+---
+
+<div align="center">
+
+# :technologist: Tutorial :monocle_face:
 
 Write your first program full of [commands](./test/README.md#default-16), warnings and errors...
 
 and [compile](./src/README.md#UFBC) and [run](./src/README.md#UFB) the program!
 
-Example:
+</div>
+
+---
 
 ```python
 // This program creates an endless background of "Hello World"s.

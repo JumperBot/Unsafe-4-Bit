@@ -1,15 +1,24 @@
+<div align="center">
+
 # UFB
 
-`UFB.java` / `/UFB/*.class` is the interpreter itself.
+`/UFB/*.class` | `UFB.jar` is the interpreter | compiler merged as one.
 
-Only files containing `.ufbb` will be interpreted.
+Only one file ending in `.ufbb` | `ufb` will be interpreted | compiled.
+
+A file will not be compiled | interpreted if there are errors.
+
+</div>
+
+---
 
 ## Usage
 
-```sh
-cd ../build/UFB/
-java UFB [ -flags ] /directory/Compiled.ufbb
+```shell
+java -jar UFB.jar [ -flags ] [ file ]
 ```
+
+---
 
 ## Flags
 
@@ -17,28 +26,19 @@ java UFB [ -flags ] /directory/Compiled.ufbb
 - "-n" -> Accurately use the "-p" flag -> ns
 - "-m" -> Time all commands being run
 - "-v" -> Display semantic version tag
-- "-h" -> Display links and then leave
+- "-h" -> Display help links and sources
+- "-c" -> Compile file
 
-Example:
+---
 
-```sh
+## Example
+
+```shell
 java UFB -pnv
 java UFB -p
 java UFB -m
 java UFB -nvp
 java UFB -pnhv
 java UFB -mn
-```
-
-# UFBC
-
-`UFBC.java` / `UFBC.class` is the compiler itself.
-
-Any file can be used as an input file.
-
-Files may or may not be compiled at all due to syntax errors.
-
-```sh
-cd ../build/UFBC/
-java UFBC /directory/NotCompiled.ufb
+java UFB -c ../test/UFB/Main.ufb
 ```

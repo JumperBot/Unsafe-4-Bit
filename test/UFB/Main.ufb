@@ -55,6 +55,7 @@ trim	38	1
 print	38
 nvar	38
 
+/*
 nop
 nop
 nop
@@ -65,6 +66,7 @@ nop
 nop
 nop
 nop
+*/
 
 wvar	38	29
 div		38	31
