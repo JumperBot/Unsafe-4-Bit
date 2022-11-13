@@ -12,6 +12,10 @@
 [![UFBDesc.apng](UFBDesc.apng)](UFBDesc.apng)
 ---
 
+> Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built on top of the Java programming language.
+
+---
+
 UFB reminds you of its ***lower-level counterparts*** as you manage your ***"RAM"***.
 
 The [256 bytes of memory](./test/README.md#memory) is divided into two parts: ROM and non-ROM.
