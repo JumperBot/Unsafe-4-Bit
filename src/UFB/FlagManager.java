@@ -23,9 +23,10 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 class FlagManager{
-  final boolean[] isActivated=new boolean[6];
+  final String flagString="[pnmvhclb]";
+  final boolean[] isActivated=new boolean[flagString.length()-2];
   final String file;
-  final Pattern flags=Pattern.compile("[pnmhvc]");
+  final Pattern flags=Pattern.compile(flagString);
   final Pattern repeats=Pattern.compile("(\\w)\\1+");
   public FlagManager(final String[]a){
     String fileName="";
@@ -43,42 +44,27 @@ class FlagManager{
             "Continuing anyway..."
           );
         }
-				if(str.contains("p"))isActivated[0]=true;
-				if(str.contains("n")){
-					isActivated[0]=true;
-					isActivated[1]=true;
-				}
-				if(str.contains("m")){
-					isActivated[0]=true;
-					isActivated[2]=true;
-				}
-				if(str.contains("v"))isActivated[3]=true;
-				if(str.contains("h"))isActivated[4]=true;
-				if(str.contains("c"))isActivated[5]=true;
+        if(str.contains("p"))isActivated[0]=true;
+        for(int i=1;i<3;i++)
+          if(str.contains(flagString.charAt(i+1)+""))
+            isActivated[0]=isActivated[i]=true;
+        for(int i=3;i<flagString.length()-2;i++)
+          if(str.contains(flagString.charAt(i+1)+""))
+            isActivated[i]=true;
 			}else System.out.printf(
         "Unrecognized argument: %s\nContinuing anyway...\n\n", arg
       );
 		}
     file=fileName;
   }
-  boolean isFlagActivated(final char c){
-    switch(c){
-      case 'p':
-        return isActivated[0];
-      case 'n':
-        return isActivated[1];
-      case 'm':
-        return isActivated[2];
-      case 'v':
-        return isActivated[3];
-      case 'h':
-        return isActivated[4];
-      case 'c':
-        return isActivated[5];
-    }
+  public boolean isFlagActivated(final char c){
+    final char[] array=flagString.substring(1).toCharArray();
+    for(int i=0;i<array.length-1;i++)
+      if(array[i]==c)
+        return isActivated[i];
     return false;
   }
-  String getFileName(){
+  public String getFileName(){
     return file;
   }
 }
