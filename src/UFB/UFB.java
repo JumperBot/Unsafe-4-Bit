@@ -27,7 +27,7 @@ class UFB{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
 	**/
-	final static String version_tag="v1.2.0";
+	final static String version_tag="v1.2.1";
 	//----------------------------------------------------------------------//
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
@@ -49,6 +49,33 @@ class UFB{
         repo, master, "test#commands",
         "or visit the examples in the 'test' folder...",
         "only if you fully cloned the repository.",
+        "Flag triggered, continuing anyway..."
+      );
+    }
+    if(flagManager.isFlagActivated('l')){
+      final StringBuilder license=new StringBuilder()
+      .append("GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007\n\n")
+      .append("Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.\n")
+      .append("Copyright (C) 2022  JumperBot_\n")
+      .append("\n")
+      .append("This program is free software: you can redistribute it and/or modify\n")
+      .append("it under the terms of the GNU General Public License as published by\n")
+      .append("the Free Software Foundation, either version 3 of the License, or\n")
+      .append("(at your option) any later version.\n")
+      .append("\n")
+      .append("This program is distributed in the hope that it will be useful,\n")
+      .append("but WITHOUT ANY WARRANTY; without even the implied warranty of\n")
+      .append("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n")
+      .append("GNU General Public License for more details.\n")
+      .append("\n")
+      .append("You should have received a copy of the GNU General Public License\n")
+      .append("along with this program.  If not, see <https://www.gnu.org/licenses/>.\n");
+      System.out.printf(
+        "%s\n%s\n%s\n%s\n%s\n\n",
+        "----------------------------------------------------------------------------------\n",
+        license.toString(),
+        "The copy of the license can be viewed at the root of this repository.\n",
+        "----------------------------------------------------------------------------------\n",
         "Flag triggered, continuing anyway..."
       );
     }
@@ -76,7 +103,8 @@ class UFB{
       fileName,
       flagManager.isFlagActivated('p'),
       flagManager.isFlagActivated('n'),
-      flagManager.isFlagActivated('m')
+      flagManager.isFlagActivated('m'),
+      flagManager.isFlagActivated('b')
     );
 	}
 }

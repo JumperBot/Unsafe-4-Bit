@@ -39,8 +39,10 @@ class Runner{
 	int furthestLine=-1;
   final boolean nanoseconds;
   final boolean timeMethods;
+  final boolean backwardsCompat;
 	public Runner(final String fileName, final boolean performance,
-                final boolean nanoseconds, final boolean timeMethods)throws Exception{
+                final boolean nanoseconds, final boolean timeMethods,
+                final boolean backwardsCompat)throws Exception{
 		mem[0]=' ';
     aKnownNonNum[0]=true;
 		for(int i=0;i<26;i++){
@@ -53,8 +55,13 @@ class Runner{
     for(int i=37;i<256;i++)aKnownNonNum[i]=true;
     this.nanoseconds=nanoseconds;
     this.timeMethods=timeMethods;
+    this.backwardsCompat=backwardsCompat;
     if(fileName.length()!=0){
       final File f=new File(fileName);
+      if(!f.exists()){
+        System.out.println("File Provided Does Not Exist...\nTerminating...");
+        System.exit(1);
+      }
       buffer=new BufferedInputStream(new FileInputStream(f));
       buffer.mark(Integer.MAX_VALUE);
       size=(int)f.length();
@@ -74,7 +81,10 @@ class Runner{
       }catch(final Exception e){
         buffer.close();
         scan.close();
-        throw new RuntimeException(e);
+        if(!e.toString().contains("Unsupported Command Lol"))
+          throw new RuntimeException(e);
+        else
+          System.exit(1);
       }
       return;
     }
@@ -148,10 +158,18 @@ class Runner{
 				read();
 				break;
 			default:
-				System.out.printf(
-          "\nCommand Index: %d Is Not Recognized By The Interpreter...\n", com
-				);
-				break;
+        if(backwardsCompat){
+          System.out.printf(
+            "\nCommand Index: %d Is Not Recognized By The Interpreter...\n%s\n",
+            com, "Skipping Instead Since '-b' Flag Is Toggled..."
+          );
+          break;
+        }
+        System.out.printf(
+          "\nCommand Index: %d Is Not Recognized By The Interpreter...\n%s\n",
+          com, "Terminating..."
+        );
+        throw new Exception("Unsupported Command Lol");
 		}
 	}
 	int byteInd=0;
