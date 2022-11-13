@@ -49,12 +49,12 @@ class UFBC{
 	final static Pattern comment=Pattern.compile("//.*\n*");
 	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 	final static StringBuilder errors=new StringBuilder();
-  public UFBC(final String[]a)throws Exception{
-		compile(a, true);
+  public UFBC(final String fileName)throws Exception{
+		compile(fileName, true);
 	}
-	public static void compile(final String[]a, final boolean recompile)throws Exception{
+	public static void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
-		try(final BufferedReader scan=new BufferedReader(new FileReader(a[0].trim()))){
+		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
 			String temp;
 			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
 		}
@@ -165,7 +165,7 @@ class UFBC{
 					ANSI_RESET, ANSI_BRIGHT_YELLOW, warnings.toString(), ANSI_RESET
 				)
 			);
-		final String outName=a[0].substring(0, a[0].lastIndexOf("."))+".ufbb";
+		final String outName=fileName.substring(0, fileName.lastIndexOf("."))+".ufbb";
 		try{
 			final File outFile=new File(outName);
 			outFile.createNewFile();
@@ -278,6 +278,7 @@ class UFBC{
 class Optimizer{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
+  final boolean[] aKnownNonNum=new boolean[256];
 	final BufferedInputStream buffer;
 	final int size;
 	final int[] lines;
@@ -286,9 +287,15 @@ class Optimizer{
 	final StringBuilder newCommands=new StringBuilder();
 	public Optimizer(final String file)throws Exception{
 		mem[0]=' ';
-		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
+    aKnownNonNum[0]=true;
+		for(int i=0;i<26;i++){
+      final int ind=i+1;
+      aKnownNonNum[ind]=true;
+      mem[ind]=(char)(ind+64);
+    }
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
+    for(int i=37;i<256;i++)aKnownNonNum[i]=true;
 		final File f=new File(file);
 		buffer=new BufferedInputStream(new FileInputStream(f));
 		buffer.mark(Integer.MAX_VALUE);
@@ -301,7 +308,7 @@ class Optimizer{
 			try(final FileWriter writer=new FileWriter(new File(newFileName))){
 				writer.write(newCommands.toString().trim().replaceAll("\n{2,}", "\n"));
 			}
-			UFBC.compile(new String[]{newFileName}, false);
+			UFBC.compile(newFileName, false);
 		}catch(final Exception e){
 			buffer.close();
 			if(!e.toString().contains("Code cannot be optimized"))throw new RuntimeException(e);
@@ -444,6 +451,7 @@ class Optimizer{
 	}
 	private void write(final int argCount, final int memIndex,
 										 final boolean fromMem, final char[] chars){
+    aKnownNonNum[memIndex]=false;
 		if(fromMem){
 			final char[] temp=rvar(memIndex);
 			int curInd=memIndex;
@@ -512,19 +520,26 @@ class Optimizer{
 		}
 		return -1;
 	}
-	private double toNum(final char[] arr){
+	private double toNum(final char[] arr, final int ind){
+    if(aKnownNonNum[ind])return new String(arr).hashCode();
 		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			double result=0;
 			for(int i=0;i<decimalInd;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result*=10;
 			}
 			for(int i=decimalInd+1;i<arr.length;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result/=10;
 			}
@@ -533,7 +548,10 @@ class Optimizer{
 			double result=0;
 			for(final char c:arr){
 				final int num=c-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result*=10;
 			}
@@ -542,7 +560,8 @@ class Optimizer{
 	}
 	private void math(final int op){
 		final int ind1=next(8);
-		final char[] str2=rvar(next(8));
+    final int ind2=next(8);
+		final char[] str2=rvar(ind2);
 		if(str2.length==0)return; // The earlier the call, the better.
 		final char[] str1=rvar(ind1);
 		if(str1.length<1&&str2.length>0){
@@ -550,8 +569,8 @@ class Optimizer{
 			return;
 		}
 		try{
-      final double num1=toNum(str1);
-      final double num2=toNum(str2);
+      final double num1=toNum(str1, ind1);
+      final double num2=toNum(str2, ind2);
       final double result=(op==0)?num1+num2:(op==1)?num1-num2:
                           (op==2)?num1*num2:(op==3)?num1/num2:
                           (op==4)?num1%num2:(int)	 (num1/num2);
@@ -572,12 +591,14 @@ class Optimizer{
 
 	final HashMap<Integer, Integer> jumpBackFrequency=new HashMap<Integer, Integer>();
 	private boolean jump(final int op){ // Returns true if optimization should stop.
-		final char[] arg1=rvar(next(8));
-		final char[] arg2=rvar(next(8));
+    final int ind1=next(8);
+    final int ind2=next(8);
+		final char[] arg1=rvar(ind1);
+		final char[] arg2=rvar(ind2);
 		final int com=next(16);
 		if(
-			(op==0&&toNum(arg1)>toNum(arg2))||
-			(op==1&&toNum(arg1)<toNum(arg2))||
+			(op==0&&toNum(arg1, ind1)>toNum(arg2, ind2))||
+			(op==1&&toNum(arg1, ind1)<toNum(arg2, ind2))||
 			(op==2&&new String(arg1).equals(new String(arg2)))||
 			(op==3&&!new String(arg1).equals(new String(arg2)))
 		){

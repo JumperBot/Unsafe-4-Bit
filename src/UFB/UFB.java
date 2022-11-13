@@ -52,27 +52,28 @@ class UFB{
         "Flag triggered, continuing anyway..."
       );
     }
-    if(flagManager.getFileName().length()==0){
+    final String fileName=flagManager.getFileName();
+    if(fileName.length()==0){
       System.out.println("No file input found, terminating.");
       System.exit(1);
       return;
     }
     if(flagManager.isFlagActivated('c')){
-      if(flagManager.getFileName().endsWith(".ufbb")){
+      if(fileName.endsWith(".ufbb")){
         System.out.println("Could not compile an already compiled source code.");
         System.out.println("Remove the compilation flag to run the compiled program.");
         return;
       }
-      new UFBC(new String[]{flagManager.getFileName()});
+      new UFBC(fileName);
       return;
     }
-    if(flagManager.getFileName().endsWith(".ufb")){
+    if(fileName.endsWith(".ufb")){
       System.out.println("Could not run uncompiled source code.");
       System.out.println("Add the compilation flag to compile the program.");
       return;
     }
     new Runner(
-      flagManager.getFileName(),
+      fileName,
       flagManager.isFlagActivated('p'),
       flagManager.isFlagActivated('n'),
       flagManager.isFlagActivated('m')

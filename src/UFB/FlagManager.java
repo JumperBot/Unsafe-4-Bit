@@ -23,9 +23,7 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 class FlagManager{
-  final boolean[] isActivated={
-    false, false, false, false, false, false
-  };
+  final boolean[] isActivated=new boolean[6];
   final String file;
   final Pattern flags=Pattern.compile("[pnmhvc]");
   final Pattern repeats=Pattern.compile("(\\w)\\1+");

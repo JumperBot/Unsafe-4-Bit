@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 class Runner{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
+  final boolean[] aKnownNonNum=new boolean[256];
 	final BufferedInputStream buffer;
 	final int size;
 	final int[] lines;
@@ -41,9 +42,15 @@ class Runner{
 	public Runner(final String fileName, final boolean performance,
                 final boolean nanoseconds, final boolean timeMethods)throws Exception{
 		mem[0]=' ';
-		for(int i=0;i<26;i++)mem[i+1]=(char)(i+65);
+    aKnownNonNum[0]=true;
+		for(int i=0;i<26;i++){
+      final int ind=i+1;
+      aKnownNonNum[ind]=true;
+      mem[ind]=(char)(ind+64);
+    }
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
+    for(int i=37;i<256;i++)aKnownNonNum[i]=true;
     this.nanoseconds=nanoseconds;
     this.timeMethods=timeMethods;
     if(fileName.length()!=0){
@@ -54,11 +61,9 @@ class Runner{
       lines=new int[size];
       try{
         if(performance){
-          final long start=(!nanoseconds)?
-            System.currentTimeMillis():System.nanoTime();
+          final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
           run();
-          final long end=(!nanoseconds)?
-            System.currentTimeMillis():System.nanoTime();
+          final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
           System.out.printf(
             "Program Took %d%s To Run.\n",
             end-start, (!nanoseconds)?"ms":"ns"
@@ -109,14 +114,11 @@ class Runner{
 				runCommand(next(8));
 			}
 		}
-		for(int i=0;i<64;i++){
-			if(memInd[i]!=0)System.out.printf("Memory Leak At Index: %d\n", i);
-			final int plus=i+64;
-			if(memInd[plus]!=0)System.out.printf("Memory Leak At Index: %d\n", plus);
-			final int plus2=i+128;
-			if(memInd[plus2]!=0)System.out.printf("Memory Leak At Index: %d\n", plus2);
-			final int plus3=i+192;
-			if(memInd[plus3]!=0)System.out.printf("Memory Leak At Index: %d\n", plus3);
+		for(int i=0;i<32;i++){
+      for(int ratio=0;ratio<8;ratio++){
+        final int ind=i+(ratio*32);
+        if(memInd[ind]!=0)System.out.printf("Memory Leak At Index: %d\n", ind);
+      }
 		}
 	}
 	private void runCommand(final int com)throws Exception{
@@ -182,6 +184,7 @@ class Runner{
 	}
 	private void write(final int argCount, final int memIndex,
 										 final boolean fromMem, final char[] chars){
+    aKnownNonNum[memIndex]=false;
 		if(fromMem){
 			final char[] temp=rvar(memIndex);
 			int curInd=memIndex;
@@ -250,19 +253,26 @@ class Runner{
 		}
 		return -1;
 	}
-	private double toNum(final char[] arr){
+	private double toNum(final char[] arr, final int ind){
+    if(aKnownNonNum[ind])return new String(arr).hashCode();
 		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			double result=0;
 			for(int i=0;i<decimalInd;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result*=10;
 			}
 			for(int i=decimalInd+1;i<arr.length;i++){
 				final int num=arr[i]-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result/=10;
 			}
@@ -271,7 +281,10 @@ class Runner{
 			double result=0;
 			for(final char c:arr){
 				final int num=c-48;
-				if(num<0||num>9)return new String(arr).hashCode();
+				if(num<0||num>9){
+          aKnownNonNum[ind]=true;
+          return new String(arr).hashCode();
+        }
 				result+=num;
 				result*=10;
 			}
@@ -280,7 +293,8 @@ class Runner{
 	}
 	private void math(final int op){
 		final int ind1=next(8);
-		final char[] str2=rvar(next(8));
+    final int ind2=next(8);
+		final char[] str2=rvar(ind2);
 		if(str2.length==0)return; // The earlier the call, the better.
 		final char[] str1=rvar(ind1);
 		if(str1.length<1&&str2.length>0){
@@ -288,8 +302,8 @@ class Runner{
 			return;
 		}
 		try{
-      final double num1=toNum(str1);
-      final double num2=toNum(str2);
+      final double num1=toNum(str1, ind1);
+      final double num2=toNum(str2, ind2);
       final double result=(op==0)?num1+num2:(op==1)?num1-num2:
                           (op==2)?num1*num2:(op==3)?num1/num2:
                           (op==4)?num1%num2:(int)	 (num1/num2);
@@ -309,12 +323,14 @@ class Runner{
 	}
 
 	private void jump(final int op){
-		final char[] arg1=rvar(next(8));
-		final char[] arg2=rvar(next(8));
+    final int ind1=next(8);
+    final int ind2=next(8);
+		final char[] arg1=rvar(ind1);
+		final char[] arg2=rvar(ind2);
 		final int com=next(16);
 		if(
-			(op==0&&toNum(arg1)>toNum(arg2))||
-			(op==1&&toNum(arg1)<toNum(arg2))||
+			(op==0&&toNum(arg1, ind1)>toNum(arg2, ind2))||
+			(op==1&&toNum(arg1, ind1)<toNum(arg2, ind2))||
 			(op==2&&new String(arg1).equals(new String(arg2)))||
 			(op==3&&!new String(arg1).equals(new String(arg2)))
 		){
