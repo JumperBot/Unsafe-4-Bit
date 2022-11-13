@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ":sparkles: Feature Request! (Please)"
-labels: help wanted
+labels: ["help wanted", "enhancement"]
 assignees: ''
 
 ---
