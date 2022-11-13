@@ -1,8 +1,9 @@
 # Welcome to Unsafe-4-Bit contributing guide
 
-We (as one entity) salute you for reading this contributing guide.
+'Salute you for reading this contributing guide!
 
-Any contribution you make will be reflected/committed to this repository, so be careful on what you're doing! 
+Any contribution you make will be ***reflected/committed*** to this repository,
+so **be careful** on what you're doing!
 
 Read our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
 
@@ -28,9 +29,9 @@ The first and most important step is getting to know yourself and your setup:
     - Can you understand it's syntax ***properly***?
     - Can you solve common problems that occur when writing a program?
       - Have you experienced coding alone with no help?
-      - Do you know when and how to ask for help on sites like [Stack Overflow](https://stackoverflow.com/)? 
+      - Do you know when and how to ask on [Stack Overflow](https://stackoverflow.com/)?
     - Do you have your `Java` environment setup ready?
-      - Do you have a JDK that supports `Java-8` and above? *(personally using Java-11)*
+      - Do you have a JDK that supports `Java-8` and above?
         - Check it with `java --version` on your terminal.
   - Do you know how to use `Git` or `GitHub` ***properly***?
 
@@ -39,19 +40,19 @@ Next step would be ***\*drum-roll\**** forking the repository!
 
 ### What to do when writing the code
 
-  - Make the code concise.
-  - Make the code compact.
-  - Make the code readable.
+  - Make the code **concise**.
+  - Make the code **compact**.
+  - Make the code **readable**.
     - Don't make it ***too readable*** or else we won't be accepting it!
     - Also, don't make the code ***too unreadable*** or else we won't be accepting it as well!
   - Take a look at some of the files to know what I meant by that.
-  - Never forget to test and compile the code first on your machine before such reckless moves!
+  - Never forget to **test and compile** the code first on your machine before such reckless moves!
 
 ### What to do after writing the code
 
   - Check, test and compile your code into it's appropriate directory.
   - Commit your changes into your fork.
-    - Use [Gitmojis](https://gitmoji.kaki87.net/) before your commit message to indicate what your commit is for.  
+    - Use [Gitmojis](https://gitmoji.kaki87.net/) before your commit message to indicate what your commit is for.
   - Open up a [PR](https://github.com/JumperBot/Unsafe-4-Bit/compare).
     - Fill up the form!
   - Wait for me to accept your changes!
@@ -62,7 +63,7 @@ Next step would be ***\*drum-roll\**** forking the repository!
 
 If you spotted a problem or would like to create a new issue, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments).
 
-If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/JumperBot/Unsafe-4-Bit/issues/new/choose). 
+If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/JumperBot/Unsafe-4-Bit/issues/new/choose).
 
 ### Solve an issue
 
@@ -73,4 +74,3 @@ You can narrow down the search at will using filters.
 If you find an issue to work on, you are welcome to fork this repository and open up a [PR](https://github.com/JumperBot/Unsafe-4-Bit/compare) containing your fix.
 
 Remember, fill up the forms to give us as much information as possible!
- 
