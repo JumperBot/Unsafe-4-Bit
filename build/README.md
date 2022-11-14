@@ -27,7 +27,13 @@ java -jar UFB.jar [ -flags ] [ file ]
 - "-m" -> Time all commands being run
 - "-v" -> Display semantic version tag
 - "-h" -> Display help links and sources
-- "-c" -> Compile file
+- "-c" -> Compile one of the provided files
+- "-l" -> Display license notice (GPL v3)
+
+---
+
+(WARNING: NOT RECOMMENDED!):
+- "-b" -> Activate backwards compatibility
 
 ---
 

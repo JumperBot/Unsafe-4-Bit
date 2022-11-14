@@ -64,6 +64,12 @@ Try *redesigining* this README!
 
 *Submit* an [issue](https://github.com/JumperBot/Unsafe-4-Bit/issues/new/choose) or *code* it yourself!
 
+---
+
+> Want to help in another way?
+
+***Star*** the repository!
+
 </div>
 
 ---
