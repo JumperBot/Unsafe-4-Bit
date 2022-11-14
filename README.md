@@ -32,7 +32,7 @@ This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
 Download the ***latest*** `.jar` file:
 
-https://github.com/JumperBot/Unsafe-4-Bit/blob/master/build/UFB.jar
+https://github.com/JumperBot/Unsafe-4-Bit/raw/master/build/UFB.jar
 
 Or clone the repository and get continous updates:
 
