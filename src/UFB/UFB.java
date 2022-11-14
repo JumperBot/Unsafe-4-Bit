@@ -27,7 +27,7 @@ class UFB{
 	 * MINOR CHANGES should give new commands/major features.
 	 * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
 	**/
-	final static String version_tag="v1.2.1";
+	final static String version_tag="v1.3.0";
 	//----------------------------------------------------------------------//
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
