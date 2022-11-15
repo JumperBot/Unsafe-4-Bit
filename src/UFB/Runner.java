@@ -133,16 +133,6 @@ class Runner{
         if(memInd[ind]!=0)System.out.printf("\u001B[91mMemory Leak At Index: %d\u001B[0m\n", ind);
       }
 		}
-    System.out.println(convertUnicode("\\u65"));
-    System.out.println(convertUnicode("\\u065"));
-    System.out.println(convertUnicode("\\u0065"));
-    System.out.println(convertUnicode("\\u00065"));
-    System.out.println(convertUnicode("\\u000065"));
-    System.out.println(convertUnicode("\\u0000065"));
-    System.out.println(convertUnicode("\\u00000065"));
-    System.out.println(convertUnicode("\\u000000065"));
-    System.out.println(convertUnicode("\\u0000000065"));
-    // This can go on forever... Literally.
 	}
 	private void runCommand(final int com)throws Exception{
 		switch(com){
@@ -409,23 +399,28 @@ class Runner{
 		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
 		// for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
 		//out.flush();
-    System.out.print(out.toString());
+    System.out.print(convertUnicode(out.toString()));
 	}
   final Pattern unicode=Pattern.compile("\\\\u\\d+");
   final Pattern zeroes=Pattern.compile("^0+");
+  final int minUnicodeHash="\\u0".hashCode();
   private String convertUnicode(final String in){
+    if(in.length()<2||in.hashCode()<minUnicodeHash)return in;
     String temp=in;
     int last=0;
+    final Matcher m=unicode.matcher(temp);
+    final Matcher m2=zeroes.matcher("");
     try{
-      for(Matcher m=unicode.matcher(temp);m.find(last);m=unicode.matcher(temp)){
+      for(;m.find(last);){
         temp=new StringBuilder(temp.substring(0, m.start()))
           .append((char)toLongAbsolute(
-            zeroes.matcher(
+            m2.reset(
               temp.substring(m.start()+2, m.end())
             ).replaceAll("").toCharArray()
           ))
           .append(temp.substring(m.end())).toString();
         last=m.end();
+        m.reset(temp);
       }
     }catch(final Exception e){}
     return temp;
