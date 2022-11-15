@@ -29,6 +29,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 class Runner{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
@@ -130,6 +133,16 @@ class Runner{
         if(memInd[ind]!=0)System.out.printf("\u001B[91mMemory Leak At Index: %d\u001B[0m\n", ind);
       }
 		}
+    System.out.println(convertUnicode("\\u65"));
+    System.out.println(convertUnicode("\\u065"));
+    System.out.println(convertUnicode("\\u0065"));
+    System.out.println(convertUnicode("\\u00065"));
+    System.out.println(convertUnicode("\\u000065"));
+    System.out.println(convertUnicode("\\u0000065"));
+    System.out.println(convertUnicode("\\u00000065"));
+    System.out.println(convertUnicode("\\u000000065"));
+    System.out.println(convertUnicode("\\u0000000065"));
+    // This can go on forever... Literally.
 	}
 	private void runCommand(final int com)throws Exception{
 		switch(com){
@@ -308,6 +321,15 @@ class Runner{
 			return result/10;
 		}
 	}
+	private long toLongAbsolute(final char[] arr){
+		// BeCoz Long#parseLong() is slow and try-catch is expensive.
+    long result=0;
+    for(final char c:arr){
+      result+=c-48;
+      result*=10;
+    }
+    return result/10;
+	}
 	private void math(final int op){
 		final int ind1=next(8);
     final int ind2=next(8);
@@ -378,14 +400,36 @@ class Runner{
 		}
 	}
 
-	final PrintWriter out=new PrintWriter(new BufferedWriter(
-		new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "UTF-8"), 512
-	));
+	// final PrintWriter out=new PrintWriter(new BufferedWriter(
+	// 	new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "UTF-8"), 512
+	// ));
 	private void print(){
 		final int argCount=next(8);
-		for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
-		out.flush();
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+		// for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
+		//out.flush();
+    System.out.print(out.toString());
 	}
+  final Pattern unicode=Pattern.compile("\\\\u\\d+");
+  final Pattern zeroes=Pattern.compile("^0+");
+  private String convertUnicode(final String in){
+    String temp=in;
+    int last=0;
+    try{
+      for(Matcher m=unicode.matcher(temp);m.find(last);m=unicode.matcher(temp)){
+        temp=new StringBuilder(temp.substring(0, m.start()))
+          .append((char)toLongAbsolute(
+            zeroes.matcher(
+              temp.substring(m.start()+2, m.end())
+            ).replaceAll("").toCharArray()
+          ))
+          .append(temp.substring(m.end())).toString();
+        last=m.end();
+      }
+    }catch(final Exception e){}
+    return temp;
+  }
 
 	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 	private void read()throws Exception{
