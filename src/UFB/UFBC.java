@@ -72,70 +72,58 @@ class UFBC{
 		boolean cancelOptimization=false;
 		for(final String arrTemp:arr){
 			final String[] temp=divider.split(arrTemp);
-			if(temp.length<2&&temp.length>0&&!temp[0].equals("nop"))
-				warnings.append("Warning: |\n")
-								.append("    Command: |\n")
-								.append("        \"")
-								.append(temp[0])
-								.append("\" Will Be Ignored For It Has No Arguments: |\n")
-								.append("            ")
-								.append(lineGen(temp));
-			else{
+			if(temp.length<2&&temp.length>0&&!temp[0].equals("nop")){
+        if(temp[0].equals("\n"))
+          warnings.append("Warning: |\n")
+                  .append("    Command: |\n")
+                  .append("        \"")
+                  .append(temp[0])
+                  .append("\" Will Be Ignored For It Has No Arguments: |\n")
+                  .append("            ")
+                  .append(lineGen(temp));
+			}else{
 				boolean isCommand=true;
-				switch(temp[0]){
-					case "trim":
-						checkLength(temp, 3);
-						break;
-					case "nvar":
-						if(checkLength(temp, 2))break;
-						checkIfMemSafe(temp, temp[1]);
-						break;
-					case "read":
-						if(checkLength(temp, 2))break;
-						checkIfMemSafe(temp, temp[1]);
-						cancelOptimization=true;
-						break;
-					case "jm":
-					case "jl":
-					case "je":
-					case "jne":
-						if(checkLength(temp, 4))break;
-					case "add":
-					case "sub":
-					case "mul":
-					case "div":
-					case "mod":
-					case "rmod":
-						if(!temp[0].startsWith("j")){
-							if(checkLength(temp, 3))break;
-							checkIfMemSafe(temp, temp[1]);
-						}
-						for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
-						break;
-					case "wvar":
-					case "print":
-						if(temp.length>Byte.MAX_VALUE-1){
-							error(
-								temp, "Command", temp[0],
-								"Has Too Many Arguments"
-							);
-							break;
-						}
-						if(temp[0].startsWith("w"))checkIfMemSafe(temp, temp[1]);
-						for(byte i=2;i<temp.length;i++)checkIfMem(temp, temp[i]);
-						break;
-					case "nop":
-						checkLength(temp, 1);
-						break;
-					default:
-						error(
-							temp, "Command", temp[0],
-							"Does Not Exist"
-						);
-						isCommand=false;
-						break;
+        if(temp[0].equals("trim"))
+          checkLength(temp, 3);
+        else if(temp[0].equals("nvar")){
+          if(!checkLength(temp, 2))
+            checkIfMemSafe(temp, temp[1]);
+        }else if(temp[0].equals("read")){
+          if(!checkLength(temp, 2)){
+            checkIfMemSafe(temp, temp[1]);
+            cancelOptimization=true;
+          }
+        }else if(temp[0].matches("j(m|l|e|ne)")){
+          if(!checkLength(temp, 4))
+            for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
+        }else if(temp[0].matches("add|sub|mul|div|r*mod")){
+          if(!checkLength(temp, 3)){
+            checkIfMemSafe(temp, temp[1]);
+            for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
+          }
+        }else if(temp[0].matches("wvar|print")){
+          if(temp.length>Byte.MAX_VALUE-1)
+            error(
+              temp, "Command", temp[0],
+              "Has Too Many Arguments"
+            );
+          else{
+						if(temp[0].startsWith("w"))
+              checkIfMemSafe(temp, temp[1]);
+						for(byte i=2;i<temp.length;i++)
+              checkIfMem(temp, temp[i]);
+          }
+        }else if(temp[0].equals("nop")) // One day I'll regret this.
+          checkLength(temp, 1);
+        else{
+          error(
+            temp, "Command", temp[0],
+            "Does Not Exist"
+          );
+          isCommand=false;
 				}
-				if(!temp[0].equals("nop")&&isCommand)checkIfMem(temp, temp[1]);
+				if(!temp[0].equals("nop")&&isCommand)
+          checkIfMem(temp, temp[1]);
 				list.add(temp);
 			}
 		}
