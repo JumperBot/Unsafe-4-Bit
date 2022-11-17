@@ -46,8 +46,8 @@ class UFBC{
 	final static Pattern comment=Pattern.compile("//.*\n*");
 	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 	final static StringBuilder errors=new StringBuilder();
-  public UFBC(final String fileName)throws Exception{
-		compile(fileName, true);
+  public UFBC(final String fileName, final boolean recompile)throws Exception{
+		compile(fileName, recompile);
 	}
 	public static void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();

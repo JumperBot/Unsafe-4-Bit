@@ -91,7 +91,7 @@ class UFB{
         System.out.println("Remove the compilation flag to run the compiled program.");
         return;
       }
-      new UFBC(fileName);
+      new UFBC(fileName, !flagManager.isLongFlagActivated("unoptimized"));
       return;
     }
     if(fileName.endsWith(".ufb")){

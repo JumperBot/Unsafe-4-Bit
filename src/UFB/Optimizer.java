@@ -276,7 +276,7 @@ class Optimizer{
 		return -1;
 	}
 	private double toNum(final char[] arr, final int ind){
-    if(aKnownNonNum[ind])return new String(arr).hashCode();
+    if(aKnownNonNum[ind])return hash(arr);
 		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			final double[] result=new double[2];
@@ -284,7 +284,7 @@ class Optimizer{
 				final int num=arr[i]-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[0]+=num;
 				result[0]*=10;
@@ -292,7 +292,7 @@ class Optimizer{
 				final int num2=arr[i2]-48;
 				if(num2<0||num2>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[1]+=num2;
 				result[1]/=10;
@@ -304,7 +304,8 @@ class Optimizer{
 				final int num=c-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
+          // return new String(arr).hashCode();
         }
 				result+=num;
 				result*=10;
@@ -312,6 +313,14 @@ class Optimizer{
 			return result/10;
 		}
 	}
+  // A rip-off of String#hashCode();
+  // It just does too much, had to rewrite it.
+  private long hash(final char[] arr){
+    int hash=0;
+    for(int i=0;i<arr.length;i++)
+      hash=31*hash+arr[i];
+    return hash;
+  }
 	private void math(final int op){
 		final int ind1=next(8);
     final int ind2=next(8);

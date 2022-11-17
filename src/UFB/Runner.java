@@ -275,7 +275,7 @@ class Runner{
 		return -1;
 	}
 	private double toNum(final char[] arr, final int ind){
-    if(aKnownNonNum[ind])return new String(arr).hashCode();
+    if(aKnownNonNum[ind])return hash(arr);
 		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			final double[] result=new double[2];
@@ -283,7 +283,7 @@ class Runner{
 				final int num=arr[i]-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[0]+=num;
 				result[0]*=10;
@@ -291,7 +291,7 @@ class Runner{
 				final int num2=arr[i2]-48;
 				if(num2<0||num2>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[1]+=num2;
 				result[1]/=10;
@@ -303,7 +303,8 @@ class Runner{
 				final int num=c-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
+          // return new String(arr).hashCode();
         }
 				result+=num;
 				result*=10;
@@ -311,6 +312,14 @@ class Runner{
 			return result/10;
 		}
 	}
+  // A rip-off of String#hashCode();
+  // It just does too much, had to rewrite it.
+  private long hash(final char[] arr){
+    int hash=0;
+    for(int i=0;i<arr.length;i++)
+      hash=31*hash+arr[i];
+    return hash;
+  }
 	private long toLongAbsolute(final char[] arr){
 		// BeCoz Long#parseLong() is slow and try-catch is expensive.
     long result=0;

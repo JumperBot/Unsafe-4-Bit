@@ -24,16 +24,37 @@ import java.util.regex.Pattern;
 
 class FlagManager{
   final String flagString="[pnmvhclb]";
+  final String[] longFlagsArr={
+    "unoptimized"
+  };
   final boolean[] isActivated=new boolean[flagString.length()-2];
+  final boolean[] isLongActivated=new boolean[longFlagsArr.length];
   final String file;
   final Pattern flags=Pattern.compile(flagString);
+  final Pattern longFlags=Pattern.compile(
+    Arrays.toString(longFlagsArr).substring(1)
+                                 .replaceAll("\\]$", "")
+                                 .replace(", ", "|")
+  );
   final Pattern repeats=Pattern.compile("(\\w)\\1+");
   public FlagManager(final String[]a){
     String fileName="";
 		for(final String s:a){
 			final String arg=s.trim();
 			if(arg.endsWith(".ufbb")||arg.endsWith(".ufb"))fileName=arg;
-			else if(arg.startsWith("-")){
+      else if(arg.startsWith("--")){
+        final String arg2=arg.replaceAll("^-+", "");
+        if(longFlags.matcher(arg2).matches()){
+          for(int i=0;i<longFlagsArr.length;i++)
+            if(longFlagsArr[i].equals(arg2))
+              isLongActivated[i]=true;
+        }else
+          System.out.printf(
+            "Unrecognized flags found: %s\n%s\n\n",
+            arg2,
+            "Continuing anyway..."
+          );
+      }else if(arg.startsWith("-")){
         final String str=repeats.matcher(arg.replace("-", "")).replaceAll("$1");
         final String shouldBeEmpty=flags.matcher(str).replaceAll("");
         if(shouldBeEmpty.length()!=0){
@@ -62,6 +83,12 @@ class FlagManager{
     for(int i=0;i<array.length-1;i++)
       if(array[i]==c)
         return isActivated[i];
+    return false;
+  }
+  public boolean isLongFlagActivated(final String s){
+    for(int i=0;i<longFlagsArr.length;i++)
+      if(longFlagsArr[i].equals(s))
+        return isLongActivated[i];
     return false;
   }
   public String getFileName(){
