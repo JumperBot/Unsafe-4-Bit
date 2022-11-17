@@ -69,6 +69,9 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<String[]> list=new ArrayList<>();
+    final Pattern jumps=Pattern.compile("j(m|l|e|ne)");
+    final Pattern maths=Pattern.compile("add|sub|mul|div|r*mod");
+    final Pattern pwvar=Pattern.compile("wvar|print");
 		boolean cancelOptimization=false;
 		for(final String arrTemp:arr){
 			final String[] temp=divider.split(arrTemp);
@@ -93,15 +96,15 @@ class UFBC{
             checkIfMemSafe(temp, temp[1]);
             cancelOptimization=true;
           }
-        }else if(temp[0].matches("j(m|l|e|ne)")){
+        }else if(jumps.matcher(temp[0]).matches()){
           if(!checkLength(temp, 4))
             for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
-        }else if(temp[0].matches("add|sub|mul|div|r*mod")){
+        }else if(maths.matcher(temp[0]).matches()){
           if(!checkLength(temp, 3)){
             checkIfMemSafe(temp, temp[1]);
             for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
           }
-        }else if(temp[0].matches("wvar|print")){
+        }else if(pwvar.matcher(temp[0]).matches()){
           if(temp.length>Byte.MAX_VALUE-1)
             error(
               temp, "Command", temp[0],
@@ -129,16 +132,12 @@ class UFBC{
 		}
 		final String ANSI_RESET="\u001B[0m";
     if(warnings.length()!=0)
-      System.out.print(
-        String.format("%s%s%s%s",
-          ANSI_RESET, "\u001B[93m", warnings.toString(), ANSI_RESET
-        )
+      System.out.printf("%s%s%s%s\n",
+        ANSI_RESET, "\u001B[93m", warnings.toString(), ANSI_RESET
       );
 		if(errors.length()!=0){
-			System.out.print(
-				String.format("%s%s%s%s",
-					ANSI_RESET, "\u001B[91m", errors.toString(), ANSI_RESET
-				)
+      System.out.printf("%s%s%s%s\n",
+        ANSI_RESET, "\u001B[91m", errors.toString(), ANSI_RESET
 			);
 			return;
 		}
