@@ -104,7 +104,8 @@ class UFB{
       flagManager.isFlagActivated('p'),
       flagManager.isFlagActivated('n'),
       flagManager.isFlagActivated('m'),
-      flagManager.isFlagActivated('b')
+      flagManager.isFlagActivated('b'),
+      false
     );
 	}
 }

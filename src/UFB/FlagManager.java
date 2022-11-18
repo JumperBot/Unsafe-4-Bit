@@ -30,20 +30,21 @@ class FlagManager{
   final boolean[] isActivated=new boolean[flagString.length()-2];
   final boolean[] isLongActivated=new boolean[longFlagsArr.length];
   final String file;
-  final Pattern flags=Pattern.compile(flagString);
-  final Pattern longFlags=Pattern.compile(
-    Arrays.toString(longFlagsArr).substring(1)
-                                 .replaceAll("\\]$", "")
-                                 .replace(", ", "|")
-  );
-  final Pattern repeats=Pattern.compile("(\\w)\\1+");
   public FlagManager(final String[]a){
+    final Pattern flags=Pattern.compile(flagString);
+    final Pattern longFlags=Pattern.compile(
+      Arrays.toString(longFlagsArr).substring(1)
+                                   .replaceAll("\\]$", "")
+                                   .replace(", ", "|")
+    );
+    final Pattern repeats=Pattern.compile("(\\w)\\1+");
+    final Pattern doubleHyphens=Pattern.compile("^-+");
     String fileName="";
 		for(final String s:a){
 			final String arg=s.trim();
 			if(arg.endsWith(".ufbb")||arg.endsWith(".ufb"))fileName=arg;
       else if(arg.startsWith("--")){
-        final String arg2=arg.replaceAll("^-+", "");
+        final String arg2=doubleHyphens.matcher(arg).replaceAll("");
         if(longFlags.matcher(arg2).matches()){
           for(int i=0;i<longFlagsArr.length;i++)
             if(longFlagsArr[i].equals(arg2))

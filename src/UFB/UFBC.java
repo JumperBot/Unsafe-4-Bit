@@ -170,7 +170,7 @@ class UFBC{
 		}catch(final Exception e){
 			System.out.println(e.toString());
 		}
-		if(!cancelOptimization&&recompile)new Optimizer(outName);
+		if(!cancelOptimization&&recompile)new Runner(fileName, false, false, false, false, true);
 		if(cancelOptimization)System.out.println("Code cannot be optimized, but compilation is a success!");
 	}
 	private static void checkIfMem(final String[] temp, final String s){
