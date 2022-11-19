@@ -67,16 +67,16 @@ class Runner{
     this.backwardsCompat=backwardsCompat;
     this.optimize=optimize;
     if(fileName.length()!=0){
-      final File f=new File(fileName);
-      if(!f.exists()){
-        System.out.println("File Provided Does Not Exist...\nTerminating...");
-        System.exit(1);
-      }
-      buffer=new BufferedInputStream(new FileInputStream(f));
-      buffer.mark(Integer.MAX_VALUE);
-      size=(int)f.length();
-      lines=new int[size];
       if(optimize){
+        final File f=new File(fileName+"b");
+        if(!f.exists()){
+          System.out.println("File Provided Does Not Exist...\nTerminating...");
+          System.exit(1);
+        }
+        buffer=new BufferedInputStream(new FileInputStream(f));
+        buffer.mark(Integer.MAX_VALUE);
+        size=(int)f.length();
+        lines=new int[size];
         scan.close();
         try{
           runOptimized();
@@ -87,8 +87,7 @@ class Runner{
             writer.write(convertUnicode(newCommands.append("\nnvar 38").toString().trim().replaceAll("\n{2,}", "\n")));
           }
           UFBC.compile(newFileName, false);
-          //newGenCode.delete();
-          //new File(newFileName).delete();
+          newGenCode.delete();
           final File newCompiledFile=new File(newFileName+"b");
           newCompiledFile.renameTo(new File(fileName+"b"));
         }catch(final Exception e){
@@ -98,6 +97,15 @@ class Runner{
         }
         return;
       }
+      final File f=new File(fileName);
+      if(!f.exists()){
+        System.out.println("File Provided Does Not Exist...\nTerminating...");
+        System.exit(1);
+      }
+      buffer=new BufferedInputStream(new FileInputStream(f));
+      buffer.mark(Integer.MAX_VALUE);
+      size=(int)f.length();
+      lines=new int[size];
       try{
         if(performance){
           final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
