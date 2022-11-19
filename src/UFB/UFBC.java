@@ -141,36 +141,41 @@ class UFBC{
 		}
 		final String outName=fileName.substring(0, fileName.lastIndexOf("."))+".ufbb";
 		try{
-			final File outFile=new File(outName);
-			outFile.createNewFile();
-			try(final FileOutputStream stream=new FileOutputStream(outFile)){
-				for(int i=0;i<list.size();i++){
-					final String[] temp=list.get(i);
-					stream.write(getBin(temp[0]));
-					if(temp[0].equals("wvar")||temp[0].equals("print"))
-						stream.write(temp.length-1);
-					if(temp[0].startsWith("j")){
-						for(int j=1;j<temp.length-1;j++)
-							stream.write(Integer.parseInt(temp[j]));
-						final int line=Integer.parseInt(temp[temp.length-1]);
-						final String bin=manPadding(Integer.toBinaryString(line), 16);
-						final String bin1=bin.substring(0, 8);
-						if(!bin1.contains("0"))
-							stream.write(0);
-						else
-							stream.write(Integer.parseInt(bin1, 2));
-						stream.write(Integer.parseInt(bin.substring(8), 2));
-					}else
-						for(int j=1;j<temp.length;j++)
-							stream.write(Integer.parseInt(temp[j]));
-				}
-			}
+      writeToFile(outName, list);
 		}catch(final Exception e){
 			System.out.println(e.toString());
 		}
-		if(!cancelOptimization&&recompile)new Runner(fileName+"b", false, false, false, false).runOptimized();
-		if(cancelOptimization)System.out.println("Code cannot be optimized, but compilation is a success!");
+		if(cancelOptimization)
+      System.out.println("Code cannot be optimized, but compilation is a success!");
+    else if(recompile)
+      new Runner(outName, false, false, false, false).runOptimized();
 	}
+  private void writeToFile(final String outName, final ArrayList<String[]> list)throws Exception{
+    final File outFile=new File(outName);
+    outFile.createNewFile();
+    try(final FileOutputStream stream=new FileOutputStream(outFile)){
+      for(int i=0;i<list.size();i++){
+        final String[] temp=list.get(i);
+        stream.write(getBin(temp[0]));
+        if(temp[0].equals("wvar")||temp[0].equals("print"))
+          stream.write(temp.length-1);
+        if(temp[0].startsWith("j")){
+          for(int j=1;j<temp.length-1;j++)
+            stream.write(Integer.parseInt(temp[j]));
+          final int line=Integer.parseInt(temp[temp.length-1]);
+          final String bin=manPadding(Integer.toBinaryString(line), 16);
+          final String bin1=bin.substring(0, 8);
+          if(!bin1.contains("0"))
+            stream.write(0);
+          else
+            stream.write(Integer.parseInt(bin1, 2));
+          stream.write(Integer.parseInt(bin.substring(8), 2));
+        }else
+          for(int j=1;j<temp.length;j++)
+            stream.write(Integer.parseInt(temp[j]));
+      }
+    }
+  }
 	private void checkIfMem(final String[] temp, final String s){
 		try{
 			if(Long.parseLong(s)>255)
