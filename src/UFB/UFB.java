@@ -87,16 +87,22 @@ class UFB{
     }
     if(flagManager.isFlagActivated('c')){
       if(fileName.endsWith(".ufbb")){
-        System.out.println("Could not compile an already compiled source code.");
-        System.out.println("Remove the compilation flag to run the compiled program.");
+        System.out.printf(
+          "%s\n%s\n",
+          "Could not compile an already compiled source code.",
+          "Remove the compilation flag to run the compiled program."
+        );
         return;
       }
-      new UFBC(fileName, !flagManager.isLongFlagActivated("unoptimized"));
+      UFBC.compile(fileName, !flagManager.isLongFlagActivated("unoptimized"));
       return;
     }
     if(fileName.endsWith(".ufb")){
-      System.out.println("Could not run uncompiled source code.");
-      System.out.println("Add the compilation flag to compile the program.");
+      System.out.printf(
+        "%s\n%s\n",
+        "Could not run uncompiled source code.",
+        "Add the compilation flag to compile the program."
+      );
       return;
     }
     new Runner(
@@ -104,8 +110,7 @@ class UFB{
       flagManager.isFlagActivated('p'),
       flagManager.isFlagActivated('n'),
       flagManager.isFlagActivated('m'),
-      flagManager.isFlagActivated('b'),
-      false
-    );
+      flagManager.isFlagActivated('b')
+    ).run();
 	}
 }

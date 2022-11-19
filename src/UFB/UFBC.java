@@ -46,9 +46,6 @@ class UFBC{
 	final static Pattern comment=Pattern.compile("//.*\n*");
 	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 	final static StringBuilder errors=new StringBuilder();
-  public UFBC(final String fileName, final boolean recompile)throws Exception{
-		compile(fileName, recompile);
-	}
 	public static void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
@@ -170,7 +167,7 @@ class UFBC{
 		}catch(final Exception e){
 			System.out.println(e.toString());
 		}
-		if(!cancelOptimization&&recompile)new Runner(fileName, false, false, false, false, true);
+		if(!cancelOptimization&&recompile)new Runner(fileName+"b", false, false, false, false).runOptimized();
 		if(cancelOptimization)System.out.println("Code cannot be optimized, but compilation is a success!");
 	}
 	private static void checkIfMem(final String[] temp, final String s){
