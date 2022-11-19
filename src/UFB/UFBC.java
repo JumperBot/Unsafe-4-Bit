@@ -40,13 +40,14 @@ class UFBC{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
-	final static Pattern allowed=Pattern.compile("[^a-zA-Z0-9 \n-|,\t]");
-	final static Pattern divider=Pattern.compile("[-|, \t]+");
-	final static Pattern empties=Pattern.compile(" *\n+ *");
-	final static Pattern comment=Pattern.compile("//.*\n*");
-	final static Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
-	final static StringBuilder errors=new StringBuilder();
-	public static void compile(final String fileName, final boolean recompile)throws Exception{
+	final Pattern allowed=Pattern.compile("[^a-zA-Z0-9 \n-|,\t]");
+	final Pattern divider=Pattern.compile("[-|, \t]+");
+	final Pattern empties=Pattern.compile(" *\n+ *");
+	final Pattern comment=Pattern.compile("//.*\n*");
+	final Pattern morecom=Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
+	final StringBuilder errors=new StringBuilder();
+  public UFBC(){}
+	public void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
 			String temp;
@@ -102,7 +103,7 @@ class UFBC{
             for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
           }
         }else if(pwvar.matcher(temp[0]).matches()){
-          if(temp.length>Byte.MAX_VALUE-1)
+          if(temp.length>255)
             error(
               temp, "Command", temp[0],
               "Has Too Many Arguments"
@@ -170,7 +171,7 @@ class UFBC{
 		if(!cancelOptimization&&recompile)new Runner(fileName+"b", false, false, false, false).runOptimized();
 		if(cancelOptimization)System.out.println("Code cannot be optimized, but compilation is a success!");
 	}
-	private static void checkIfMem(final String[] temp, final String s){
+	private void checkIfMem(final String[] temp, final String s){
 		try{
 			if(Long.parseLong(s)>255)
 				error(
@@ -184,7 +185,7 @@ class UFBC{
 			);
 		}
 	}
-	private static void checkIfMemSafe(final String[] temp, final String s){
+	private void checkIfMemSafe(final String[] temp, final String s){
 		try{
 			if(Long.parseLong(s)<38)
 				error(
@@ -199,7 +200,7 @@ class UFBC{
 		}
 	}
 	// false if error is not thrown. Misleading eh?
-	private static boolean checkLength(final String[] temp, final int length){
+	private boolean checkLength(final String[] temp, final int length){
 		if(temp.length!=length){
 			final String num=(length<1)?"Zero":(length==1)?"One":(length==2)?"Two":"Three";
 			error(
@@ -210,22 +211,22 @@ class UFBC{
 		}
 		return false;
 	}
-	private static String lineGen(final String[]temp){
+	private String lineGen(final String[]temp){
 		return Arrays.toString(temp).substring(1).replace(", ", " ").replace("]", "\n\n");
 	}
-	private static void error(final String[] temp, final String... in){
+	private void error(final String[] temp, final String... in){
 		errors.append("Error: |\n")
 					.append(String.format("    %s: |\n", in[0]))
 					.append(String.format("        \"%s\" %s: |\n", in[1], in[2]))
 					.append(String.format("            %s", lineGen(temp)));
 	}
-	private static String manPadding(final String str, final int i){
+	private String manPadding(final String str, final int i){
     final StringBuilder reverse=new StringBuilder(str).reverse();
     while(reverse.length()<i)reverse.append("0");
     while(reverse.length()>i)reverse.delete(0, 1);
     return reverse.reverse().toString();
   }
-	final static HashMap<String, Integer> binaryMap=new HashMap<>(){{
+	final HashMap<String, Integer> binaryMap=new HashMap<>(){{
 		put("wvar" , 0 );
 		put("nvar" , 1 );
 		put("trim" , 2 );
@@ -243,7 +244,7 @@ class UFBC{
 		put("print", 14);
 		put("read" , 15);
 	}};
-	private static int getBin(final String com){
+	private int getBin(final String com){
 		return binaryMap.get(com.trim());
 	}
 }

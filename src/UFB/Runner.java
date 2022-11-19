@@ -505,7 +505,7 @@ class Runner{
       try(final FileWriter writer=new FileWriter(newGenCode)){
         writer.write(convertUnicode(newCommands.append("\nnvar 38").toString().trim().replaceAll("\n{2,}", "\n")));
       }
-      UFBC.compile(newFileName, false);
+      new UFBC().compile(newFileName, false);
       newGenCode.delete();
       new File(newFileName+"b").renameTo(new File(fileName));
     }catch(final Exception e){
@@ -575,7 +575,7 @@ class Runner{
 		final int argCount=next(8);
 		for(int i=0;i<argCount;i++){
 			printProxy.append(rvar(next(8)));
-			if(printProxy.length()>Byte.MAX_VALUE-3)addToCommands();
+			if(printProxy.length()>254)addToCommands();
 		}
 	}
 }
