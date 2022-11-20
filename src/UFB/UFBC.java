@@ -83,32 +83,16 @@ class UFBC{
 		for(final String arrTemp:arr){
       final String[] realTemp=divider.split(arrTemp);
       final ArrayList<String> tempList=new ArrayList<>();
-      boolean startString=false;
-      System.out.println(Arrays.toString(realTemp));
       for(String s:realTemp){
-        if(s.startsWith("\"")){
-          startString=true;
-          for(final String s2:convertToMem(s.substring(1)))
+        if(s.startsWith("\"")&&s.endsWith("\""))
+          for(final String s2:convertToMem(s.substring(1, s.length()-1)))
             tempList.add(s2);
-          if(s.endsWith("\""))
-            startString=false;
-          else
-            tempList.add("0");
-        }else if(s.endsWith("\"")){
-          startString=false;
-          for(final String s2:convertToMem(s.substring(0, s.length()-1)))
-            tempList.add(s2);
-        }else if(startString){
-          for(final String s2:convertToMem(s))
-            tempList.add(s2);
-          tempList.add("0");
-        }else{
+        else
           tempList.add(s);
-        }
       }
       final String[] temp=tempList.toArray(new String[tempList.size()]);
 			if(temp.length<2&&temp.length>0&&!temp[0].equalsIgnoreCase("nop")){
-        if(!temp[0].equals("\n"))
+        if(!(temp[0].equals("\n")||temp[0].trim().isEmpty()))
           warnings.append("Warning: |\n")
                   .append("    Command: |\n")
                   .append("        \"")
@@ -130,14 +114,14 @@ class UFBC{
           }
         }else if(jumps.matcher(temp[0]).matches()){
           if(!checkLength(temp, 4))
-            for(int i=1;i<3;i++)checkIfMem(temp, temp[i]);
+            for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
         }else if(maths.matcher(temp[0]).matches()){
           if(!checkLength(temp, 3)){
             checkIfMemSafe(temp, temp[1]);
-            for(int i=1;i<3;i++)checkIfMem(temp, temp[i]);
+            for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
           }
         }else if(pwvar.matcher(temp[0]).matches()){
-          if(temp.length>255)
+          if(temp.length>200)
             error(
               realTemp, "Command", temp[0],
               "Has Too Many Arguments",
@@ -146,7 +130,7 @@ class UFBC{
           else{
 						if(temp[0].startsWith("w"))
               checkIfMemSafe(temp, temp[1]);
-						for(int i=2;i<temp.length;i++)
+						for(short i=2;i<temp.length;i++)
               checkIfMem(temp, temp[i]);
           }
         }else if(temp[0].equalsIgnoreCase("nop")) // One day I'll regret this.
@@ -234,7 +218,6 @@ class UFBC{
 		put('\n', 37);
   }};
   private void writeToFile(final String outName, final ArrayList<String[]> list)throws Exception{
-    System.out.println(Arrays.deepToString(list.toArray()));
     final File outFile=new File(outName);
     outFile.createNewFile();
     try(final FileOutputStream stream=new FileOutputStream(outFile)){
@@ -244,7 +227,7 @@ class UFBC{
         if(temp[0].equalsIgnoreCase("wvar")||temp[0].equalsIgnoreCase("print"))
           stream.write(temp.length-1);
         if(temp[0].startsWith("j")){
-          for(int j=1;j<temp.length-1;j++)
+          for(short j=1;j<temp.length-1;j++)
             stream.write(Integer.parseInt(temp[j]));
           final int line=Integer.parseInt(temp[temp.length-1]);
           final String bin=manPadding(Integer.toBinaryString(line), 16);
@@ -255,7 +238,7 @@ class UFBC{
             stream.write(Integer.parseInt(bin1, 2));
           stream.write(Integer.parseInt(bin.substring(8), 2));
         }else
-          for(int j=1;j<temp.length;j++)
+          for(short j=1;j<temp.length;j++)
             stream.write(Integer.parseInt(temp[j]));
       }
     }
@@ -346,7 +329,7 @@ class UFBC{
       "%"+i+"s", str
     ).replace(" ", "0");
   }
-	final HashMap<String, Integer> binaryMap=new HashMap<>(){{
+	final HashMap<String, Short> binaryMap=new HashMap<>(){{
 		final String[] commands={
       "wvar", "nvar", "trim",
       "add", "sub", "mul", "div", "mod", "rmod",
@@ -354,11 +337,11 @@ class UFBC{
       "jm", "jl", "je", "jne",
       "print", "read"
     };
-    for(int i=0;i<commands.length;i++){
+    for(short i=0;i<commands.length;i++){
       put(commands[i], i);
     }
 	}};
 	private int getBin(final String com){
-		return binaryMap.get(com.trim());
+		return binaryMap.get(com);
 	}
 }

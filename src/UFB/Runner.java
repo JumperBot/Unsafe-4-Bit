@@ -442,7 +442,8 @@ class Runner{
     write(0, ind, false, scan.readLine().toCharArray());
 	}
 
-  public void runOptimized()throws Exception{scan.close();
+  public void runOptimized()throws Exception{
+    scan.close();
     try{
       scan.close();
       final long start=System.currentTimeMillis();
@@ -484,7 +485,15 @@ class Runner{
           case 14:
             printOptimizer();
             break;
-          // Read not supported for optimization.
+          case 15:
+            // Read not supported for optimization.
+            break;
+          default:
+            System.out.printf(
+              "\n\u001B[91mCommand Index: %d Is Not Recognized By The Optimizer...\n%s\u001B[0m\n",
+              com, "Terminating..."
+            );
+            throw new Exception("Unsupported Command Lol");
         }
       }
       if(printProxy.length()!=0)addToCommands();
@@ -499,8 +508,10 @@ class Runner{
       new File(newFileName+"b").renameTo(new File(fileName));
     }catch(final Exception e){
       buffer.close();
-      if(!e.toString().contains("Code cannot be optimized"))throw new RuntimeException(e);
+      if(!(e.toString().contains("Code cannot be optimized")||e.toString().contains("Unsupported Command Lol")))
+        throw new RuntimeException(e);
       else System.out.println("Code cannot be optimized, but compilation is a success!");
+      //System.out.println(byteInd); // For debugging only!
     }
     return;
   }
@@ -564,7 +575,7 @@ class Runner{
 		final int argCount=next(8);
 		for(int i=0;i<argCount;i++){
 			printProxy.append(rvar(next(8)));
-			if(printProxy.length()>254)addToCommands();
+			if(printProxy.length()>200)addToCommands();
 		}
 	}
 }
