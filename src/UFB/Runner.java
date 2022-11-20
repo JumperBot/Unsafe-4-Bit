@@ -419,28 +419,17 @@ class Runner{
 		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
     System.out.print(convertUnicode(out.toString()));
 	}
-  final Pattern unicode=Pattern.compile("(\\\\|\u0000)u\\d+");
-  final Pattern zeroes=Pattern.compile("^0+");
-  final long minUnicodeHash=hash(new char[]{
-    '\u0000', 'u', '0'
-  });
+  final Pattern unicode=Pattern.compile("(uu|UU)(\\d{1,4})");
   private String convertUnicode(final String in){
-    if(in.length()<2||hash(in.toCharArray())<minUnicodeHash)return in;
+    if(in.length()<2)return in;
     String temp=in;
-    int last=0;
-    final Matcher m=unicode.matcher(temp);
-    final Matcher m2=zeroes.matcher("");
     try{
-      for(;m.find(last);){
+      for(final Matcher m=unicode.matcher(temp);m.find();m.reset(temp)){
         temp=new StringBuilder(temp.substring(0, m.start()))
-          .append((char)toLongAbsolute(
-            m2.reset(
-              temp.substring(m.start()+2, m.end())
-            ).replaceAll("").toCharArray()
-          ))
-          .append(temp.substring(m.end())).toString();
-        last=m.end();
-        m.reset(temp);
+        .append((char)toLongAbsolute(
+          temp.substring(m.start()+2, m.end()).toCharArray()
+        ))
+        .append(temp.substring(m.end())).toString();
       }
     }catch(final Exception e){}
     return temp;
