@@ -572,10 +572,11 @@ class Runner{
 	}
 
 	private void printOptimizer(){
+    if(convertToMemory(printProxy.toString()).length()>200)addToCommands();
 		final int argCount=next(8);
 		for(int i=0;i<argCount;i++){
 			printProxy.append(rvar(next(8)));
-			if(printProxy.length()>200)addToCommands();
-		}
-	}
+      if(convertToMemory(printProxy.toString()).length()>254)addToCommands();
+    }
+  }
 }

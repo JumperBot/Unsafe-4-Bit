@@ -121,7 +121,7 @@ class UFBC{
             for(byte i=1;i<3;i++)checkIfMem(temp, temp[i]);
           }
         }else if(pwvar.matcher(temp[0]).matches()){
-          if(temp.length>200)
+          if(temp.length>256)
             error(
               realTemp, "Command", temp[0],
               "Has Too Many Arguments",

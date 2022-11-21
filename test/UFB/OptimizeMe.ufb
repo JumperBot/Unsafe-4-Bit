@@ -1,3 +1,15 @@
+print   "Hello "
+print   "World"
+print   "!\n"
+print   "Programmed to work "
+print   "and "
+print   "not "
+print   "to "
+print   "feel\n"
+print   "\n"
+print   "I got LSS'd lol\n"
+
+/*
 print		8		5		12	12	15
 print		23	15	18	12	4
 print		28	37
@@ -8,3 +20,4 @@ print		20	15	0
 print		6		5		5		12	37
 print		37
 print		9		0		7		15	20	0		12	19	19	28	4		0		12	15	12	37
+*/
