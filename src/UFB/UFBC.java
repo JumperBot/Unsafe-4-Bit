@@ -60,7 +60,7 @@ class UFBC{
           input=new StringBuilder(input.substring(0, m2.start()))
                           .append("UU")
                           .append(manPadding(Integer.toString(m2.group().charAt(0)+0), 4))
-                          .append(input.substring(m2.end())).toString();
+                          .append(input.substring(m2.start()+1)).toString();
           m.reset(input).find();
           m2.reset(input);
         }
@@ -324,9 +324,10 @@ class UFBC{
     }catch(final Exception e){}
     return temp;
   }
-	private String manPadding(final String str, final int i){
+	public static String manPadding(final String str, final int i){
     return String.format(
-      "%"+i+"s", str
+      new StringBuilder("%").append(i).append("s").toString(),
+      str
     ).replace(" ", "0");
   }
 	final HashMap<String, Short> binaryMap=new HashMap<>(){{

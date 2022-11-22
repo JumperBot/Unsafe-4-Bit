@@ -208,7 +208,7 @@ class Runner{
 		write(next(8), next(8), true, emptyArr);
 	}
 	private void write(final int argCount, final int memIndex,
-										 final boolean fromMem, final char[] chars){
+  final boolean fromMem, final char[] chars){
     aKnownNonNum[memIndex]=false;
 		if(fromMem){
 			final char[] temp=rvar(memIndex);
@@ -220,6 +220,9 @@ class Runner{
 					if(curInd+temp.length-1>255){
 						System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
 						memInd[ind]=255;
+            final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+            System.arraycopy(converted, 0, mem, memIndex, converted.length);
+            memInd[memIndex]=memIndex+converted.length-1;
 						return;
 					}
 					System.arraycopy(temp, 0, mem, curInd, temp.length);
@@ -229,13 +232,19 @@ class Runner{
 					if(curInd+tempty.length-1>255){
 						System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
 						memInd[ind]=255;
+            final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+            System.arraycopy(converted, 0, mem, memIndex, converted.length);
+            memInd[memIndex]=memIndex+converted.length-1;
 						return;
 					}
 					System.arraycopy(tempty, 0, mem, curInd, tempty.length);
 					curInd+=tempty.length;
 				}
 			}
-			memInd[memIndex]=curInd-1;
+      memInd[memIndex]=curInd-1;
+      final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+      System.arraycopy(converted, 0, mem, memIndex, converted.length);
+			memInd[memIndex]=memIndex+converted.length-1;
 			return;
 		}
 		nvar(memIndex);
@@ -524,14 +533,23 @@ class Runner{
 		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nprint 255")
 		 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\nprint 255")
 	 	 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nprint 255")
- 		 .replace("\n ", "\n");
+ 		.replace("\n ", "\n");
 		printProxy.setLength(0);
 		if(!converted.startsWith("\n"))newCommands.append("print ");
 		newCommands.append(converted).append("\n");
 	}
 	private String convertToMemory(final String in){
 		final StringBuilder output=new StringBuilder();
-		for(final char c:in.toCharArray())output.append(memMap.get(c)).append(" ");
+		for(final char c:in.toCharArray()){
+      if(memMap.containsKey(c))
+        output.append(memMap.get(c)).append(" ");
+      else{
+        output.append(memMap.get('U')).append(" ");
+        output.append(memMap.get('U')).append(" ");
+        for(final char c2:UFBC.manPadding(Integer.toString(c+0), 4).toCharArray())
+          output.append(memMap.get(c2)).append(" ");
+      }
+    }
 		return output.toString().trim();
 	}
 	final HashMap<Character, Integer> memMap=new HashMap<>(){{
@@ -572,11 +590,19 @@ class Runner{
 	}
 
 	private void printOptimizer(){
-    if(convertToMemory(printProxy.toString()).length()>200)addToCommands();
+    int untilDump=0;
+    if(convertToMemory(printProxy.toString()).length()>249){
+      final int length=printProxy.length()-printProxy.toString().lastIndexOf("U");
+      if(length<5)
+        untilDump=5-length;
+      else
+        addToCommands();
+    }
 		final int argCount=next(8);
 		for(int i=0;i<argCount;i++){
 			printProxy.append(rvar(next(8)));
-      if(convertToMemory(printProxy.toString()).length()>254)addToCommands();
+      untilDump--;
+      if(untilDump==0&&convertToMemory(printProxy.toString()).length()>254)addToCommands();
     }
   }
 }
