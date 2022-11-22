@@ -92,7 +92,7 @@ and [compile](./src/README.md#UFBC) and [run](./src/README.md#UFB) the program!
 /*
 Write "Hello World" to memory index: 38
 */
-wvar  38  8  5  12  12  15  0  23  15  18  12  4
+wvar  38  "Hello World"
 // Print the variable residing in memory index: 38
 print 38
 /* Jump to command no. 0

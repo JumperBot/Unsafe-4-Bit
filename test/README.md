@@ -11,7 +11,7 @@ nop
 #### :pencil2: wvar (Write Variable) :arrow_down:
 ```python
 // Write the data "Hello World" into memory index 38
-wvar  38  8   5   12  12  15  0   23  15  18  12  4
+wvar  38  "Hello World"
 ```
 ---
 #### :lock: nvar (Null Variable) :arrow_down:
@@ -24,6 +24,7 @@ nvar  38
 #### :fire: trim (Trim Memory) :arrow_down:
 ```python
 // Trim data in memory index 38 ("Hello World") into "Hello"
+// In other words, trim it to only fill in 5 bytes
 trim  38  5
 ```
 ---
@@ -94,8 +95,6 @@ jne  1   2   0
 
 - `-|, \t` can divide between a command and its argument(s).
 
-- `a-zA-Z0-9 \n-|,\t` are the only characters allowed upon compilation.
-
 - All non-allowed characters are neglected by the compiler.
 
 - Only the compiler will stop you from writing to the `ROM`.
@@ -133,7 +132,7 @@ jne  1   2   0
 /*
 Write "Hello World" to memory index: 38
 */
-wvar  38  8  5  12  12  15  0  23  15  18  12  4
+wvar  38  "Hello World"
 // Print the variable residing in memory index: 38
 print 38
 /* Jump to command no. 0

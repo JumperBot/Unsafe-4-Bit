@@ -25,24 +25,46 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+
+import java.util.HashMap;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class Runner{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
   final boolean[] aKnownNonNum=new boolean[256];
+
 	final BufferedInputStream buffer;
+  final String fileName;
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
+
+  final boolean performance;
   final boolean nanoseconds;
   final boolean timeMethods;
   final boolean backwardsCompat;
-	public Runner(final String fileName, final boolean performance,
-                final boolean nanoseconds, final boolean timeMethods,
-                final boolean backwardsCompat)throws Exception{
+
+	public Runner(
+    final String fileName, final boolean performance,
+    final boolean nanoseconds, final boolean timeMethods,
+    final boolean backwardsCompat
+  )throws Exception{
+    final File f=new File(fileName);
+    if(!f.exists()){
+      System.out.println("File Provided Does Not Exist...\nTerminating...");
+      System.exit(1);
+    }
+    buffer=new BufferedInputStream(new FileInputStream(f));
+    buffer.mark(Integer.MAX_VALUE);
+    size=(int)f.length();
+    lines=new int[size];
 		mem[0]=' ';
     aKnownNonNum[0]=true;
 		for(int i=0;i<26;i++){
@@ -53,83 +75,68 @@ class Runner{
 		for(int i=0;i<10;i++)mem[i+27]=String.valueOf(i).charAt(0);
 		mem[37]='\n';
     for(int i=37;i<256;i++)aKnownNonNum[i]=true;
+    this.fileName=fileName;
+    this.performance=performance;
     this.nanoseconds=nanoseconds;
     this.timeMethods=timeMethods;
     this.backwardsCompat=backwardsCompat;
-    if(fileName.length()!=0){
-      final File f=new File(fileName);
-      if(!f.exists()){
-        System.out.println("File Provided Does Not Exist...\nTerminating...");
-        System.exit(1);
-      }
-      buffer=new BufferedInputStream(new FileInputStream(f));
-      buffer.mark(Integer.MAX_VALUE);
-      size=(int)f.length();
-      lines=new int[size];
-      try{
-        if(performance){
+  }
+
+	public void run()throws Exception{
+    final long runStart=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+    try{
+      if(timeMethods){
+        for(;byteInd<size;){
+          if(furthestLine>-1&&lines[furthestLine]<byteInd){
+            furthestLine++;
+            lines[furthestLine]=byteInd;
+          }else if(furthestLine<0){
+            furthestLine=0;
+            lines[0]=byteInd;
+          }
+          final int com=next(8);
           final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
-          run();
+          runCommand(com);
           final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
           System.out.printf(
-            "Program Took %d%s To Run.\n",
-            end-start, (!nanoseconds)?"ms":"ns"
+            "\n\u001B[93mCommand Index: %d Took %d%s To Run.\u001B[0m\n",
+            com, end-start, (!nanoseconds)?"ms":"ns"
           );
-        }else run();
-        buffer.close();
-        scan.close();
-      }catch(final Exception e){
-        buffer.close();
-        scan.close();
-        if(!e.toString().contains("Unsupported Command Lol"))
-          throw new RuntimeException(e);
-        else
-          System.exit(1);
+        }
+      }else{
+        for(;byteInd<size;){
+          if(furthestLine>-1&&lines[furthestLine]<byteInd){
+            furthestLine++;
+            lines[furthestLine]=byteInd;
+          }else if(furthestLine<0){
+            furthestLine=0;
+            lines[0]=byteInd;
+          }
+          runCommand(next(8));
+        }
       }
-      return;
+      for(int i=0;i<32;i++){
+        for(int ratio=0;ratio<8;ratio++){
+          final int ind=i+(ratio*32);
+          if(memInd[ind]!=0)System.out.printf("\u001B[91mMemory Leak At Index: %d\u001B[0m\n", ind);
+        }
+      }
+      final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
+      if(performance)
+        System.out.printf(
+          "Program Took %d%s To Run.\n",
+          end-runStart, (!nanoseconds)?"ms":"ns"
+        );
+      buffer.close();
+      scan.close();
+    }catch(final Exception e){
+      buffer.close();
+      scan.close();
+      if(!e.toString().contains("Unsupported Command Lol"))
+        throw new RuntimeException(e);
+      else
+        System.exit(1);
     }
-		buffer=null;
-		size=0;
-		lines=null;
-		scan.close();
-	}
-	private void run()throws Exception{
-		if(timeMethods){
-			for(;byteInd<size;){
-				if(furthestLine>-1&&lines[furthestLine]<byteInd){
-					furthestLine++;
-					lines[furthestLine]=byteInd;
-				}else if(furthestLine<0){
-					furthestLine=0;
-					lines[0]=byteInd;
-				}
-				final int com=next(8);
-				final long start=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
-				runCommand(com);
-				final long end=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
-				System.out.printf(
-					"\n\u001B[93mCommand Index: %d Took %d%s To Run.\u001B[0m\n",
-          com, end-start, (!nanoseconds)?"ms":"ns"
-				);
-			}
-		}else{
-			for(;byteInd<size;){
-				if(furthestLine>-1&&lines[furthestLine]<byteInd){
-					furthestLine++;
-					lines[furthestLine]=byteInd;
-				}else if(furthestLine<0){
-					furthestLine=0;
-					lines[0]=byteInd;
-				}
-				runCommand(next(8));
-			}
-		}
-		for(int i=0;i<32;i++){
-      for(int ratio=0;ratio<8;ratio++){
-        final int ind=i+(ratio*32);
-        if(memInd[ind]!=0)System.out.printf("\u001B[91mMemory Leak At Index: %d\u001B[0m\n", ind);
-      }
-		}
 	}
 	private void runCommand(final int com)throws Exception{
 		switch(com){
@@ -201,7 +208,7 @@ class Runner{
 		write(next(8), next(8), true, emptyArr);
 	}
 	private void write(final int argCount, final int memIndex,
-										 final boolean fromMem, final char[] chars){
+  final boolean fromMem, final char[] chars){
     aKnownNonNum[memIndex]=false;
 		if(fromMem){
 			final char[] temp=rvar(memIndex);
@@ -213,6 +220,9 @@ class Runner{
 					if(curInd+temp.length-1>255){
 						System.arraycopy(temp, 0, mem, curInd, 255-curInd+1);
 						memInd[ind]=255;
+            final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+            System.arraycopy(converted, 0, mem, memIndex, converted.length);
+            memInd[memIndex]=memIndex+converted.length-1;
 						return;
 					}
 					System.arraycopy(temp, 0, mem, curInd, temp.length);
@@ -222,13 +232,19 @@ class Runner{
 					if(curInd+tempty.length-1>255){
 						System.arraycopy(tempty, 0, mem, curInd, 255-curInd+1);
 						memInd[ind]=255;
+            final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+            System.arraycopy(converted, 0, mem, memIndex, converted.length);
+            memInd[memIndex]=memIndex+converted.length-1;
 						return;
 					}
 					System.arraycopy(tempty, 0, mem, curInd, tempty.length);
 					curInd+=tempty.length;
 				}
 			}
-			memInd[memIndex]=curInd-1;
+      memInd[memIndex]=curInd-1;
+      final char[] converted=convertUnicode(new String(rvar(memIndex))).toCharArray();
+      System.arraycopy(converted, 0, mem, memIndex, converted.length);
+			memInd[memIndex]=memIndex+converted.length-1;
 			return;
 		}
 		nvar(memIndex);
@@ -272,7 +288,7 @@ class Runner{
 		return -1;
 	}
 	private double toNum(final char[] arr, final int ind){
-    if(aKnownNonNum[ind])return new String(arr).hashCode();
+    if(aKnownNonNum[ind])return hash(arr);
 		final int decimalInd=findPeriod(arr);
 		if(decimalInd!=-1){
 			final double[] result=new double[2];
@@ -280,7 +296,7 @@ class Runner{
 				final int num=arr[i]-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[0]+=num;
 				result[0]*=10;
@@ -288,7 +304,7 @@ class Runner{
 				final int num2=arr[i2]-48;
 				if(num2<0||num2>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
         }
 				result[1]+=num2;
 				result[1]/=10;
@@ -300,13 +316,31 @@ class Runner{
 				final int num=c-48;
 				if(num<0||num>9){
           aKnownNonNum[ind]=true;
-          return new String(arr).hashCode();
+          return hash(arr);
+          // return new String(arr).hashCode();
         }
 				result+=num;
 				result*=10;
 			}
 			return result/10;
 		}
+	}
+  // A rip-off of String#hashCode();
+  // It just does too much, had to rewrite it.
+  private long hash(final char[] arr){
+    int hash=0;
+    for(int i=0;i<arr.length;i++)
+      hash=31*hash+arr[i];
+    return hash;
+  }
+	private long toLongAbsolute(final char[] arr){
+		// BeCoz Long#parseLong() is slow and try-catch is expensive.
+    long result=0;
+    for(final char c:arr){
+      result+=c-48;
+      result*=10;
+    }
+    return result/10;
 	}
 	private void math(final int op){
 		final int ind1=next(8);
@@ -378,14 +412,37 @@ class Runner{
 		}
 	}
 
-	final PrintWriter out=new PrintWriter(new BufferedWriter(
-		new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "UTF-8"), 512
-	));
+  // TODO: Stop people from removing this; historically important.
+	// final PrintWriter out=new PrintWriter(new BufferedWriter(
+	// 	new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "UTF-8"), 512
+	// ));
+	// private void print(){
+	// 	final int argCount=next(8);
+	// 	for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
+	// 	out.flush();
+	// }
+
 	private void print(){
 		final int argCount=next(8);
-		for(int i=0;i<argCount;i++)out.write(rvar(next(8)));
-		out.flush();
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+    System.out.print(convertUnicode(out.toString()));
 	}
+  final Pattern unicode=Pattern.compile("(uu|UU)(\\d{1,4})");
+  private String convertUnicode(final String in){
+    if(in.length()<2)return in;
+    String temp=in;
+    try{
+      for(final Matcher m=unicode.matcher(temp);m.find();m.reset(temp)){
+        temp=new StringBuilder(temp.substring(0, m.start()))
+        .append((char)toLongAbsolute(
+          temp.substring(m.start()+2, m.end()).toCharArray()
+        ))
+        .append(temp.substring(m.end())).toString();
+      }
+    }catch(final Exception e){}
+    return temp;
+  }
 
 	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
 	private void read()throws Exception{
@@ -393,4 +450,159 @@ class Runner{
 		System.out.print("=>");
     write(0, ind, false, scan.readLine().toCharArray());
 	}
+
+  public void runOptimized()throws Exception{
+    scan.close();
+    try{
+      scan.close();
+      final long start=System.currentTimeMillis();
+      for(;byteInd<size;){
+        if(System.currentTimeMillis()-start>5000){
+          System.out.println("Optimizer: \"Timeout!\"");
+          throw new Exception("Code cannot be optimized, but compilation is a success!");
+        }
+        if(furthestLine>-1&&lines[furthestLine]<byteInd){
+          furthestLine++;
+          lines[furthestLine]=byteInd;
+        }else if(furthestLine<0){
+          furthestLine=0;
+          lines[0]=byteInd;
+        }
+        final int com=next(8);
+        switch(com){
+          case 0:
+            wvar();
+            break;
+          case 1:
+            nvar(next(8));
+            break;
+          case 2:
+            trim();
+            break;
+          case 3: case 4: case 5: case 6: case 7: case 8:
+            math(com-3);
+            break;
+          case 9:
+            // Need to dump printProxy when called to preserve no-op.
+            if(printProxy.length()!=0)addToCommands();
+            newCommands.append("nop\n");
+            break;
+          case 10: case 11: case 12: case 13:
+            if(jumpOptimizer(com-10))
+              throw new Exception("Code cannot be optimized, but compilation is a success!");
+            break;
+          case 14:
+            printOptimizer();
+            break;
+          case 15:
+            // Read not supported for optimization.
+            break;
+          default:
+            System.out.printf(
+              "\n\u001B[91mCommand Index: %d Is Not Recognized By The Optimizer...\n%s\u001B[0m\n",
+              com, "Terminating..."
+            );
+            throw new Exception("Unsupported Command Lol");
+        }
+      }
+      if(printProxy.length()!=0)addToCommands();
+      buffer.close();
+      final String newFileName=fileName.substring(0, fileName.lastIndexOf("."))+".optimized.ufb";
+      final File newGenCode=new File(newFileName);
+      try(final FileWriter writer=new FileWriter(newGenCode)){
+        writer.write(convertUnicode(newCommands.append("\nnvar 38").toString().trim().replaceAll("\n{2,}", "\n")));
+      }
+      new UFBC().compile(newFileName, false);
+      newGenCode.delete();
+      new File(newFileName+"b").renameTo(new File(fileName));
+    }catch(final Exception e){
+      buffer.close();
+      if(!(e.toString().contains("Code cannot be optimized")||e.toString().contains("Unsupported Command Lol")))
+        throw new RuntimeException(e);
+      else System.out.println("Code cannot be optimized, but compilation is a success!");
+      //System.out.println(byteInd); // For debugging only!
+    }
+    return;
+  }
+
+	final StringBuilder printProxy=new StringBuilder();
+	final StringBuilder newCommands=new StringBuilder();
+	private void addToCommands(){
+		final String converted=convertToMemory(
+			printProxy.toString() // i == -255, - == -254, . == -253
+		).replace("-255", "\nwvar 38 27\ndiv 38 27\nprint 38\nprint 255")
+		 .replace("-254", "\nwvar 38 27\nsub 38 28\ntrim 38 1\nprint 38\nprint 255")
+	 	 .replace("-253", "\nwvar 38 28\ndiv 38 29\nprint 39\nprint 255")
+ 		.replace("\n ", "\n");
+		printProxy.setLength(0);
+		if(!converted.startsWith("\n"))newCommands.append("print ");
+		newCommands.append(converted).append("\n");
+	}
+	private String convertToMemory(final String in){
+		final StringBuilder output=new StringBuilder();
+		for(final char c:in.toCharArray()){
+      if(memMap.containsKey(c))
+        output.append(memMap.get(c)).append(" ");
+      else{
+        output.append(memMap.get('U')).append(" ");
+        output.append(memMap.get('U')).append(" ");
+        for(final char c2:UFBC.manPadding(Integer.toString(c+0), 4).toCharArray())
+          output.append(memMap.get(c2)).append(" ");
+      }
+    }
+		return output.toString().trim();
+	}
+	final HashMap<Character, Integer> memMap=new HashMap<>(){{
+		put(' ', 0); put('A', 1); put('B', 2); put('C', 3); put('D', 4);
+    put('E', 5); put('F', 6); put('G', 7); put('H', 8); put('I', 9);
+		put('J', 10); put('K', 11); put('L', 12); put('M', 13); put('N', 14);
+    put('O', 15); put('P', 16); put('Q', 17); put('R', 18); put('S', 19);
+    put('T', 20); put('U', 21); put('V', 22); put('W', 23); put('X', 24);
+    put('Y', 25); put('Z', 26);
+		put('0', 27); put('1', 28); put('2', 29); put('3', 30); put('4', 31);
+    put('5', 32); put('6', 33); put('7', 34); put('8', 35); put('9', 36);
+		put('\n', 37);
+		put('\u0000', 38);
+		//hack-characters
+		put('i', -255); put('-', -254); put('.', -253);
+	}};
+
+	final HashMap<Integer, Integer> jumpBackFrequency=new HashMap<Integer, Integer>();
+	private boolean jumpOptimizer(final int op){ // Returns true if optimization should stop.
+    final int ind1=next(8);
+    final int ind2=next(8);
+		final char[] arg1=rvar(ind1);
+		final char[] arg2=rvar(ind2);
+		final int com=next(16);
+		if(
+			(op==0&&toNum(arg1, ind1)>toNum(arg2, ind2))||
+			(op==1&&toNum(arg1, ind1)<toNum(arg2, ind2))||
+			(op==2&&new String(arg1).equals(new String(arg2)))||
+			(op==3&&!new String(arg1).equals(new String(arg2)))
+		){
+			if(com<furthestLine+1){
+				byteInd=lines[com];
+				jumpBackFrequency.put(byteInd, jumpBackFrequency.getOrDefault(byteInd, 0)+1);
+				if(jumpBackFrequency.get(byteInd)==10001)return true;
+			}else skip(com);
+		}
+		return false;
+	}
+
+	private void printOptimizer(){
+    int untilDump=0;
+    if(convertToMemory(printProxy.toString()).length()>249){
+      final int length=printProxy.length()-printProxy.toString().lastIndexOf("U");
+      if(length<5)
+        untilDump=5-length;
+      else
+        addToCommands();
+    }
+		final int argCount=next(8);
+		for(int i=0;i<argCount;i++){
+			printProxy.append(rvar(next(8)));
+      untilDump--;
+      if(untilDump==0&&convertToMemory(printProxy.toString()).length()>254)addToCommands();
+    }
+  }
 }

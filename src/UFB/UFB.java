@@ -19,22 +19,21 @@
 **/
 
 class UFB{
-	//----------------------------------------------------------------------//
-	/**TODO: ALWAYS CHANGE VERSION TAG.
-	 * DO NOT Change '1' in "1.*.*".
-	 * MINOR CHANGES should go in "1.MINOR.*".
-	 * PATCH CHANGES should go in "1.*.PATCH".
-	 * MINOR CHANGES should give new commands/major features.
-	 * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
-	**/
-	final static String version_tag="v1.3.0";
-	//----------------------------------------------------------------------//
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
     if(flagManager.isFlagActivated('v')){
+      //----------------------------------------------------------------------//
+      /**TODO: ALWAYS CHANGE SEMANTIC VERSION BEFORE RELEASING.
+       * DO NOT Change '1' in "1.*.*".
+       * MINOR CHANGES should go in "1.MINOR.*".
+       * PATCH CHANGES should go in "1.*.PATCH".
+       * MINOR CHANGES should give new commands/major features.
+       * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
+      **/
+      //----------------------------------------------------------------------//
       System.out.printf(
         "UFB version: %s (master)\n%s\n\n",
-        version_tag,
+        "v1.4.0",
         "Flag triggered, continuing anyway..."
       );
     }
@@ -87,16 +86,22 @@ class UFB{
     }
     if(flagManager.isFlagActivated('c')){
       if(fileName.endsWith(".ufbb")){
-        System.out.println("Could not compile an already compiled source code.");
-        System.out.println("Remove the compilation flag to run the compiled program.");
+        System.out.printf(
+          "%s\n%s\n",
+          "Could not compile an already compiled source code.",
+          "Remove the compilation flag to run the compiled program."
+        );
         return;
       }
-      new UFBC(fileName);
+      new UFBC().compile(fileName, !flagManager.isLongFlagActivated("unoptimized"));
       return;
     }
     if(fileName.endsWith(".ufb")){
-      System.out.println("Could not run uncompiled source code.");
-      System.out.println("Add the compilation flag to compile the program.");
+      System.out.printf(
+        "%s\n%s\n",
+        "Could not run uncompiled source code.",
+        "Add the compilation flag to compile the program."
+      );
       return;
     }
     new Runner(
@@ -105,6 +110,6 @@ class UFB{
       flagManager.isFlagActivated('n'),
       flagManager.isFlagActivated('m'),
       flagManager.isFlagActivated('b')
-    );
+    ).run();
 	}
 }

@@ -37,7 +37,7 @@ java -jar UFB.jar [ -flags ] [ file ]
 
 ---
 
-## Example
+## Examples
 
 ```shell
 java UFB -pnv
@@ -47,4 +47,5 @@ java UFB -nvp
 java UFB -pnhv
 java UFB -mn
 java UFB -c ../test/UFB/Main.ufb
+java UFB -b ../test/UFB/Main.ufbb
 ```
