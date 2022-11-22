@@ -33,7 +33,7 @@ class UFB{
       //----------------------------------------------------------------------//
       System.out.printf(
         "UFB version: %s (master)\n%s\n\n",
-        "v1.3.0",
+        "v1.4.0",
         "Flag triggered, continuing anyway..."
       );
     }
