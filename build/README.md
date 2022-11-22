@@ -30,10 +30,15 @@ java -jar UFB.jar [ -flags ] [ file ]
 - "-c" -> Compile one of the provided files
 - "-l" -> Display license notice (GPL v3)
 
+- "--unoptimized" -> Don't optimize when compiling
+
 ---
 
 (WARNING: NOT RECOMMENDED!):
-- "-b" -> Activate backwards compatibility
+- "-b" -> Activate backwards/forwards compatibility
+	- Ignore/Skip unrecognized command
+		- Only skips one byte
+		- "Might" be a major issue, for you
 
 ---
 
@@ -47,5 +52,6 @@ java UFB -nvp
 java UFB -pnhv
 java UFB -mn
 java UFB -c ../test/UFB/Main.ufb
+java UFB -c --unoptimized ../test/UFB/Main.ufb
 java UFB -b ../test/UFB/Main.ufbb
 ```
