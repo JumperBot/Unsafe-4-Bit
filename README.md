@@ -9,7 +9,7 @@
 
 [![Banner.png](./ShortenedBanner.png)](./ShortenedBanner.png)
 
-[![UFBDesc.apng](UFBDesc.apng)](UFBDesc.apng)
+[![UFBDesc.apng](./UFBDesc.apng)](./UFBDesc.apng)
 ---
 
 > Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built on top of the Java programming language.
@@ -18,7 +18,7 @@
 
 UFB reminds you of its ***lower-level counterparts*** as you manage your ***"RAM"***.
 
-The [256 bytes of memory](./test/README.md#memory) is divided into two parts: ROM and non-ROM.
+The [256 bytes of memory](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
 
 This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
@@ -78,9 +78,9 @@ Try *redesigining* this README!
 
 # :technologist: Tutorial :monocle_face:
 
-Write your first program full of [commands](./test/README.md#default-16), warnings and errors...
+Write your first program full of [commands](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#default-16), warnings and errors...
 
-and [compile](./src/README.md#UFBC) and [run](./src/README.md#UFB) the program!
+and [compile](https://github.com/JumperBot/Unsafe-4-Bit/wiki/The-Compiler) and [run](https://github.com/JumperBot/Unsafe-4-Bit/wiki/The-Interpreter) the program!
 
 </div>
 
