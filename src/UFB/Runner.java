@@ -32,9 +32,6 @@ import java.io.PrintWriter;
 
 import java.util.HashMap;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 class Runner{
 	final char[] mem=new char[256];
 	final int[] memInd=new int[256];
@@ -428,20 +425,28 @@ class Runner{
 		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
     System.out.print(convertUnicode(out.toString()));
 	}
-  final Pattern unicode=Pattern.compile("(uu|UU)(\\d{1,4})");
   private String convertUnicode(final String in){
-    if(in.length()<2)return in;
+    if(in.length()<6)return in;
     String temp=in;
-    try{
-      for(final Matcher m=unicode.matcher(temp);m.find();m.reset(temp)){
-        temp=new StringBuilder(temp.substring(0, m.start()))
-        .append((char)toLongAbsolute(
-          temp.substring(m.start()+2, m.end()).toCharArray()
-        ))
-        .append(temp.substring(m.end())).toString();
+    // Regex slow ._.
+    for(int i=0;i<temp.length()-6;i++){
+      if(temp.substring(i, i+2).toLowerCase().equals("uu")){
+        boolean confirmed=true;
+        for(int i2=i+2;i2<6;i2++)
+          if(!isDigit(temp.charAt(i2)))confirmed=false;
+        if(confirmed)
+          temp=new StringBuilder(temp.substring(0, i))
+            .append((char)toLongAbsolute(
+              temp.substring(i+2, i+6).toCharArray()
+            ))
+            .append(temp.substring(i+6)).toString();
       }
-    }catch(final Exception e){}
+    }
     return temp;
+  }
+  private boolean isDigit(final char c){
+    // BeCoz Character.isDigit has too much function overhead.
+    return (c>47&&c<58);
   }
 
 	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
