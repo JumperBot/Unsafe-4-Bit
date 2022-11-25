@@ -86,7 +86,9 @@ class Command{
         return new JumpCommand(comInd, line, realLine);
       case 14:
         return new PrintCommand(line, realLine);
-      case 1: case 15:
+      case 15:
+        cancelOptimization=true;
+      case 1:
         return new NeedsOneMemCommand(comInd, line, realLine);
       default:
         return null;

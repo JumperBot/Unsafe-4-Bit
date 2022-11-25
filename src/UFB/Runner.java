@@ -427,7 +427,7 @@ class Runner{
     for(int i=0;i<temp.length()-6;i++){
       if(temp.substring(i, i+2).toLowerCase().equals("uu")){
         boolean confirmed=true;
-        for(int i2=i+2;i2<6;i2++)
+        for(int i2=i+2;i2<i+6;i2++)
           if(!isDigit(temp.charAt(i2)))confirmed=false;
         if(confirmed)
           temp=new StringBuilder(temp.substring(0, i))
