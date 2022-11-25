@@ -61,7 +61,7 @@ class UFBC{
 			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
 		}
 		String input=inBuilder.toString();
-		final Pattern dividerInString=Pattern.compile("\".*([-|, \t]).*\"");
+		final Pattern dividerInString=Pattern.compile("\".*(?:[-|, \t]).*\"");
     try{
       for(final Matcher m=dividerInString.matcher(input);m.find();)
         for(final Matcher m2=divider.matcher(input);m2.find(m.start());){
@@ -84,7 +84,7 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<int[]> list=new ArrayList<>();
-    final Pattern jumps=Pattern.compile("j(m|l|e|ne)", Pattern.CASE_INSENSITIVE);
+    final Pattern jumps=Pattern.compile("j(?:m|l|e|ne)", Pattern.CASE_INSENSITIVE);
     final Pattern maths=Pattern.compile("add|sub|mul|div|r*mod", Pattern.CASE_INSENSITIVE);
     final Pattern pwvar=Pattern.compile("wvar|print", Pattern.CASE_INSENSITIVE);
 		boolean cancelOptimization=false;
