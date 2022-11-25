@@ -444,7 +444,7 @@ class Runner{
     }
     return temp;
   }
-  private boolean isDigit(final char c){
+  public static boolean isDigit(final char c){
     // BeCoz Character.isDigit has too much function overhead.
     return (c>47&&c<58);
   }
