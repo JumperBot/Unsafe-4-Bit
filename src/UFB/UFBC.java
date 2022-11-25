@@ -110,7 +110,7 @@ class UFBC{
                   .append("            ")
                   .append(lineGen(temp));
 			}else
-        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, unicode, binaryMap));
+        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, binaryMap));
 		}
     threads.shutdown();
     threads.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
@@ -201,7 +201,6 @@ class UFBC{
 	private String lineGen(final String[]temp){
 		return Arrays.toString(temp).substring(1).replace(", ", " ").replace("]", "\n\n");
 	}
-  final Pattern unicode=Pattern.compile("(uu|UU)(\\d{1,4})");
 	public static String manPadding(final String str, final int i){
     return String.format(
       new StringBuilder("%").append(i).append("s").toString(),

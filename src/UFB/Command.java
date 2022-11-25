@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 class Command{
   final ArrayList<Integer> compiled=new ArrayList<>();
@@ -35,7 +34,6 @@ class Command{
   final Pattern jumps;
   final Pattern maths;
   final Pattern pwvar;
-  final Pattern unicode;
   final String[] line;
   final String[] realLine;
   boolean cancelOptimization=false;
@@ -53,7 +51,7 @@ class Command{
   }
 
   private Command(final String[] line, final String[] realLine, final ExecutorService executor,
-  final Pattern jumps, final Pattern maths, final Pattern pwvar, final Pattern unicode,
+  final Pattern jumps, final Pattern maths, final Pattern pwvar,
   final HashMap<String, Integer> binaryMap){
     this.line=line;
     this.realLine=realLine;
@@ -62,7 +60,6 @@ class Command{
     this.jumps=jumps;
     this.maths=maths;
     this.pwvar=pwvar;
-    this.unicode=unicode;
     this.line[0]=this.line[0].toLowerCase();
   }
   private void compile(){
@@ -141,9 +138,9 @@ class Command{
     return temp;
   }
   public static Command create(final String[] line, final String[] realLine, final ExecutorService executor,
-  final Pattern jumps, final Pattern maths, final Pattern pwvar, final Pattern unicode,
+  final Pattern jumps, final Pattern maths, final Pattern pwvar,
   final HashMap<String, Integer> binaryMap){
-    final Command com=new Command(line, realLine, executor, jumps, maths, pwvar, unicode, binaryMap);
+    final Command com=new Command(line, realLine, executor, jumps, maths, pwvar, binaryMap);
     com.compile();
     return com;
   }
