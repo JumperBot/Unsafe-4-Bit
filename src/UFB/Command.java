@@ -68,58 +68,32 @@ class Command{
   private void compile(){
     executor.execute(new Runnable(){
       public void run(){
-        final int comInd=binaryMap.get(line[0]);
-        switch(comInd){
-          case 0:
-            final WvarCommand wvarCom=new WvarCommand(line, realLine);
-            errors.append(wvarCom.getErrors());
-            for(final int i:wvarCom.getCompiled())
-              compiled.add(i);
-            break;
-          case 2:
-            final TrimCommand trimCom=new TrimCommand(line, realLine);
-            errors.append(trimCom.getErrors());
-            for(final int i:trimCom.getCompiled())
-              compiled.add(i);
-            break;
-          case 3:
-          case 4:
-          case 5:
-          case 6:
-          case 7:
-          case 8:
-            final MathCommand mathCom=new MathCommand(comInd, line, realLine);
-            errors.append(mathCom.getErrors());
-            for(final int i:mathCom.getCompiled())
-              compiled.add(i);
-            break;
-          case 9:
-            break;
-          case 10:
-          case 11:
-          case 12:
-          case 13:
-            final JumpCommand jumpCom=new JumpCommand(comInd, line, realLine);
-            errors.append(jumpCom.getErrors());
-            for(final int i:jumpCom.getCompiled())
-              compiled.add(i);
-            break;
-          case 14:
-            final PrintCommand printCom=new PrintCommand(line, realLine);
-            errors.append(printCom.getErrors());
-            for(final int i:printCom.getCompiled())
-              compiled.add(i);
-            break;
-          case 1:
-          case 15:
-            final NeedsOneMemCommand needsOneMemCom=new NeedsOneMemCommand(comInd, line, realLine);
-            errors.append(needsOneMemCom.getErrors());
-            for(final int i:needsOneMemCom.getCompiled())
-              compiled.add(i);
-            break;
-        }
+        final GenericCommand com=getCommand(binaryMap.get(line[0]));
+        errors.append(com.getErrors());
+        for(final int i:com.getCompiled())
+          compiled.add(i);
       }
     });
+  }
+  private GenericCommand getCommand(final int comInd){
+    switch(comInd){
+      case 0:
+        return new WvarCommand(line, realLine);
+      case 2:
+        return new TrimCommand(line, realLine);
+      case 3: case 4: case 5: case 6: case 7: case 8:
+        return new MathCommand(comInd, line, realLine);
+      case 9:
+        return new NopCommand(line, realLine);
+      case 10: case 11: case 12: case 13:
+        return new JumpCommand(comInd, line, realLine);
+      case 14:
+        return new PrintCommand(line, realLine);
+      case 1: case 15:
+        return new NeedsOneMemCommand(comInd, line, realLine);
+      default:
+        return null;
+    }
   }
   public static int toIntAbsolute(final String s){
 		// BeCoz Integer#parseInt() is slow and try-catch is expensive.
