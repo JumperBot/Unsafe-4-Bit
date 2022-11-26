@@ -45,6 +45,10 @@ class UFBC{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
+  /**
+   * 16 - 00010000 - wfile
+   * 17 - 00010001 - rfile
+   **/
 	final Pattern divider=Pattern.compile("[-|, \t]+");
 	final Pattern empties=Pattern.compile(" *\n+ *");
 	final Pattern comment=Pattern.compile("//.*\n*");
@@ -213,7 +217,8 @@ class UFBC{
       "add", "sub", "mul", "div", "mod", "rmod",
       "nop",
       "jm", "jl", "je", "jne",
-      "print", "read"
+      "print", "read",
+      "wfile", "rfile"
     };
     for(int i=0;i<commands.length;i++){
       put(commands[i], i);

@@ -20,8 +20,10 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 
@@ -447,6 +449,30 @@ class Runner{
     write(0, ind, false, scan.readLine().toCharArray());
 	}
 
+  private void wfile()throws Exception{
+		final int argCount=next(8);
+    final int memIndex=next(8);
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+    final String fileName=convertUnicode(out.toString());
+    try(final BufferedWriter writer=new BufferedWriter(new FileWriter(fileName))){
+      writer.write(rvar(memIndex));
+    }
+  }
+  private void rfile()throws Exception{
+		final int argCount=next(8);
+    final int memIndex=next(8);
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+    final String fileName=convertUnicode(out.toString());
+    try(final BufferedReader reader=new BufferedReader(new FileReader(fileName))){
+      final StringBuilder read=new StringBuilder();
+      String temp;
+      while(read.length()>218&&(temp=reader.readLine())!=null)
+        read.append(temp);
+      write(0, memIndex, false, read.toString().toCharArray());
+    }
+  }
   public void runOptimized()throws Exception{
     scan.close();
     try{
@@ -491,7 +517,11 @@ class Runner{
             printOptimizer();
             break;
           case 15:
-            // Read not supported for optimization.
+          case 16:
+          case 17:
+            // Read  not supported for optimization.
+            // Wfile not supported for optimization.
+            // Rfile not supported for optimization.
             break;
           default:
             System.out.printf(

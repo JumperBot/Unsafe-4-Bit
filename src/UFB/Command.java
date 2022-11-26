@@ -97,6 +97,12 @@ class Command{
         cancelOptimization=true;
       case 1:
         return new NeedsOneMemCommand(comInd, line, realLine);
+      case 16:
+        cancelOptimization=true;
+        return new WfileCommand(line, realLine);
+      case 17:
+        cancelOptimization=true;
+        return new RfileCommand(line, realLine);
       default:
         return null;
     }

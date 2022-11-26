@@ -91,3 +91,7 @@ nvar	252
 nvar	254
 */
 // unknownCommand 99
+rfile 38  "Hello.ufb"
+print "Hello.ufb content:\n"
+print 38
+print "\n"
