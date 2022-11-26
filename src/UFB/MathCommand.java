@@ -43,7 +43,7 @@ class MathCommand implements GenericCommand{
     if(line.length!=3)
       errors.append(Command.formatError(
         line, "Command", line[0],
-        "Needs No Less And No More Than Three Arguments To Work"
+        "Needs No Less And No More Than Two Arguments To Work"
       ));
     try{
       if(Long.parseLong(line[1])<38)

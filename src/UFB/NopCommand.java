@@ -39,7 +39,7 @@ class NopCommand implements GenericCommand{
     if(line.length!=1)
       errors.append(Command.formatError(
         line, "Command", line[0],
-        "Needs No Less And No More Than Three Arguments To Work"
+        "Needs No Less And No More Than Zero Arguments To Work"
       ));
   }
   @Override

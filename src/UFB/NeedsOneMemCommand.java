@@ -41,9 +41,8 @@ class NeedsOneMemCommand implements GenericCommand{
   public void checkCases(final String[] line, final String[] realLine){
     if(line.length!=2)
       errors.append(Command.formatError(
-        realLine, "Command", line[0],
-        "Has Too Many Arguments",
-        Command.lineGen(line)
+        line, "Command", line[0],
+        "Needs No Less And No More Than One Argument To Work"
       ));
     for(int i=1;i<line.length;i++)
       if(Long.parseLong(line[i])>255)
