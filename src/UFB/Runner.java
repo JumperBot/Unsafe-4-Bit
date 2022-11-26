@@ -424,7 +424,7 @@ class Runner{
     if(in.length()<6)return in;
     String temp=in;
     // Regex slow ._.
-    for(int i=0;i<temp.length()-6;i++){
+    for(int i=0;i<temp.length()-5;i++){
       if(temp.substring(i, i+2).toLowerCase().equals("uu")){
         boolean confirmed=true;
         for(int i2=i+2;i2<i+6;i2++)
@@ -591,8 +591,9 @@ class Runner{
 
 	private void printOptimizer(){
     int untilDump=0;
-    if(convertToMemory(printProxy.toString()).length()>249){
-      final int length=printProxy.length()-printProxy.toString().lastIndexOf("U");
+    final String printString=printProxy.toString();
+    if(convertToMemory(printString).length()>249){
+      final int length=printString.substring(printString.lastIndexOf("U")).length();
       if(length<5)
         untilDump=5-length;
       else
@@ -602,7 +603,14 @@ class Runner{
 		for(int i=0;i<argCount;i++){
 			printProxy.append(rvar(next(8)));
       untilDump--;
-      if(untilDump==0&&convertToMemory(printProxy.toString()).length()>254)addToCommands();
+      final String printString2=printProxy.toString();
+      if(untilDump==0&&convertToMemory(printString2).length()>249){
+        final int length=printString2.substring(printString2.lastIndexOf("U")).length();
+        if(length<5)
+          untilDump=5-length;
+        else
+          addToCommands();
+      }
     }
   }
 }
