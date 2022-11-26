@@ -21,7 +21,7 @@
 class UFB{
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
-    if(flagManager.isFlagActivated('v')){
+    if(flagManager.isFlagActivated('v'))
       //----------------------------------------------------------------------//
       /**TODO: ALWAYS CHANGE SEMANTIC VERSION BEFORE RELEASING.
        * DO NOT Change '1' in "1.*.*".
@@ -33,10 +33,9 @@ class UFB{
       //----------------------------------------------------------------------//
       System.out.printf(
         "UFB version: %s (master)\n%s\n\n",
-        "v1.4.1",
+        "v1.4.2",
         "Flag triggered, continuing anyway..."
       );
-    }
     if(flagManager.isFlagActivated('h')){
       final String repo="https://github.com/JumperBot/Unsafe-4-Bit";
       final String master="/tree/master/";
@@ -51,39 +50,31 @@ class UFB{
         "Flag triggered, continuing anyway..."
       );
     }
-    if(flagManager.isFlagActivated('l')){
-      final StringBuilder license=new StringBuilder()
-      .append("GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007\n\n")
-      .append("Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.\n")
-      .append("Copyright (C) 2022  JumperBot_\n")
-      .append("\n")
-      .append("This program is free software: you can redistribute it and/or modify\n")
-      .append("it under the terms of the GNU General Public License as published by\n")
-      .append("the Free Software Foundation, either version 3 of the License, or\n")
-      .append("(at your option) any later version.\n")
-      .append("\n")
-      .append("This program is distributed in the hope that it will be useful,\n")
-      .append("but WITHOUT ANY WARRANTY; without even the implied warranty of\n")
-      .append("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n")
-      .append("GNU General Public License for more details.\n")
-      .append("\n")
-      .append("You should have received a copy of the GNU General Public License\n")
-      .append("along with this program.  If not, see <https://www.gnu.org/licenses/>.\n");
+    if(flagManager.isFlagActivated('l'))
       System.out.printf(
         "%s\n%s\n%s\n%s\n%s\n\n",
         "----------------------------------------------------------------------------------\n",
-        license.toString(),
+        new StringBuilder("GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007\n\n")
+        .append("Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.\n")
+        .append("Copyright (C) 2022  JumperBot_\n")
+        .append("\n")
+        .append("This program is free software: you can redistribute it and/or modify\n")
+        .append("it under the terms of the GNU General Public License as published by\n")
+        .append("the Free Software Foundation, either version 3 of the License, or\n")
+        .append("(at your option) any later version.\n")
+        .append("\n")
+        .append("This program is distributed in the hope that it will be useful,\n")
+        .append("but WITHOUT ANY WARRANTY; without even the implied warranty of\n")
+        .append("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n")
+        .append("GNU General Public License for more details.\n")
+        .append("\n")
+        .append("You should have received a copy of the GNU General Public License\n")
+        .append("along with this program.  If not, see <https://www.gnu.org/licenses/>.\n").toString(),
         "The copy of the license can be viewed at the root of this repository.\n",
         "----------------------------------------------------------------------------------\n",
         "Flag triggered, continuing anyway..."
       );
-    }
     final String fileName=flagManager.getFileName();
-    if(fileName.length()==0){
-      System.out.println("No file input found, terminating.");
-      System.exit(1);
-      return;
-    }
     if(flagManager.isFlagActivated('c')){
       if(fileName.endsWith(".ufbb")){
         System.out.printf(
@@ -91,7 +82,7 @@ class UFB{
           "Could not compile an already compiled source code.",
           "Remove the compilation flag to run the compiled program."
         );
-        return;
+        System.exit(1);
       }
       new UFBC().compile(fileName, !flagManager.isLongFlagActivated("unoptimized"));
       return;
@@ -102,7 +93,7 @@ class UFB{
         "Could not run uncompiled source code.",
         "Add the compilation flag to compile the program."
       );
-      return;
+      System.exit(1);
     }
     new Runner(
       fileName,

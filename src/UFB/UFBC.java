@@ -61,7 +61,7 @@ class UFBC{
 			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
 		}
 		String input=inBuilder.toString();
-		final Pattern dividerInString=Pattern.compile("\".*([-|, \t]).*\"");
+		final Pattern dividerInString=Pattern.compile("\".*(?:[-|, \t]).*\"");
     try{
       for(final Matcher m=dividerInString.matcher(input);m.find();)
         for(final Matcher m2=divider.matcher(input);m2.find(m.start());){
@@ -84,7 +84,7 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<int[]> list=new ArrayList<>();
-    final Pattern jumps=Pattern.compile("j(m|l|e|ne)", Pattern.CASE_INSENSITIVE);
+    final Pattern jumps=Pattern.compile("j(?:m|l|e|ne)", Pattern.CASE_INSENSITIVE);
     final Pattern maths=Pattern.compile("add|sub|mul|div|r*mod", Pattern.CASE_INSENSITIVE);
     final Pattern pwvar=Pattern.compile("wvar|print", Pattern.CASE_INSENSITIVE);
 		boolean cancelOptimization=false;
@@ -110,7 +110,7 @@ class UFBC{
                   .append("            ")
                   .append(lineGen(temp));
 			}else
-        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, unicode, binaryMap));
+        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, binaryMap));
 		}
     threads.shutdown();
     threads.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
@@ -201,7 +201,6 @@ class UFBC{
 	private String lineGen(final String[]temp){
 		return Arrays.toString(temp).substring(1).replace(", ", " ").replace("]", "\n\n");
 	}
-  final Pattern unicode=Pattern.compile("(uu|UU)(\\d{1,4})");
 	public static String manPadding(final String str, final int i){
     return String.format(
       new StringBuilder("%").append(i).append("s").toString(),
