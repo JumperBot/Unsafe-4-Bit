@@ -65,10 +65,17 @@ class Command{
   private void compile(){
     executor.execute(new Runnable(){
       public void run(){
-        final GenericCommand com=getCommand(binaryMap.get(line[0]));
-        errors.append(com.getErrors());
-        for(final int i:com.getCompiled())
-          compiled.add(i);
+        try{
+          final GenericCommand com=getCommand(binaryMap.get(line[0]));
+          errors.append(com.getErrors());
+          for(final int i:com.getCompiled())
+            compiled.add(i);
+        }catch(final NullPointerException e){
+          errors.append(formatError(
+            line, "Command", line[0],
+            "Does Not Exist"
+          ));
+        }
       }
     });
   }
