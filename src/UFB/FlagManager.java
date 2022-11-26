@@ -18,6 +18,8 @@
  *
 **/
 
+import java.io.File;
+
 import java.util.Arrays;
 
 import java.util.regex.Pattern;
@@ -78,6 +80,14 @@ class FlagManager{
       );
 		}
     file=fileName;
+    if(fileName.length()==0){
+      System.out.println("No file input found, terminating.");
+      System.exit(1);
+    }
+    if(!new File(fileName).exists()){
+      System.out.println("File Provided Does Not Exist...\nTerminating...");
+      System.exit(1);
+    }
   }
   public boolean isFlagActivated(final char c){
     final char[] array=flagString.substring(1).toCharArray();

@@ -49,10 +49,6 @@ class Runner{
     final boolean backwardsCompat
   )throws Exception{
     final File f=new File(fileName);
-    if(!f.exists()){
-      System.out.println("File Provided Does Not Exist...\nTerminating...");
-      System.exit(1);
-    }
     buffer=new BufferedInputStream(new FileInputStream(f));
     buffer.mark(Integer.MAX_VALUE);
     size=(int)f.length();
