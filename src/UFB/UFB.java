@@ -79,8 +79,8 @@ class UFB{
       if(fileName.endsWith(".ufbb")){
         System.out.printf(
           "%s\n%s\n",
-          "Could not compile an already compiled source code.",
-          "Remove the compilation flag to run the compiled program."
+          "\u001B[91mCould not compile an already compiled source code.",
+          "Remove the compilation flag to run the compiled program.\u001B[0m"
         );
         System.exit(1);
       }
@@ -90,8 +90,8 @@ class UFB{
     if(fileName.endsWith(".ufb")){
       System.out.printf(
         "%s\n%s\n",
-        "Could not run uncompiled source code.",
-        "Add the compilation flag to compile the program."
+        "\u001B[91mCould not run uncompiled source code.",
+        "Add the compilation flag to compile the program.\u001B[0m"
       );
       System.exit(1);
     }

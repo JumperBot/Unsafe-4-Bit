@@ -15,25 +15,20 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"hilalh.hyper-dracula-vscode-theme",
-				"VisualStudioExptTeam.vscodeintellicode",
-				"redhat.java",
-				"bierner.github-markdown-preview",
-				"bierner.markdown-checkbox",
-				"bierner.markdown-emoji",
-				"bierner.markdown-footnotes",
-				"bierner.markdown-preview-github-styles",
-				"bierner.markdown-yaml-preamble",
-				"bierner.markdown-mermaid"
+        "hilalh.hyper-dracula-vscode-theme",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "VisualStudioExptTeam.intellicode-api-usage-examples",
+        "redhat.java",
+				"vscjava.vscode-java-dependency"
 			]
 		}
-	}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "java -version",
+	"postCreateCommand": "cd /workspaces/Unsafe-4-Bit/build && sh build.sh && cd .."
 
 	// Configure tool-specific properties.
 	// "customizations": {},

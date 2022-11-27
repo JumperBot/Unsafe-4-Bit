@@ -138,10 +138,10 @@ class UFBC{
 		try{
       writeToFile(outName, list);
 		}catch(final Exception e){
-			System.out.println(e.toString());
+			System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
 		}
 		if(cancelOptimization)
-      System.out.println("Code cannot be optimized, but compilation is a success!");
+      System.out.println("\u001B[93mCode cannot be optimized, but compilation is a success!\u001B[0m");
     else if(recompile)
       new Runner(outName, false, false, false, false).runOptimized();
 	}

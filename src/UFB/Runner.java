@@ -23,11 +23,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 class Runner{
 	final char[] mem=new char[256];
@@ -71,8 +73,10 @@ class Runner{
     this.timeMethods=timeMethods;
     this.backwardsCompat=backwardsCompat;
   }
-
+  final String[] dirs=new String[2];
 	public void run()throws Exception{
+    dirs[0]=System.getProperty("user.dir");
+    dirs[1]=fileName.substring(0, fileName.lastIndexOf("/")+1);
     final long runStart=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
     try{
       if(timeMethods){
@@ -123,9 +127,8 @@ class Runner{
       buffer.close();
       scan.close();
       if(!e.toString().contains("Unsupported Command Lol"))
-        throw new RuntimeException(e);
-      else
-        System.exit(1);
+        System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
+      System.exit(1);
     }
 	}
 	private void runCommand(final int com)throws Exception{
@@ -154,6 +157,12 @@ class Runner{
 			case 15:
 				read();
 				break;
+      case 16:
+        wfile();
+        break;
+      case 17:
+        rfile();
+        break;
 			default:
         if(backwardsCompat){
           System.out.printf(
@@ -449,28 +458,42 @@ class Runner{
     write(0, ind, false, scan.readLine().toCharArray());
 	}
 
+  final Pattern rootDir=Pattern.compile("(?:[a-zA-Z]:[\\\\/].*)|(?:[/\\\\].*)");
   private void wfile()throws Exception{
 		final int argCount=next(8);
+    if(argCount<2)return;
     final int memIndex=next(8);
     final StringBuilder out=new StringBuilder();
-		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
     final String fileName=convertUnicode(out.toString());
-    try(final BufferedWriter writer=new BufferedWriter(new FileWriter(fileName))){
-      writer.write(rvar(memIndex));
+    if(memInd[memIndex]==0)return;
+    final char[] toWrite=rvar(memIndex);
+    final File file=(rootDir.matcher(fileName).matches())?
+                    new File(fileName):new File(dirs[1], fileName);
+    file.getParentFile().mkdirs();
+    try(final BufferedWriter writer=new BufferedWriter(new FileWriter(file))){
+      writer.write(toWrite);
     }
   }
   private void rfile()throws Exception{
 		final int argCount=next(8);
+    if(argCount<2)return;
     final int memIndex=next(8);
     final StringBuilder out=new StringBuilder();
-		for(int i=0;i<argCount;i++)out.append(rvar(next(8)));
+		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
     final String fileName=convertUnicode(out.toString());
-    try(final BufferedReader reader=new BufferedReader(new FileReader(fileName))){
+    final File file=(rootDir.matcher(fileName).matches())?
+                    new File(fileName):new File(dirs[1], fileName);
+    try(final BufferedReader reader=new BufferedReader(new FileReader(file))){
       final StringBuilder read=new StringBuilder();
       String temp;
-      while(read.length()>218&&(temp=reader.readLine())!=null)
-        read.append(temp);
-      write(0, memIndex, false, read.toString().toCharArray());
+      for(;read.length()<218&&(temp=reader.readLine())!=null;)
+        read.append(temp).append("\n");
+      if(read.length()>1)
+        write(0, memIndex, false, read.deleteCharAt(read.length()-1).toString().toCharArray());
+    }catch(final FileNotFoundException e){
+      System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
+      System.exit(1);
     }
   }
   public void runOptimized()throws Exception{
