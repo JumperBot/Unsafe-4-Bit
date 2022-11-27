@@ -8,5 +8,5 @@ jar --create --file=../UFB.jar --main-class=UFB *.class
 cd ../..
 # Copy changed to codespace extensions directory
 echo "cp -r syntax-highlight/unsafe-4-bit ~/.vscode-remote/extensions/"
-cp -r syntax-highlight/unsafe-4-bit ~/.vscode-remote/extensions/
+cp -r syntax-highlight/ ~/.vscode-remote/extensions/
 cd build
