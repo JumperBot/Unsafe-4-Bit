@@ -479,22 +479,27 @@ class Runner{
 		final int argCount=next(8);
     if(argCount<2)return;
     final int memIndex=next(8);
-    final StringBuilder out=new StringBuilder();
-		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
-    final String fileName=convertUnicode(out.toString());
-    final File file=(rootDir.matcher(fileName).matches())?
-                    new File(fileName):new File(dirs[1], fileName);
-    try(final BufferedReader reader=new BufferedReader(new FileReader(file))){
+    try(final BufferedReader reader=new BufferedReader(new FileReader(getActualFile(argCount)))){
       final StringBuilder read=new StringBuilder();
-      String temp;
-      for(;read.length()<218&&(temp=reader.readLine())!=null;)
-        read.append(temp).append("\n");
+      for(String temp;read.length()<218&&(temp=reader.readLine())!=null;read.append(temp).append("\n"));
       if(read.length()>1)
         write(0, memIndex, false, read.deleteCharAt(read.length()-1).toString().toCharArray());
     }catch(final FileNotFoundException e){
       System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
       System.exit(1);
     }
+  }
+  private void dfile()throws Exception{
+		final int argCount=next(8);
+    if(argCount<2)return;
+    final File file=getActualFile(argCount);
+  }
+  private File getActualFile(final int argCount){
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
+    final String fileName=convertUnicode(out.toString());
+    return (rootDir.matcher(fileName).matches())?
+            new File(fileName):new File(dirs[1], fileName);
   }
   public void runOptimized()throws Exception{
     scan.close();

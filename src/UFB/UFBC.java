@@ -61,8 +61,7 @@ class UFBC{
 	public void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
-			String temp;
-			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
+			for(String temp;(temp=scan.readLine())!=null;inBuilder.append(temp).append("\n"));
 		}
 		String input=inBuilder.toString();
 		final Pattern dividerInString=Pattern.compile("\".*(?:[-|, \t]).*\"");
@@ -88,9 +87,6 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<int[]> list=new ArrayList<>();
-    final Pattern jumps=Pattern.compile("j(?:m|l|e|ne)", Pattern.CASE_INSENSITIVE);
-    final Pattern maths=Pattern.compile("add|sub|mul|div|r*mod", Pattern.CASE_INSENSITIVE);
-    final Pattern pwvar=Pattern.compile("wvar|print", Pattern.CASE_INSENSITIVE);
 		boolean cancelOptimization=false;
     final ArrayList<Command> commands=new ArrayList<>();
 		for(final String arrTemp:arr){
@@ -114,7 +110,7 @@ class UFBC{
                   .append("            ")
                   .append(lineGen(temp));
 			}else
-        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, binaryMap));
+        commands.add(Command.create(temp, realTemp, threads, binaryMap));
 		}
     threads.shutdown();
     threads.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
