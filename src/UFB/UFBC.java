@@ -113,7 +113,7 @@ class UFBC{
         commands.add(Command.create(temp, realTemp, threads, binaryMap));
 		}
     threads.shutdown();
-    threads.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+    threads.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     for(final Command command:commands){
       errors.append(command.getErrors());
       if(command.cancelOptimization())cancelOptimization=true;
@@ -214,7 +214,7 @@ class UFBC{
       "nop",
       "jm", "jl", "je", "jne",
       "print", "read",
-      "wfile", "rfile"
+      "wfile", "rfile", "dfile"
     };
     for(int i=0;i<commands.length;i++){
       put(commands[i], i);

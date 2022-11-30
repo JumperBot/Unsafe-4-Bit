@@ -103,6 +103,11 @@ print "\n"
 // wfile 38  "/unknown/Unsafe-4-Bit/copyMe/Hello-Copy.ufb"
 
 // Works perfectly fine
-// wfile 38  "/copyMe/Hello-Copy.ufb"
+wfile 38  "copyMe/Hello-Copy.ufb"
+rfile 38  "copyMe/Hello-Copy.ufb"
+print "copyMe/Hello-Copy.ufb content:\n"
+print 38
+print "\n"
+dfile "copyMe/Hello-Copy.ufb"
 
 nvar  38

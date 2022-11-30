@@ -29,6 +29,11 @@ import java.io.FileWriter;
 import java.io.InputStreamReader;
 
 import java.util.HashMap;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+
 import java.util.regex.Pattern;
 
 class Runner{
@@ -41,6 +46,8 @@ class Runner{
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
+
+  final int threads=Runtime.getRuntime().availableProcessors()*2;
 
   final boolean performance;
   final boolean nanoseconds;
@@ -127,7 +134,8 @@ class Runner{
       buffer.close();
       scan.close();
       if(!e.toString().contains("Unsupported Command Lol"))
-        System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
+        //System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
+        throw e;
       System.exit(1);
     }
 	}
@@ -162,6 +170,9 @@ class Runner{
         break;
       case 17:
         rfile();
+        break;
+      case 18:
+        dfile();
         break;
 			default:
         if(backwardsCompat){
@@ -493,6 +504,29 @@ class Runner{
 		final int argCount=next(8);
     if(argCount<2)return;
     final File file=getActualFile(argCount);
+    final File[] underlyingFiles=file.listFiles();
+    if(underlyingFiles==null){
+      file.delete();
+      return;
+    }
+    final ExecutorService executor=Executors.newFixedThreadPool(threads);
+    dfileHelper(underlyingFiles, executor);
+    executor.shutdown();
+    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+  }
+  private void dfileHelper(final File[] files, final ExecutorService executor){
+    for(int i=0;i<files.length;i++){
+      final int ind=i;
+      executor.execute(new Runnable(){
+        public void run(){
+          final File[] underlyingFiles=files[ind].listFiles();
+          if(underlyingFiles!=null)
+            dfileHelper(files[ind].listFiles(), executor);
+          else
+            files[ind].delete();
+        }
+      });
+    }
   }
   private File getActualFile(final int argCount){
     final StringBuilder out=new StringBuilder();
