@@ -474,13 +474,9 @@ class Runner{
 		final int argCount=next(8);
     if(argCount<2)return;
     final int memIndex=next(8);
-    final StringBuilder out=new StringBuilder();
-		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
-    final String fileName=convertUnicode(out.toString());
     if(memInd[memIndex]==0)return;
     final char[] toWrite=rvar(memIndex);
-    final File file=(rootDir.matcher(fileName).matches())?
-                    new File(fileName):new File(dirs[1], fileName);
+    final File file=getActualFile(argCount);
     file.getParentFile().mkdirs();
     try(final BufferedWriter writer=new BufferedWriter(new FileWriter(file))){
       writer.write(toWrite);
@@ -503,7 +499,7 @@ class Runner{
   private void dfile()throws Exception{
 		final int argCount=next(8);
     if(argCount<2)return;
-    final File file=getActualFile(argCount);
+    final File file=getActualFile(argCount+1);
     final File[] underlyingFiles=file.listFiles();
     if(underlyingFiles==null){
       file.delete();
@@ -513,19 +509,24 @@ class Runner{
     dfileHelper(underlyingFiles, executor);
     executor.shutdown();
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+    file.delete();
+    System.out.println(file.getName()+" | Main");
   }
   private void dfileHelper(final File[] files, final ExecutorService executor){
-    for(int i=0;i<files.length;i++){
-      final int ind=i;
-      executor.execute(new Runnable(){
-        public void run(){
-          final File[] underlyingFiles=files[ind].listFiles();
-          if(underlyingFiles!=null)
-            dfileHelper(files[ind].listFiles(), executor);
-          else
-            files[ind].delete();
-        }
-      });
+    for(final File curFile:files){
+      final File[] underlyingFiles=curFile.listFiles();
+      if(underlyingFiles!=null){
+        dfileHelper(underlyingFiles, executor);
+        executor.execute(new Runnable(){
+          public void run(){
+            curFile.delete();
+            System.out.println(curFile.getName()+" | Helper");
+          }
+        });
+      }else{
+        curFile.delete();
+        System.out.println(curFile.getName()+" | Helper");
+      }
     }
   }
   private File getActualFile(final int argCount){

@@ -94,20 +94,21 @@ nvar	254
 // This throws a compilation error
 // unknownCommand 99
 
-rfile 38  "Hello.ufb"
-print "Hello.ufb content:\n"
-print 38
-print "\n"
-
-// Returns FileNotFoundException, not allowed to mkdir at root
-// wfile 38  "/unknown/Unsafe-4-Bit/copyMe/Hello-Copy.ufb"
-
 // Works perfectly fine
-wfile 38  "copyMe/Hello-Copy.ufb"
-rfile 38  "copyMe/Hello-Copy.ufb"
-print "copyMe/Hello-Copy.ufb content:\n"
-print 38
-print "\n"
-dfile "copyMe/Hello-Copy.ufb"
 
-nvar  38
+// rfile 38  "Hello.ufb"
+// print "Hello.ufb content:\n"
+// print 38
+// print "\n"
+// wfile 38  "copyMe/hm/Hello-Copy.ufb"
+// wfile 38  "copyMe/hm/Hello-Copy2.ufb"
+// wfile 38  "copyMe/hm/Hello-Copy3.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
+// rfile 38  "copyMe/hm/Hello-Copy.ufb"
+// print "copyMe/hm/Hello-Copy.ufb content:\n"
+// print 38
+// print "\n"
+// dfile "copyMe"
+// nvar  38
