@@ -472,7 +472,7 @@ class Runner{
   final Pattern rootDir=Pattern.compile("(?:[a-zA-Z]:[\\\\/].*)|(?:[/\\\\].*)");
   private void wfile()throws Exception{
 		final int argCount=next(8);
-    if(argCount<2)return;
+    if(argCount<4)return;
     final int memIndex=next(8);
     if(memInd[memIndex]==0)return;
     final char[] toWrite=rvar(memIndex);
@@ -484,8 +484,8 @@ class Runner{
   }
   private void rfile()throws Exception{
 		final int argCount=next(8);
-    if(argCount<2)return;
     final int memIndex=next(8);
+    if(argCount<4)return;
     try(final BufferedReader reader=new BufferedReader(new FileReader(getActualFile(argCount)))){
       final StringBuilder read=new StringBuilder();
       for(String temp;read.length()<218&&(temp=reader.readLine())!=null;read.append(temp).append("\n"));
@@ -498,8 +498,11 @@ class Runner{
   }
   private void dfile()throws Exception{
 		final int argCount=next(8);
-    if(argCount<2)return;
     final File file=getActualFile(argCount+1);
+    if(!file.exists()){
+      System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
+      System.exit(1);
+    }
     final File[] underlyingFiles=file.listFiles();
     if(underlyingFiles==null){
       file.delete();
@@ -510,7 +513,6 @@ class Runner{
     executor.shutdown();
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     file.delete();
-    System.out.println(file.getName()+" | Main");
   }
   private void dfileHelper(final File[] files, final ExecutorService executor){
     for(final File curFile:files){
@@ -520,13 +522,10 @@ class Runner{
         executor.execute(new Runnable(){
           public void run(){
             curFile.delete();
-            System.out.println(curFile.getName()+" | Helper");
           }
         });
-      }else{
+      }else
         curFile.delete();
-        System.out.println(curFile.getName()+" | Helper");
-      }
     }
   }
   private File getActualFile(final int argCount){
