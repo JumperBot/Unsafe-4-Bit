@@ -1,0 +1,74 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Unsafe Four Bit",
+	"patterns": [
+		{"include": "#comments"},
+    {"include": "#constants"},
+    {"include": "#keywords"},
+		{"include": "#strings"}
+	],
+	"repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.ufb",
+          "match": "(?://.*)$"
+        },
+        {
+          "name": "comment.block.ufb",
+          "begin": "/\\*[^\\*]",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.block.documentation.ufb",
+          "begin": "/\\*\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.numeric.ufb",
+          "match": "[0-9]"
+        },
+        {
+          "name": "constant.language.ufb",
+          "match": "[-|, \t]"
+        }
+      ]
+    },
+    "keywords":{
+      "patterns": [
+        {
+          "name": "keyword.control.ufb",
+          "match": "\\b(?:nop|jm|jl|je|jne)\\b"
+        },
+        {
+          "name": "keyword.control.less.ufb",
+          "match": "\\b(?:wvar|nvar|trim|print|read|wfile|rfile|dfile)\\b"
+        },
+        {
+          "name": "keyword.operator.ufb",
+          "match": "\\b(?:add|sub|mul|div|mod|rmod)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.ufb",
+      "begin": "\"",
+      "end": "(?:[^\"]\"*)+\"",
+      "captures": {
+        "0": {
+          "patterns": [
+            {
+              "name": "constant.character.escape.ufb",
+              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}"
+            }
+          ]
+        }
+      }
+    }
+	},
+	"scopeName": "source.ufb"
+}

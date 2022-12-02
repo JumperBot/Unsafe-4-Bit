@@ -18,8 +18,6 @@
  *
 **/
 
-import java.io.File;
-
 import java.util.Arrays;
 
 import java.util.regex.Pattern;
@@ -53,9 +51,9 @@ class FlagManager{
               isLongActivated[i]=true;
         }else
           System.out.printf(
-            "Unrecognized flags found: %s\n%s\n\n",
+            "\u001B[93mUnrecognized flags found: %s\n%s\n\n",
             arg2,
-            "Continuing anyway..."
+            "Continuing anyway...\u001B[0m"
           );
       }else if(arg.startsWith("-")){
         final String str=repeats.matcher(arg.replace("-", "")).replaceAll("$1");
@@ -63,9 +61,9 @@ class FlagManager{
         if(shouldBeEmpty.length()!=0){
           final String joined=Arrays.toString(shouldBeEmpty.split("")).substring(1);
           System.out.printf(
-            "Unrecognized flags found: %s\n%s\n\n",
+            "\u001B[93mUnrecognized flags found: %s\n%s\n\n",
             joined.substring(0, joined.length()-1),
-            "Continuing anyway..."
+            "Continuing anyway...\u001B[0m"
           );
         }
         if(str.contains("p"))isActivated[0]=true;
@@ -76,18 +74,10 @@ class FlagManager{
           if(str.contains(flagString.charAt(i+1)+""))
             isActivated[i]=true;
 			}else System.out.printf(
-        "Unrecognized argument: %s\nContinuing anyway...\n\n", arg
+        "\u001B[93mUnrecognized argument: %s\nContinuing anyway...\n\n\u001B[0m", arg
       );
 		}
     file=fileName;
-    if(fileName.length()==0){
-      System.out.println("No file input found, terminating.");
-      System.exit(1);
-    }
-    if(!new File(fileName).exists()){
-      System.out.println("File Provided Does Not Exist...\nTerminating...");
-      System.exit(1);
-    }
   }
   public boolean isFlagActivated(final char c){
     final char[] array=flagString.substring(1).toCharArray();

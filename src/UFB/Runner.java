@@ -20,12 +20,21 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 
 import java.util.HashMap;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+
+import java.util.regex.Pattern;
 
 class Runner{
 	final char[] mem=new char[256];
@@ -37,6 +46,8 @@ class Runner{
 	final int size;
 	final int[] lines;
 	int furthestLine=-1;
+
+  final int threads=Runtime.getRuntime().availableProcessors()*2;
 
   final boolean performance;
   final boolean nanoseconds;
@@ -69,8 +80,10 @@ class Runner{
     this.timeMethods=timeMethods;
     this.backwardsCompat=backwardsCompat;
   }
-
+  final String[] dirs=new String[2];
 	public void run()throws Exception{
+    dirs[0]=System.getProperty("user.dir");
+    dirs[1]=fileName.substring(0, fileName.lastIndexOf("/")+1);
     final long runStart=(!nanoseconds)?System.currentTimeMillis():System.nanoTime();
     try{
       if(timeMethods){
@@ -121,9 +134,9 @@ class Runner{
       buffer.close();
       scan.close();
       if(!e.toString().contains("Unsupported Command Lol"))
-        throw new RuntimeException(e);
-      else
-        System.exit(1);
+        //System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
+        throw e;
+      System.exit(1);
     }
 	}
 	private void runCommand(final int com)throws Exception{
@@ -152,6 +165,15 @@ class Runner{
 			case 15:
 				read();
 				break;
+      case 16:
+        wfile();
+        break;
+      case 17:
+        rfile();
+        break;
+      case 18:
+        dfile();
+        break;
 			default:
         if(backwardsCompat){
           System.out.printf(
@@ -447,6 +469,72 @@ class Runner{
     write(0, ind, false, scan.readLine().toCharArray());
 	}
 
+  final Pattern rootDir=Pattern.compile("(?:[a-zA-Z]:[\\\\/].*)|(?:[/\\\\].*)");
+  private void wfile()throws Exception{
+		final int argCount=next(8);
+    if(argCount<4)return;
+    final int memIndex=next(8);
+    if(memInd[memIndex]==0)return;
+    final char[] toWrite=rvar(memIndex);
+    final File file=getActualFile(argCount);
+    file.getParentFile().mkdirs();
+    try(final BufferedWriter writer=new BufferedWriter(new FileWriter(file))){
+      writer.write(toWrite);
+    }
+  }
+  private void rfile()throws Exception{
+		final int argCount=next(8);
+    final int memIndex=next(8);
+    if(argCount<4)return;
+    try(final BufferedReader reader=new BufferedReader(new FileReader(getActualFile(argCount)))){
+      final StringBuilder read=new StringBuilder();
+      for(String temp;read.length()<218&&(temp=reader.readLine())!=null;read.append(temp).append("\n"));
+      if(read.length()>1)
+        write(0, memIndex, false, read.deleteCharAt(read.length()-1).toString().toCharArray());
+    }catch(final FileNotFoundException e){
+      System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
+      System.exit(1);
+    }
+  }
+  private void dfile()throws Exception{
+		final int argCount=next(8);
+    final File file=getActualFile(argCount+1);
+    if(!file.exists()){
+      System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
+      System.exit(1);
+    }
+    final File[] underlyingFiles=file.listFiles();
+    if(underlyingFiles==null){
+      file.delete();
+      return;
+    }
+    final ExecutorService executor=Executors.newFixedThreadPool(threads);
+    dfileHelper(underlyingFiles, executor);
+    executor.shutdown();
+    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+    file.delete();
+  }
+  private void dfileHelper(final File[] files, final ExecutorService executor){
+    for(final File curFile:files){
+      final File[] underlyingFiles=curFile.listFiles();
+      if(underlyingFiles!=null){
+        dfileHelper(underlyingFiles, executor);
+        executor.execute(new Runnable(){
+          public void run(){
+            curFile.delete();
+          }
+        });
+      }else
+        curFile.delete();
+    }
+  }
+  private File getActualFile(final int argCount){
+    final StringBuilder out=new StringBuilder();
+		for(int i=0;i<argCount-1;i++)out.append(rvar(next(8)));
+    final String fileName=convertUnicode(out.toString());
+    return (rootDir.matcher(fileName).matches())?
+            new File(fileName):new File(dirs[1], fileName);
+  }
   public void runOptimized()throws Exception{
     scan.close();
     try{
@@ -491,7 +579,11 @@ class Runner{
             printOptimizer();
             break;
           case 15:
-            // Read not supported for optimization.
+          case 16:
+          case 17:
+            // Read  not supported for optimization.
+            // Wfile not supported for optimization.
+            // Rfile not supported for optimization.
             break;
           default:
             System.out.printf(

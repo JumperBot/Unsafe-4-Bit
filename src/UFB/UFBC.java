@@ -45,6 +45,10 @@ class UFBC{
 	 * 12	-	1100	-	je		|	13	-	1101	-	jne
 	 * 14	-	1110	-	print	|	15	-	1111	-	read
 	 **/
+  /**
+   * 16 - 00010000 - wfile
+   * 17 - 00010001 - rfile
+   **/
 	final Pattern divider=Pattern.compile("[-|, \t]+");
 	final Pattern empties=Pattern.compile(" *\n+ *");
 	final Pattern comment=Pattern.compile("//.*\n*");
@@ -57,8 +61,11 @@ class UFBC{
 	public void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
-			String temp;
-			while((temp=scan.readLine())!=null)inBuilder.append(temp).append("\n");
+			for(
+        String temp;
+        (temp=scan.readLine())!=null;
+        inBuilder.append(temp).append("\n")
+      );
 		}
 		String input=inBuilder.toString();
 		final Pattern dividerInString=Pattern.compile("\".*(?:[-|, \t]).*\"");
@@ -84,9 +91,6 @@ class UFBC{
 		);
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<int[]> list=new ArrayList<>();
-    final Pattern jumps=Pattern.compile("j(?:m|l|e|ne)", Pattern.CASE_INSENSITIVE);
-    final Pattern maths=Pattern.compile("add|sub|mul|div|r*mod", Pattern.CASE_INSENSITIVE);
-    final Pattern pwvar=Pattern.compile("wvar|print", Pattern.CASE_INSENSITIVE);
 		boolean cancelOptimization=false;
     final ArrayList<Command> commands=new ArrayList<>();
 		for(final String arrTemp:arr){
@@ -110,10 +114,10 @@ class UFBC{
                   .append("            ")
                   .append(lineGen(temp));
 			}else
-        commands.add(Command.create(temp, realTemp, threads, jumps, maths, pwvar, binaryMap));
+        commands.add(Command.create(temp, realTemp, threads, binaryMap));
 		}
     threads.shutdown();
-    threads.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+    threads.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
     for(final Command command:commands){
       errors.append(command.getErrors());
       if(command.cancelOptimization())cancelOptimization=true;
@@ -134,18 +138,37 @@ class UFBC{
 		try{
       writeToFile(outName, list);
 		}catch(final Exception e){
-			System.out.println(e.toString());
+			System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
 		}
 		if(cancelOptimization)
-      System.out.println("Code cannot be optimized, but compilation is a success!");
+      System.out.println("\u001B[93mCode cannot be optimized, but compilation is a success!\u001B[0m");
     else if(recompile)
       new Runner(outName, false, false, false, false).runOptimized();
 	}
   private String[] convertToMem(final String in){
     final ArrayList<String> mems=new ArrayList<>();
     boolean backSlash=false;
+    boolean memIndicator=false;
+    final StringBuilder placeHolder=new StringBuilder();
     for(final char c:in.toCharArray()){
-      if(memMap.containsKey(c))
+      if(c=='$'){
+        memIndicator=true;
+        placeHolder.append(c);
+      }else if(memIndicator){
+        placeHolder.append(c);
+        if(!Runner.isDigit(c)){
+          memIndicator=false;
+          for(final String converted:convertToMem(placeHolder.toString()))
+            mems.add(converted);
+          placeHolder.setLength(0);
+        }else{
+          if(placeHolder.length()==4){
+            mems.add(placeHolder.substring(1));
+            placeHolder.setLength(0);
+            memIndicator=false;
+          }
+        }
+      }else if(memMap.containsKey(c))
         mems.add(memMap.get(c).toString());
       else{
         if(c=='\\'){
@@ -213,7 +236,8 @@ class UFBC{
       "add", "sub", "mul", "div", "mod", "rmod",
       "nop",
       "jm", "jl", "je", "jne",
-      "print", "read"
+      "print", "read",
+      "wfile", "rfile", "dfile"
     };
     for(int i=0;i<commands.length;i++){
       put(commands[i], i);

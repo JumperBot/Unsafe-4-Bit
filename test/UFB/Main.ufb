@@ -1,6 +1,6 @@
 wvar  38, "Hello World111\n"
 //wvar	38,	8		5		12	12	15	0		23	15	18	12	4		28	28	28	37
-print	38, "That's a String!!!\n"
+print	"$038That's a String!!!\n"
 nvar	38
 wvar	38,	"HELLO World111\n"// Woohoooo
 /**/
@@ -13,20 +13,20 @@ wvar	38,	"HELLO World111\n"// Woohoooo
 */
 /* 4| */
 trim	38,	5
-wvar	38,	38	"\n"
+wvar	38, "$038\n"
 print	38
 add		38	38
-print	38	"\n"
+print	"$038\n"
 sub		38	38
-print	38	"\n"
+print	"$038\n"
 mul		38	38
-print	38	"\n"
+print	"$038\n"
 div		38	38
-print	38	"\n"
+print	"$038\n"
 mod		38	38
-print	38	"\n"
+print	"$038\n"
 rmod	38	38
-print	38	"\n"
+print	"$038\n"
 nvar	38
 /*
 read	251
@@ -36,7 +36,7 @@ nvar	251
 /* 20| */
 wvar	254	"0"
 wvar	252	"10"
-print	14	21	13	2		5		18	0		254	37
+print	"NUMBER $254\n"
 add		254	"1"
 jl		254	252	22
 je		28	28	26
@@ -71,10 +71,10 @@ nop
 
 wvar	38	"2"
 div		38	"4"
-print	39	"\n"
-print	38	"\n"
+print	"$039\n"
+print	"$038\n"
 add		38	38
-print	38	"\n"
+print	"$038\n"
 nvar	38
 
 /* 30|
@@ -90,4 +90,25 @@ nvar	248
 nvar	252
 nvar	254
 */
+
+// This throws a compilation error
 // unknownCommand 99
+
+// Works perfectly fine
+
+// rfile 38  "Hello.ufb"
+// print "Hello.ufb content:\n"
+// print 38
+// print "\n"
+// wfile 38  "copyMe/hm/Hello-Copy.ufb"
+// wfile 38  "copyMe/hm/Hello-Copy2.ufb"
+// wfile 38  "copyMe/hm/Hello-Copy3.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
+// wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
+// rfile 38  "copyMe/hm/Hello-Copy.ufb"
+// print "copyMe/hm/Hello-Copy.ufb content:\n"
+// print 38
+// print "\n"
+// dfile "copyMe"
+// nvar  38

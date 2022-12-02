@@ -24,16 +24,11 @@ import java.util.HashMap;
 
 import java.util.concurrent.ExecutorService;
 
-import java.util.regex.Pattern;
-
 class Command{
   final ArrayList<Integer> compiled=new ArrayList<>();
   final StringBuilder errors=new StringBuilder();
   final ExecutorService executor;
   final HashMap<String, Integer> binaryMap;
-  final Pattern jumps;
-  final Pattern maths;
-  final Pattern pwvar;
   final String[] line;
   final String[] realLine;
   boolean cancelOptimization=false;
@@ -50,16 +45,14 @@ class Command{
     return errors.toString();
   }
 
-  private Command(final String[] line, final String[] realLine, final ExecutorService executor,
-  final Pattern jumps, final Pattern maths, final Pattern pwvar,
-  final HashMap<String, Integer> binaryMap){
+  private Command(
+    final String[] line, final String[] realLine,
+    final ExecutorService executor, final HashMap<String, Integer> binaryMap
+  ){
     this.line=line;
     this.realLine=realLine;
     this.executor=executor;
     this.binaryMap=binaryMap;
-    this.jumps=jumps;
-    this.maths=maths;
-    this.pwvar=pwvar;
     this.line[0]=this.line[0].toLowerCase();
   }
   private void compile(){
@@ -97,6 +90,13 @@ class Command{
         cancelOptimization=true;
       case 1:
         return new NeedsOneMemCommand(comInd, line, realLine);
+      case 17:
+        cancelOptimization=true;
+        return new RfileCommand(line, realLine);
+      case 18:
+      case 16:
+        cancelOptimization=true;
+        return new NeedsArgLengthCommand(comInd, line, realLine);
       default:
         return null;
     }
@@ -146,10 +146,11 @@ class Command{
     }
     return temp;
   }
-  public static Command create(final String[] line, final String[] realLine, final ExecutorService executor,
-  final Pattern jumps, final Pattern maths, final Pattern pwvar,
-  final HashMap<String, Integer> binaryMap){
-    final Command com=new Command(line, realLine, executor, jumps, maths, pwvar, binaryMap);
+  public static Command create(
+    final String[] line, final String[] realLine,
+    final ExecutorService executor, final HashMap<String, Integer> binaryMap
+  ){
+    final Command com=new Command(line, realLine, executor, binaryMap);
     com.compile();
     return com;
   }
