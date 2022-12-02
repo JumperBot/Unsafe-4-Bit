@@ -56,13 +56,18 @@
     },
     "strings": {
       "name": "string.quoted.double.ufb",
-      "match": "\"(?:[^\"]*\"*){1,}\"",
-      "patterns": [
-        {
-          "name": "constant.character.escape.ufb",
-          "match": "\\\\n|(?:UU|uu||Uu||uU)[0-9]{4}|\\$[0-9]{3}"
+      "begin": "\"",
+      "end": "(?:[^\"]\"*)+\"",
+      "captures": {
+        "0": {
+          "patterns": [
+            {
+              "name": "constant.character.escape.ufb",
+              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}"
+            }
+          ]
         }
-      ]
+      }
     }
 	},
 	"scopeName": "source.ufb"

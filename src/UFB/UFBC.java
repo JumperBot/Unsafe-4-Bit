@@ -61,7 +61,11 @@ class UFBC{
 	public void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
-			for(String temp;(temp=scan.readLine())!=null;inBuilder.append(temp).append("\n"));
+			for(
+        String temp;
+        (temp=scan.readLine())!=null;
+        inBuilder.append(temp).append("\n")
+      );
 		}
 		String input=inBuilder.toString();
 		final Pattern dividerInString=Pattern.compile("\".*(?:[-|, \t]).*\"");
@@ -144,8 +148,27 @@ class UFBC{
   private String[] convertToMem(final String in){
     final ArrayList<String> mems=new ArrayList<>();
     boolean backSlash=false;
+    boolean memIndicator=false;
+    final StringBuilder placeHolder=new StringBuilder();
     for(final char c:in.toCharArray()){
-      if(memMap.containsKey(c))
+      if(c=='$'){
+        memIndicator=true;
+        placeHolder.append(c);
+      }else if(memIndicator){
+        placeHolder.append(c);
+        if(!Runner.isDigit(c)){
+          memIndicator=false;
+          for(final String converted:convertToMem(placeHolder.toString()))
+            mems.add(converted);
+          placeHolder.setLength(0);
+        }else{
+          if(placeHolder.length()==4){
+            mems.add(placeHolder.substring(1));
+            placeHolder.setLength(0);
+            memIndicator=false;
+          }
+        }
+      }else if(memMap.containsKey(c))
         mems.add(memMap.get(c).toString());
       else{
         if(c=='\\'){
