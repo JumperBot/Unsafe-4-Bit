@@ -18,10 +18,17 @@
  *
 **/
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 class UFB{
 	public static void main(final String[]a)throws Exception{
     final FlagManager flagManager=new FlagManager(a);
-    if(flagManager.isFlagActivated('v'))
+    if(flagManager.isFlagActivated('v')){
       //----------------------------------------------------------------------//
       /**TODO: ALWAYS CHANGE SEMANTIC VERSION BEFORE RELEASING.
        * DO NOT Change '1' in "1.*.*".
@@ -31,11 +38,63 @@ class UFB{
        * PATCH CHANGES should give new flags/performance-boosts/bug-fixes/etc.
       **/
       //----------------------------------------------------------------------//
+      final String versionString="v1.5.0";
       System.out.printf(
         "UFB version: %s (master)\n%s\n\n",
-        "v1.4.2",
+        versionString,
         "Flag triggered, continuing anyway..."
       );
+      // Inspired By:
+      // https://www.javaguides.net/2019/07/java-http-getpost-request-example.html
+      System.out.println("Checking if UFB is up-to-date...");
+      HttpURLConnection connection=(HttpURLConnection)new URL(
+        "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest"
+      ).openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+      final int responseCode=connection.getResponseCode();
+      System.out.printf(
+        "%s: %d...\n",
+        "GitHub API responded with code",
+        responseCode
+      );
+      if(responseCode==HttpURLConnection.HTTP_OK){
+        try(BufferedReader in=new BufferedReader(
+          new InputStreamReader(connection.getInputStream())
+        )){
+          final String inputLine=in.readLine();
+          final int versionInd=inputLine.indexOf("\"name\":")+8;
+          final String latestVersion=inputLine.substring(
+            versionInd,
+            inputLine.indexOf(
+              ",",
+              versionInd
+            )-1
+          );
+          if(!latestVersion.equals(versionString))
+            System.out.printf(
+              "%s\n\n%s\n%s\n\n%s\n%s\n%s\n\n",
+              "UFB on this machine is not up-to-date!",
+              "Download the latest .jar file:",
+              "https://github.com/JumperBot/Unsafe-4-Bit/raw/master/build/UFB.jar",
+              "Or clone the repository and get continous updates:",
+              "git clone https://github.com/JumperBot/Unsafe-4-Bit.git",
+              "Version check triggered, continuing anyway..."
+            );
+          else
+            System.out.printf(
+              "%s\n%s\n\n",
+              "UFB on this machine is up-to-date!",
+              "Version check triggered, continuing anyway..."
+            );
+        }
+      }else
+        System.out.printf(
+          "%s\n%s\n\n",
+          "Version check failed...",
+          "Version check triggered, continuing anyway..."
+        );
+    }
     if(flagManager.isFlagActivated('h')){
       final String repo="https://github.com/JumperBot/Unsafe-4-Bit";
       final String master="/tree/master/";
@@ -75,6 +134,14 @@ class UFB{
         "Flag triggered, continuing anyway..."
       );
     final String fileName=flagManager.getFileName();
+    if(fileName.length()==0){
+      System.out.println("\u001B[91mNo file input found, terminating.\u001B[0m");
+      System.exit(1);
+    }
+    if(!new File(fileName).exists()){
+      System.out.println("\u001B[91mFile Provided Does Not Exist...\nTerminating...\u001B[0m");
+      System.exit(1);
+    }
     if(flagManager.isFlagActivated('c')){
       if(fileName.endsWith(".ufbb")){
         System.out.printf(
