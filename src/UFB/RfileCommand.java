@@ -25,17 +25,17 @@ class RfileCommand extends NeedsArgLengthCommand{
   @Override
   public void checkCases(final String[] line, final String[] realLine){
     super.checkCases(line, realLine);
-    if(Long.parseLong(line[1])<38)
-      try{
+    try{
+      if(Long.parseLong(line[1])<38)
         errors.append(Command.formatError(
           line, "Memory Index", line[1],
           "Endangers A Read-Only Memory Index"
         ));
-      }catch(final Exception e){
-        errors.append(Command.formatError(
-          line, "Memory Index Expected Instead Of", line[1],
-          "Should Be Replaced With A Memory Index"
-        ));
-      }
+    }catch(final Exception e){
+      errors.append(Command.formatError(
+        line, "Memory Index Expected Instead Of", line[1],
+        "Should Be Replaced With A Memory Index"
+      ));
+    }
   }
 }

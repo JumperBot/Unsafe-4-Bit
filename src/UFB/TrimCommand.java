@@ -43,42 +43,42 @@ class TrimCommand implements GenericCommand{
         line, "Command", line[0],
         "Needs No Less And No More Than Two Arguments To Work"
       ));
-    if(Long.parseLong(line[1])>255)
-      try{
+    try{
+      if(Long.parseLong(line[1])>255)
         errors.append(Command.formatError(
           line, "Memory Index", line[1],
           "Is Larger Than 255 And Will Not Point To Memory"
         ));
-      }catch(final Exception e){
-        errors.append(Command.formatError(
-          line, "Memory Index Expected Instead Of", line[1],
-          "Should Be Replaced With A Memory Index"
-        ));
-      }
-    if(Long.parseLong(line[1])<38)
-      try{
+    }catch(final Exception e){
+      errors.append(Command.formatError(
+        line, "Memory Index Expected Instead Of", line[1],
+        "Should Be Replaced With A Memory Index"
+      ));
+    }
+    try{
+      if(Long.parseLong(line[1])<38)
         errors.append(Command.formatError(
           line, "Memory Index", line[1],
           "Endangers A Read-Only Memory Index"
         ));
-      }catch(final Exception e){
-        errors.append(Command.formatError(
-          line, "Memory Index Expected Instead Of", line[1],
-          "Should Be Replaced With A Memory Index"
-        ));
-      }
-    if(Long.parseLong(line[2])>255)
-      try{
+    }catch(final Exception e){
+      errors.append(Command.formatError(
+        line, "Memory Index Expected Instead Of", line[1],
+        "Should Be Replaced With A Memory Index"
+      ));
+    }
+    try{
+      if(Long.parseLong(line[2])>255)
         errors.append(Command.formatError(
           line, "Trim Length", line[2],
           "Is Larger Than 255 And Will Not Be Compiled Properly"
         ));
-      }catch(final Exception e){
-        errors.append(Command.formatError(
-          line, "Trim Length Expected Instead Of", line[2],
-          "Should Be Replaced With A Trim Length"
-        ));
-      }
+    }catch(final Exception e){
+      errors.append(Command.formatError(
+        line, "Trim Length Expected Instead Of", line[2],
+        "Should Be Replaced With A Trim Length"
+      ));
+    }
   }
   @Override
   public String getErrors(){

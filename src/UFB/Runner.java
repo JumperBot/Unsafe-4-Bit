@@ -134,8 +134,7 @@ class Runner{
       buffer.close();
       scan.close();
       if(!e.toString().contains("Unsupported Command Lol"))
-        //System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
-        throw e;
+        System.out.printf("\u001B[91m%s\nTerminating...\n\u001B[0m", e.toString());
       System.exit(1);
     }
 	}

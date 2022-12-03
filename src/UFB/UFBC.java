@@ -80,15 +80,59 @@ class UFBC{
           m2.reset(input);
         }
     }catch(final Exception e){}
-    final String[] arr=empties.split(
-			divider.matcher(
-        comment.matcher(
-          morecom.matcher(
-            input
+    final ArrayList<String> arr=new ArrayList<>(
+      Arrays.asList(empties.split(
+        divider.matcher(
+          comment.matcher(
+            morecom.matcher(
+              input
+            ).replaceAll("\n")
           ).replaceAll("\n")
-        ).replaceAll("\n")
-			).replaceAll(" ")
-		);
+        ).replaceAll(" ")
+      ))
+    );
+		final String ANSI_RESET="\u001B[0m";
+    final Pattern labelInvalids=Pattern.compile("[${}]");
+    for(int ind=0;ind<arr.size();ind++){
+      final String arrTemp=arr.get(ind);
+      final String[] line=divider.split(arrTemp);
+      if(line[0].equals("label")){
+        if(line.length!=3){
+          System.out.printf("%s%s%s%s\n",
+            ANSI_RESET, "\u001B[91m", Command.formatError(
+              line, "Command", line[0],
+              "Needs No Less And No More Than Two Arguments To Work"
+            ), ANSI_RESET
+          );
+          System.exit(1);
+        }
+        final long labelMemInd;
+        try{
+          labelMemInd=Long.parseLong(line[1]);
+          if(Long.parseLong(line[1])>255){
+            System.out.printf("%s%s%s%s\n",
+              ANSI_RESET, "\u001B[91m", Command.formatError(
+                line, "Memory Index", line[1],
+                "Is Larger Than 255 And Will Not Point To Memory"
+              ), ANSI_RESET
+            );
+            System.exit(1);
+          }
+          line[2]=labelInvalids.matcher(line[2]).replaceAll("");
+          labels.put(line[2], (int)labelMemInd);
+        }catch(final Exception e){
+          System.out.printf("%s%s%s%s\n",
+            ANSI_RESET, "\u001B[91m", Command.formatError(
+              line, "Memory Index Expected Instead Of", line[1],
+              "Should Be Replaced With A Memory Index"
+            ), ANSI_RESET
+          );
+          System.exit(1);
+        }
+        arr.remove(ind);
+        ind--;
+      }
+    }
 		final StringBuilder warnings=new StringBuilder();
 		final ArrayList<int[]> list=new ArrayList<>();
 		boolean cancelOptimization=false;
@@ -123,7 +167,6 @@ class UFBC{
       if(command.cancelOptimization())cancelOptimization=true;
       list.add(command.getCompiled());
     }
-		final String ANSI_RESET="\u001B[0m";
     if(warnings.length()!=0)
       System.out.printf("%s%s%s%s\n",
         ANSI_RESET, "\u001B[93m", warnings.toString(), ANSI_RESET
@@ -132,7 +175,7 @@ class UFBC{
       System.out.printf("%s%s%s%s\n",
         ANSI_RESET, "\u001B[91m", errors.toString(), ANSI_RESET
 			);
-			return;
+			System.exit(1);
 		}
 		final String outName=fileName.substring(0, fileName.lastIndexOf("."))+".ufbb";
 		try{
@@ -145,10 +188,12 @@ class UFBC{
     else if(recompile)
       new Runner(outName, false, false, false, false).runOptimized();
 	}
+  final HashMap<String, Integer> labels=new HashMap<>();
   private String[] convertToMem(final String in){
     final ArrayList<String> mems=new ArrayList<>();
     boolean backSlash=false;
     boolean memIndicator=false;
+    boolean isLabel=false;
     final StringBuilder placeHolder=new StringBuilder();
     for(final char c:in.toCharArray()){
       if(c=='$'){
@@ -156,7 +201,21 @@ class UFBC{
         placeHolder.append(c);
       }else if(memIndicator){
         placeHolder.append(c);
-        if(!Runner.isDigit(c)){
+        if(c=='{')
+          isLabel=true;
+        else if(isLabel){
+          if(c=='}'){
+            final String key=placeHolder.substring(2, placeHolder.length()-1);
+            if(labels.containsKey(key))
+              mems.add(Integer.toString(labels.get(key)));
+            // else
+            //   for(final String converted:convertToMem(placeHolder.toString()))
+            //     mems.add(converted);
+            placeHolder.setLength(0);
+            memIndicator=false;
+            isLabel=false;
+          }
+        }else if(!Runner.isDigit(c)){
           memIndicator=false;
           for(final String converted:convertToMem(placeHolder.toString()))
             mems.add(converted);

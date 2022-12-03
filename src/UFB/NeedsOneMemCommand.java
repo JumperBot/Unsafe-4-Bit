@@ -45,18 +45,18 @@ class NeedsOneMemCommand implements GenericCommand{
         "Needs No Less And No More Than One Argument To Work"
       ));
     for(int i=1;i<line.length;i++)
-      if(Long.parseLong(line[i])>255)
-        try{
+      try{
+        if(Long.parseLong(line[i])>255)
           errors.append(Command.formatError(
             line, "Memory Index", line[i],
             "Is Larger Than 255 And Will Not Point To Memory"
           ));
-        }catch(final Exception e){
-          errors.append(Command.formatError(
-            line, "Memory Index Expected Instead Of", line[i],
-            "Should Be Replaced With A Memory Index"
-          ));
-        }
+      }catch(final Exception e){
+        errors.append(Command.formatError(
+          line, "Memory Index Expected Instead Of", line[i],
+          "Should Be Replaced With A Memory Index"
+        ));
+      }
   }
   @Override
   public String getErrors(){
