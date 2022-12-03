@@ -691,7 +691,7 @@ class Runner{
 			printProxy.append(rvar(next(8)));
       untilDump--;
       final String printString2=printProxy.toString();
-      if(untilDump==0&&convertToMemory(printString2).length()>249){
+      if(untilDump<=0&&convertToMemory(printString2).length()>249){
         final int length=printString2.substring(printString2.lastIndexOf("U")).length();
         if(length<5)
           untilDump=5-length;
