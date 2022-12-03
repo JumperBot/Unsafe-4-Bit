@@ -1,6 +1,7 @@
+label 38, useMeLater
 wvar  38, "Hello World111\n"
 //wvar	38,	8		5		12	12	15	0		23	15	18	12	4		28	28	28	37
-print	"$038That's a String!!!\n"
+print	"$038That's a String!!!\n${useMeLater}"
 nvar	38
 wvar	38,	"HELLO World111\n"// Woohoooo
 /**/

@@ -51,6 +51,10 @@
         {
           "name": "keyword.operator.ufb",
           "match": "\\b(?:add|sub|mul|div|mod|rmod)\\b"
+        },
+        {
+          "name": "keyword.other.ufb",
+          "match": "\\b(?:label)\\b"
         }
       ]
     },
@@ -63,7 +67,7 @@
           "patterns": [
             {
               "name": "constant.character.escape.ufb",
-              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}"
+              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}|\\$\\{.*\\}"
             }
           ]
         }
