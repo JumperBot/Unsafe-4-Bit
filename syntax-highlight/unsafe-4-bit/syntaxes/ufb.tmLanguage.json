@@ -35,6 +35,10 @@
         {
           "name": "constant.language.ufb",
           "match": "[-|, \t]"
+        },
+        {
+          "name": "constant.character.escape",
+          "match": "\\$\\{.*?\\}"
         }
       ]
     },
@@ -67,7 +71,7 @@
           "patterns": [
             {
               "name": "constant.character.escape.ufb",
-              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}|\\$\\{.*\\}"
+              "match": "\\\\n|(?:UU|uu|Uu|uU)[0-9]{4}|\\$[0-9]{3}|\\$\\{.*?\\}"
             }
           ]
         }

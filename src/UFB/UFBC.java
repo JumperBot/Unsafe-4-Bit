@@ -58,7 +58,8 @@ class UFBC{
     Runtime.getRuntime().availableProcessors()*2
   );
   public UFBC(){}
-	public void compile(final String fileName, final boolean recompile)throws Exception{
+  final String ANSI_RESET="\u001B[0m";
+  public void compile(final String fileName, final boolean recompile)throws Exception{
 		final StringBuilder inBuilder=new StringBuilder();
 		try(final BufferedReader scan=new BufferedReader(new FileReader(fileName))){
 			for(
@@ -80,27 +81,27 @@ class UFBC{
           m2.reset(input);
         }
     }catch(final Exception e){}
-    final ArrayList<String> arr=new ArrayList<>(
-      Arrays.asList(empties.split(
-        divider.matcher(
-          comment.matcher(
-            morecom.matcher(
-              input
-            ).replaceAll("\n")
+    final String[] arr=empties.split(
+      divider.matcher(
+        comment.matcher(
+          morecom.matcher(
+            input
           ).replaceAll("\n")
-        ).replaceAll(" ")
-      ))
+        ).replaceAll("\n")
+      ).replaceAll(" ")
     );
-		final String ANSI_RESET="\u001B[0m";
     final Pattern labelInvalids=Pattern.compile("[${}]");
-    for(int ind=0;ind<arr.size();ind++){
-      final String arrTemp=arr.get(ind);
-      final String[] line=divider.split(arrTemp);
-      if(line[0].equals("label")){
-        if(line.length!=3){
+		final StringBuilder warnings=new StringBuilder();
+		final ArrayList<int[]> list=new ArrayList<>();
+		boolean cancelOptimization=false;
+    final ArrayList<Command> commands=new ArrayList<>();
+		for(final String arrTemp:arr){
+      final String[] realTemp=divider.split(arrTemp);
+      if(realTemp[0].equals("label")){
+        if(realTemp.length!=3){
           System.out.printf("%s%s%s%s\n",
             ANSI_RESET, "\u001B[91m", Command.formatError(
-              line, "Command", line[0],
+              realTemp, "Command", realTemp[0],
               "Needs No Less And No More Than Two Arguments To Work"
             ), ANSI_RESET
           );
@@ -108,57 +109,65 @@ class UFBC{
         }
         final long labelMemInd;
         try{
-          labelMemInd=Long.parseLong(line[1]);
-          if(Long.parseLong(line[1])>255){
+          labelMemInd=Long.parseLong(realTemp[1]);
+          if(Long.parseLong(realTemp[1])>255){
             System.out.printf("%s%s%s%s\n",
               ANSI_RESET, "\u001B[91m", Command.formatError(
-                line, "Memory Index", line[1],
+                realTemp, "Memory Index", realTemp[1],
                 "Is Larger Than 255 And Will Not Point To Memory"
               ), ANSI_RESET
             );
             System.exit(1);
           }
-          line[2]=labelInvalids.matcher(line[2]).replaceAll("");
-          labels.put(line[2], (int)labelMemInd);
+          realTemp[2]=labelInvalids.matcher(realTemp[2]).replaceAll("");
+          for(final String key:labels.keySet())
+            if(labels.get(key)==(int)labelMemInd)
+              labels.remove(key);
+          labels.put(realTemp[2], (int)labelMemInd);
         }catch(final Exception e){
           System.out.printf("%s%s%s%s\n",
             ANSI_RESET, "\u001B[91m", Command.formatError(
-              line, "Memory Index Expected Instead Of", line[1],
+              realTemp, "Memory Index Expected Instead Of", realTemp[1],
               "Should Be Replaced With A Memory Index"
             ), ANSI_RESET
           );
           System.exit(1);
         }
-        arr.remove(ind);
-        ind--;
+      }else{
+        final ArrayList<String> tempList=new ArrayList<>();
+        for(String s:realTemp){
+          if(s.startsWith("\"")&&s.endsWith("\""))
+            for(final String s2:convertToMem(s.substring(1, s.length()-1), true))
+              tempList.add(s2);
+          else if(s.startsWith("${")&&s.endsWith("}")){
+            final String key=s.substring(2, s.length()-1);
+            if(labels.containsKey(key))
+              tempList.add(Integer.toString(labels.get(key)));
+            else{
+              System.out.printf("%s%s%s%s\n",
+                ANSI_RESET, "\u001B[91m", Command.formatError(
+                  realTemp, "Memory Index Label Already Replaced By Another", realTemp[1],
+                  "Should Be Replaced With The Appropriate Label"
+                ), ANSI_RESET
+              );
+              System.exit(1);
+            }
+          }else
+            tempList.add(s);
+        }
+        final String[] temp=tempList.toArray(new String[tempList.size()]);
+        if(temp.length<2&&temp.length>0&&!temp[0].equalsIgnoreCase("nop")){
+          if(!(temp[0].equals("\n")||temp[0].trim().isEmpty()))
+            warnings.append("Warning: |\n")
+                    .append("    Command: |\n")
+                    .append("        \"")
+                    .append(temp[0])
+                    .append("\" Will Be Ignored For It Has No Arguments: |\n")
+                    .append("            ")
+                    .append(lineGen(temp));
+        }else
+          commands.add(Command.create(temp, realTemp, threads, binaryMap));
       }
-    }
-		final StringBuilder warnings=new StringBuilder();
-		final ArrayList<int[]> list=new ArrayList<>();
-		boolean cancelOptimization=false;
-    final ArrayList<Command> commands=new ArrayList<>();
-		for(final String arrTemp:arr){
-      final String[] realTemp=divider.split(arrTemp);
-      final ArrayList<String> tempList=new ArrayList<>();
-      for(String s:realTemp){
-        if(s.startsWith("\"")&&s.endsWith("\""))
-          for(final String s2:convertToMem(s.substring(1, s.length()-1)))
-            tempList.add(s2);
-        else
-          tempList.add(s);
-      }
-      final String[] temp=tempList.toArray(new String[tempList.size()]);
-			if(temp.length<2&&temp.length>0&&!temp[0].equalsIgnoreCase("nop")){
-        if(!(temp[0].equals("\n")||temp[0].trim().isEmpty()))
-          warnings.append("Warning: |\n")
-                  .append("    Command: |\n")
-                  .append("        \"")
-                  .append(temp[0])
-                  .append("\" Will Be Ignored For It Has No Arguments: |\n")
-                  .append("            ")
-                  .append(lineGen(temp));
-			}else
-        commands.add(Command.create(temp, realTemp, threads, binaryMap));
 		}
     threads.shutdown();
     threads.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
@@ -189,12 +198,47 @@ class UFBC{
       new Runner(outName, false, false, false, false).runOptimized();
 	}
   final HashMap<String, Integer> labels=new HashMap<>();
-  private String[] convertToMem(final String in){
+  private String[] convertToMem(final String in, final boolean hasMemIndicators){
     final ArrayList<String> mems=new ArrayList<>();
     boolean backSlash=false;
     boolean memIndicator=false;
     boolean isLabel=false;
     final StringBuilder placeHolder=new StringBuilder();
+    if(!hasMemIndicators){
+      for(final char c:in.toCharArray()){
+        if(memMap.containsKey(c))
+          mems.add(memMap.get(c).toString());
+        else{
+          if(c=='\\'){
+            if(backSlash){
+              backSlash=false;
+              mems.add("21");
+              mems.add("21");
+              for(final char c2:manPadding(Integer.toString('\\'), 4).toCharArray())
+                mems.add(memMap.get(c2).toString());
+            }else{
+              backSlash=true;
+            }
+          }else if(backSlash){
+            if(c=='n'){
+              mems.add("37");
+            }else{
+              mems.add("21");
+              mems.add("21");
+              for(final char c2:manPadding(Integer.toString((int)c), 4).toCharArray())
+                mems.add(memMap.get(c2).toString());
+            }
+            backSlash=false;
+          }else{
+            mems.add("21");
+            mems.add("21");
+            for(final char c2:manPadding(Integer.toString((int)c), 4).toCharArray())
+              mems.add(memMap.get(c2).toString());
+          }
+        }
+      }
+      return mems.toArray(new String[mems.size()]);
+    }
     for(final char c:in.toCharArray()){
       if(c=='$'){
         memIndicator=true;
@@ -208,16 +252,22 @@ class UFBC{
             final String key=placeHolder.substring(2, placeHolder.length()-1);
             if(labels.containsKey(key))
               mems.add(Integer.toString(labels.get(key)));
-            // else
-            //   for(final String converted:convertToMem(placeHolder.toString()))
-            //     mems.add(converted);
+            else{
+              System.out.printf("%s%s%s%s\n",
+                ANSI_RESET, "\u001B[91m", Command.formatError(
+                  new String[]{Command.convertUnicode(in)}, "Memory Index Label Already Replaced By Another",
+                  placeHolder.toString(), "Should Be Replaced With The Appropriate Label"
+                ), ANSI_RESET
+              );
+              System.exit(1);
+            }
             placeHolder.setLength(0);
             memIndicator=false;
             isLabel=false;
           }
         }else if(!Runner.isDigit(c)){
           memIndicator=false;
-          for(final String converted:convertToMem(placeHolder.toString()))
+          for(final String converted:convertToMem(placeHolder.toString(), false))
             mems.add(converted);
           placeHolder.setLength(0);
         }else{
