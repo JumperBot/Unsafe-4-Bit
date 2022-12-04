@@ -28,6 +28,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
 import java.util.HashMap;
 
 import java.util.concurrent.Executors;
@@ -531,7 +535,6 @@ class Runner{
             new File(fileName):new File(dirs[1], fileName);
   }
   public void runOptimized()throws Exception{
-    scan.close();
     try{
       scan.close();
       final long start=System.currentTimeMillis();
@@ -579,6 +582,7 @@ class Runner{
             // Read  not supported for optimization.
             // Wfile not supported for optimization.
             // Rfile not supported for optimization.
+            // Dfile not supported for optimization.
             break;
           default:
             System.out.printf(
@@ -590,14 +594,18 @@ class Runner{
       }
       if(printProxy.length()!=0)addToCommands();
       buffer.close();
-      final String newFileName=fileName.substring(0, fileName.lastIndexOf("."))+".optimized.ufb";
-      final File newGenCode=new File(newFileName);
+      final String actualFileName=new File(fileName).getName();
+      final String newFileName=actualFileName.substring(0, actualFileName.lastIndexOf("."));
+      final File newGenCode=File.createTempFile("UFBTemp", "."+newFileName+".optimized.ufb", null);
       try(final FileWriter writer=new FileWriter(newGenCode)){
         writer.write(convertUnicode(newCommands.append("\nnvar 38").toString().trim().replaceAll("\n{2,}", "\n")));
       }
-      new UFBC().compile(newFileName, false);
-      newGenCode.delete();
-      new File(newFileName+"b").renameTo(new File(fileName));
+      final String newPath=newGenCode.getPath();
+      new UFBC().compile(newPath, false);
+      final Path compiledFilePath=Path.of(fileName);
+      Files.deleteIfExists(compiledFilePath);
+      Files.move(Path.of(newPath+"b"), compiledFilePath, StandardCopyOption.REPLACE_EXISTING);
+      Files.deleteIfExists(Path.of(newPath));
     }catch(final Exception e){
       buffer.close();
       if(!(e.toString().contains("Code cannot be optimized")||e.toString().contains("Unsupported Command Lol")))
