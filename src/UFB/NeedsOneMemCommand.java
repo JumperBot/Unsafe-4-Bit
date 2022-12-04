@@ -31,7 +31,7 @@ class NeedsOneMemCommand implements GenericCommand{
   @Override
   public void compile(final String[] line){
     compiled[0]=comInd;
-    compiled[1]=Command.toIntAbsolute(line[1]);
+    compiled[1]=Universal.toIntAbsolute(line[1]);
   }
   @Override
   public int[] getCompiled(){
@@ -40,19 +40,19 @@ class NeedsOneMemCommand implements GenericCommand{
   @Override
   public void checkCases(final String[] line, final String[] realLine){
     if(line.length!=2)
-      errors.append(Command.formatError(
+      errors.append(Universal.formatError(
         line, "Command", line[0],
         "Needs No Less And No More Than One Argument To Work"
       ));
     for(int i=1;i<line.length;i++)
       try{
         if(Long.parseLong(line[i])>255)
-          errors.append(Command.formatError(
+          errors.append(Universal.formatError(
             line, "Memory Index", line[i],
             "Is Larger Than 255 And Will Not Point To Memory"
           ));
       }catch(final Exception e){
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index Expected Instead Of", line[i],
           "Should Be Replaced With A Memory Index"
         ));

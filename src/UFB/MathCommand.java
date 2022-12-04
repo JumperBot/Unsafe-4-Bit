@@ -32,7 +32,7 @@ class MathCommand implements GenericCommand{
   public void compile(final String[] line){
     compiled[0]=comInd;
     for(int i=1;i<line.length;i++)
-      compiled[i]=Command.toIntAbsolute(line[i]);
+      compiled[i]=Universal.toIntAbsolute(line[i]);
   }
   @Override
   public int[] getCompiled(){
@@ -41,18 +41,18 @@ class MathCommand implements GenericCommand{
   @Override
   public void checkCases(final String[] line, final String[] realLine){
     if(line.length!=3)
-      errors.append(Command.formatError(
+      errors.append(Universal.formatError(
         line, "Command", line[0],
         "Needs No Less And No More Than Two Arguments To Work"
       ));
     try{
       if(Long.parseLong(line[1])<38)
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index", line[1],
           "Endangers A Read-Only Memory Index"
         ));
     }catch(final Exception e){
-      errors.append(Command.formatError(
+      errors.append(Universal.formatError(
         line, "Memory Index Expected Instead Of", line[1],
         "Should Be Replaced With A Memory Index"
       ));
@@ -60,12 +60,12 @@ class MathCommand implements GenericCommand{
     for(int i=1;i<line.length;i++)
       try{
         if(Long.parseLong(line[i])>255)
-          errors.append(Command.formatError(
+          errors.append(Universal.formatError(
             line, "Memory Index", line[i],
             "Is Larger Than 255 And Will Not Point To Memory"
           ));
       }catch(final Exception e){
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index Expected Instead Of", line[i],
           "Should Be Replaced With A Memory Index"
         ));

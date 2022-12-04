@@ -37,7 +37,7 @@ class NopCommand implements GenericCommand{
   @Override
   public void checkCases(final String[] line, final String[] realLine){
     if(line.length!=1)
-      errors.append(Command.formatError(
+      errors.append(Universal.formatError(
         line, "Command", line[0],
         "Needs No Less And No More Than Zero Arguments To Work"
       ));

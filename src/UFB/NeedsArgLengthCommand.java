@@ -33,7 +33,7 @@ class NeedsArgLengthCommand implements GenericCommand{
     compiled[0]=comInd;
     compiled[1]=line.length-1;
     for(int i=1;i<line.length;i++)
-      compiled[i+1]=Command.toIntAbsolute(line[i]);
+      compiled[i+1]=Universal.toIntAbsolute(line[i]);
   }
   @Override
   public int[] getCompiled(){
@@ -42,20 +42,20 @@ class NeedsArgLengthCommand implements GenericCommand{
   @Override
   public void checkCases(final String[] line, final String[] realLine){
     if(line.length>256)
-      errors.append(Command.formatError(
+      errors.append(Universal.formatError(
         realLine, "Command", line[0],
         "Has Too Many Arguments",
-        Command.lineGen(line)
+        Universal.lineGen(line)
       ));
     for(int i=1;i<line.length;i++)
       try{
         if(Long.parseLong(line[i])>255)
-          errors.append(Command.formatError(
+          errors.append(Universal.formatError(
             line, "Memory Index", line[i],
             "Is Larger Than 255 And Will Not Point To Memory"
           ));
       }catch(final Exception e){
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index Expected Instead Of", line[i],
           "Should Be Replaced With A Memory Index"
         ));

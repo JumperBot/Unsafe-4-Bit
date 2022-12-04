@@ -445,7 +445,7 @@ class Runner{
       if(temp.substring(i, i+2).toLowerCase().equals("uu")){
         boolean confirmed=true;
         for(int i2=i+2;i2<i+6;i2++)
-          if(!isDigit(temp.charAt(i2)))confirmed=false;
+          if(!Universal.isDigit(temp.charAt(i2)))confirmed=false;
         if(confirmed)
           temp=new StringBuilder(temp.substring(0, i))
             .append((char)toLongAbsolute(
@@ -455,10 +455,6 @@ class Runner{
       }
     }
     return temp;
-  }
-  public static boolean isDigit(final char c){
-    // BeCoz Character.isDigit has too much function overhead.
-    return (c>47&&c<58);
   }
 
 	final BufferedReader scan=new BufferedReader(new InputStreamReader(System.in));
@@ -633,7 +629,7 @@ class Runner{
       else{
         output.append(memMap.get('U')).append(" ");
         output.append(memMap.get('U')).append(" ");
-        for(final char c2:UFBC.manPadding(Integer.toString(c+0), 4).toCharArray())
+        for(final char c2:Universal.manPadding(Integer.toString(c+0), 4).toCharArray())
           output.append(memMap.get(c2)).append(" ");
       }
     }

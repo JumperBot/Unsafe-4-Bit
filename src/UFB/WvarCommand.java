@@ -27,12 +27,12 @@ class WvarCommand extends NeedsArgLengthCommand{
     super.checkCases(line, realLine);
     if(Long.parseLong(line[1])<38)
       try{
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index", line[1],
           "Endangers A Read-Only Memory Index"
         ));
       }catch(final Exception e){
-        errors.append(Command.formatError(
+        errors.append(Universal.formatError(
           line, "Memory Index Expected Instead Of", line[1],
           "Should Be Replaced With A Memory Index"
         ));
