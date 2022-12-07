@@ -93,6 +93,8 @@ class Command{
         cancelOptimization=true;
         return new RfileCommand(line, realLine);
       case 18:
+      case 19:
+      case 20:
       case 16:
         cancelOptimization=true;
         return new NeedsArgLengthCommand(comInd, line, realLine);
