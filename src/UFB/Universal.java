@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 class Universal{
   private Universal(){}
@@ -122,7 +124,7 @@ class Universal{
       if(temp.substring(i, i+2).toLowerCase().equals("uu")){
         boolean confirmed=true;
         for(int i2=i+2;i2<6;i2++)
-          if(!Universal.isDigit(temp.charAt(i2)))confirmed=false;
+          if(!isDigit(temp.charAt(i2)))confirmed=false;
         if(confirmed)
           temp=new StringBuilder(temp.substring(0, i))
             .append((char)toIntAbsolute(
@@ -132,5 +134,163 @@ class Universal{
       }
     }
     return temp;
+  }
+  final static HashMap<Character, Integer> memMap=new HashMap<>(){{
+		put(' ', 0); put('A', 1); put('B', 2); put('C', 3); put('D', 4);
+    put('E', 5); put('F', 6); put('G', 7); put('H', 8); put('I', 9);
+		put('J', 10); put('K', 11); put('L', 12); put('M', 13); put('N', 14);
+    put('O', 15); put('P', 16); put('Q', 17); put('R', 18); put('S', 19);
+    put('T', 20); put('U', 21); put('V', 22); put('W', 23); put('X', 24);
+    put('Y', 25); put('Z', 26);
+		put('0', 27); put('1', 28); put('2', 29); put('3', 30); put('4', 31);
+    put('5', 32); put('6', 33); put('7', 34); put('8', 35); put('9', 36);
+		put('\n', 37);
+  }};
+  /**
+   * Returns a {@code String[]} full of UFB memory pointers parsed from the given {@code String}.
+   * <p>Example:</p>
+   * <pre><code>
+   * convertToMem("ABC12345");
+   * {"1", "2", "3", "28", "29", "30", "31", "32"}
+   * </code></pre>
+   * @param  in          the input {@code String} to be parsed
+   * @param  memIndics   tells if the given {@code String} has memory indicators <code>${.*}</code> or <code>$.*</code>.
+   * @param  labels      the map used to convert memory indicators into UFB memory pointers
+   * @return             the {@code String[]} with all the UFB memory pointers
+  */
+  public static String[] convertToMem(
+    final String in, final boolean memIndics, final HashMap<String, Integer> labels
+  ){
+    final String ANSI_RESET="\u001B[0m";
+    final ArrayList<String> mems=new ArrayList<>();
+    boolean backSlash=false;
+    boolean memIndicator=false;
+    boolean isLabel=false;
+    final StringBuilder placeHolder=new StringBuilder();
+    if(!memIndics){
+      for(final char c:in.toCharArray()){
+        if(memMap.containsKey(c))
+          mems.add(memMap.get(c).toString());
+        else{
+          if(c=='\\'){
+            if(backSlash){
+              backSlash=false;
+              mems.add("21");
+              mems.add("21");
+              for(
+                final char c2:
+                manPadding(Integer.toString('\\'), 4).toCharArray()
+              )
+                mems.add(memMap.get(c2).toString());
+            }else{
+              backSlash=true;
+            }
+          }else if(backSlash){
+            if(c=='n'){
+              mems.add("37");
+            }else{
+              mems.add("21");
+              mems.add("21");
+              for(
+                final char c2:
+                manPadding(Integer.toString((int)c), 4).toCharArray()
+              )
+                mems.add(memMap.get(c2).toString());
+            }
+            backSlash=false;
+          }else{
+            mems.add("21");
+            mems.add("21");
+            for(
+              final char c2:
+              manPadding(Integer.toString((int)c), 4).toCharArray()
+            )
+              mems.add(memMap.get(c2).toString());
+          }
+        }
+      }
+      return mems.toArray(new String[mems.size()]);
+    }
+    for(final char c:in.toCharArray()){
+      if(c=='$'){
+        memIndicator=true;
+        placeHolder.append(c);
+      }else if(memIndicator){
+        placeHolder.append(c);
+        if(c=='{')
+          isLabel=true;
+        else if(isLabel){
+          if(c=='}'){
+            final String key=placeHolder.substring(2, placeHolder.length()-1);
+            if(labels.containsKey(key))
+              mems.add(Integer.toString(labels.get(key)));
+            else{
+              System.out.printf("%s%s%s%s\n",
+                ANSI_RESET, "\u001B[91m", formatError(
+                  new String[]{convertUnicode(in)},
+                  "Memory Index Label Already Replaced By Another",
+                  placeHolder.toString(),
+                  "Should Be Replaced With The Appropriate Label"
+                ), ANSI_RESET
+              );
+              System.exit(1);
+            }
+            placeHolder.setLength(0);
+            memIndicator=false;
+            isLabel=false;
+          }
+        }else if(!isDigit(c)){
+          memIndicator=false;
+          for(final String converted:convertToMem(placeHolder.toString(), false, labels))
+            mems.add(converted);
+          placeHolder.setLength(0);
+        }else{
+          if(placeHolder.length()==4){
+            mems.add(placeHolder.substring(1));
+            placeHolder.setLength(0);
+            memIndicator=false;
+          }
+        }
+      }else if(memMap.containsKey(c))
+        mems.add(memMap.get(c).toString());
+      else{
+        if(c=='\\'){
+          if(backSlash){
+            backSlash=false;
+            mems.add("21");
+            mems.add("21");
+            for(
+              final char c2:
+              manPadding(Integer.toString('\\'), 4).toCharArray()
+            )
+              mems.add(memMap.get(c2).toString());
+          }else{
+            backSlash=true;
+          }
+        }else if(backSlash){
+          if(c=='n'){
+            mems.add("37");
+          }else{
+            mems.add("21");
+            mems.add("21");
+            for(
+              final char c2:
+              manPadding(Integer.toString((int)c), 4).toCharArray()
+            )
+              mems.add(memMap.get(c2).toString());
+          }
+          backSlash=false;
+        }else{
+          mems.add("21");
+          mems.add("21");
+          for(
+            final char c2:
+            manPadding(Integer.toString((int)c), 4).toCharArray()
+          )
+            mems.add(memMap.get(c2).toString());
+        }
+      }
+    }
+    return mems.toArray(new String[mems.size()]);
   }
 }
