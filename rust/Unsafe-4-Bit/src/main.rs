@@ -1,14 +1,27 @@
 mod universal;
 mod flag_manager;
+mod ufbc;
+
+use flag_manager::FlagManager;
+use ufbc::UFBC;
 
 use std::env;
 
-use flag_manager::FlagManager;
-
 fn main(){
-    let flag_manager: FlagManager=FlagManager{
-        args: env::args().collect(),
-    };
+    let flags: FlagManager=FlagManager::new(
+        &env::args().collect::<Vec<String>>()
+    );
+    if flags.file_name.len()==0 {
+        universal::err_exit(
+            "No File Input Found, Terminating.".to_string()
+        );
+    }
+    if flags.compile_flag {
+        let compiler: UFBC=UFBC{
+            file_name: flags.file_name,
+        };
+        compiler.compile();
+    }
 }
 
 fn run(){

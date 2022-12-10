@@ -1,17 +1,28 @@
 pub struct FlagManager{
-    pub args: Vec<String>,
+    pub compile_flag: bool,
+    pub file_name: String,
 }
 impl FlagManager{
-    pub fn is_compile_flag_on(&self) -> bool{
-        return self.check_if_flag_exists("c".to_string());
+    pub fn new(args: &Vec<String>) -> FlagManager{
+        return FlagManager{
+            compile_flag: Self::check_flag(args, "c".to_string()),
+            file_name: Self::get_file_name(args),
+        };
     }
-    fn check_if_flag_exists(&self, flag: String) -> bool{
-        let args_copy=&self.args;
-        for x in args_copy{
+    fn check_flag(args: &Vec<String>, flag: String) -> bool{
+        for x in args{
             if x.starts_with("-")&&x.contains(&flag){
                 return true;
             }
         }
         return false;
+    }
+    fn get_file_name(args: &Vec<String>) -> String{
+        for x in args{
+            if x.ends_with(".ufb")||x.ends_with(".ufbb"){
+                return x.to_string();
+            }
+        }
+        return "".to_string();
     }
 }

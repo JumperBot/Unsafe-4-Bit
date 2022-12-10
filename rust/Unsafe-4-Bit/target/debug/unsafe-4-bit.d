@@ -1,1 +1,0 @@
-/home/csg/coding/Unsafe-4-Bit/rust/Unsafe-4-Bit/target/debug/unsafe-4-bit: /home/csg/coding/Unsafe-4-Bit/rust/Unsafe-4-Bit/src/flag_manager.rs /home/csg/coding/Unsafe-4-Bit/rust/Unsafe-4-Bit/src/main.rs /home/csg/coding/Unsafe-4-Bit/rust/Unsafe-4-Bit/src/universal.rs
