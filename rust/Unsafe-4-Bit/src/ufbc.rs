@@ -23,7 +23,6 @@ use std::fs;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
-use regex::Captures;
 use regex::Regex;
 
 pub struct UFBC{
@@ -52,16 +51,101 @@ impl UFBC{
         let mut cancel_optimizations: bool=false;
         let mut compiled: Vec<Vec<u8>>=Vec::<Vec<u8>>::new();
         let mut memory_map: MemoryMap=MemoryMap::new();
-        let labelInvalids: Regex=Regex::new("[${}]").unwrap();
+        let default_memory_map: MemoryMap=MemoryMap{
+            keys: vec![
+                " ",
+                "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\n"
+            ].into_iter().map(|x| x.to_string()).collect::<Vec<String>>(),
+            mems: (0..38).collect::<Vec<u64>>(),
+        };
+        let label_invalids: Regex=Regex::new("[${}]").unwrap();
         for x in lines.clone(){
-            let realTemp: Vec<String>=Self::split_line(&x, &dividers);
-            let temp: Vec<String>=Self::substitute_strings_and_labels(&realTemp, &string, &memory_map);
+            let real_line: Vec<String>=Self::split_line(&x, &dividers);
+            let line: Vec<String>=Self::substitute_strings_and_labels(
+                &real_line, &mut memory_map, &label_invalids, &default_memory_map
+            );
+            if !real_line[0].to_lowercase().eq("label"){
+                println!("{}", Universal::arr_to_string2(&real_line, '|'));
+                println!("{}", Universal::arr_to_string2(&line, '|'));
+                println!();
+            }
         }
-        println!("{}", Universal::arr_to_string2(&compiled, '\n'));
     }
 
-    fn substitute_strings_and_labels(line: &Vec<String>, string: &Regex, labels: &MemoryMap) -> Vec<String>{
-        return line.clone();
+    fn substitute_strings_and_labels(
+        real_line: &Vec<String>, labels: &mut MemoryMap,
+        label_invalids: &Regex, default_memory_map: &MemoryMap
+    ) -> Vec<String>{
+        if real_line[0].to_lowercase().eq("label"){
+            Self::assign_labels(&real_line, labels, &label_invalids);
+            return Vec::<String>::new();
+        }
+        return Self::substitute_strings(&real_line, &labels, &default_memory_map);
+    }
+    fn substitute_strings(real_line: &Vec<String>, labels: &MemoryMap, default_memory_map: &MemoryMap) -> Vec<String>{
+        let mut out: Vec<String>=Vec::<String>::new();
+        for x in real_line.clone(){
+            if x.starts_with("\"")&&x.ends_with("\""){
+                for x2 in Universal::convert_to_mem(&x, true, &labels, &default_memory_map){
+                    out.push(x2);
+                }
+            }else if x.starts_with("${")&&x.ends_with("}"){
+                let key: String={
+                    let mut temp: String=x.clone();
+                    temp.replace_range(0..2, "");
+                    temp.replace_range(temp.len()-1..temp.len(), "");
+                    temp
+                };
+                if labels.contains_key(&key){
+                    out.push(labels.get(&key).to_string());
+                }else{
+                    Universal::err_exit(Universal::format_error(
+                        &real_line, &[
+                            "Memory Index Label Already Replaced By Another",
+                            &real_line[1], "Should Be Replaced With The Appropriate Label"
+                        ]
+                    ));
+                }
+            }else{
+                out.push(x);
+            }
+        }
+        return out;
+    }
+    fn assign_labels(real_line: &Vec<String>, labels: &mut MemoryMap, label_invalids: &Regex){
+        if real_line.len()!=3{
+            Universal::err_exit(Universal::format_error(
+                &real_line, &[
+                    "Command", "label",
+                    "Needs No Less And No More Than Two Arguments To Work"
+                    ]
+                ));
+        }
+        let label_mem_ind: u64=match real_line[1].parse::<u64>(){
+            Ok(x)  => x,
+            Err(_x) => {
+                Universal::err_exit(Universal::format_error(
+                    &real_line, &[
+                        "Memory Index Expected Instead Of", &real_line[1],
+                        "Should Be Replaced With A Memory Index"
+                    ]
+                ));
+                0
+            }
+        };
+        if label_mem_ind>255{
+            Universal::err_exit(Universal::format_error(
+                &real_line, &[
+                    "Memory Index", &real_line[1],
+                    "Is Larger Than 255 And Will Not Point To Memory"
+                ]
+            ));
+        }
+        let label: String=label_invalids.replace_all(&real_line[2], "").to_string();
+        labels.remove_mem_if_exists(&label_mem_ind);
+        labels.put(&label, &label_mem_ind);
     }
 
     fn split_line(line: &str, dividers: &Regex) -> Vec<String>{

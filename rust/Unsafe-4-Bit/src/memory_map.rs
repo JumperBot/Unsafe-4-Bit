@@ -18,6 +18,8 @@
  *
 **/
 
+use crate::universal::Universal;
+
 pub struct MemoryMap{
     pub keys: Vec<String>,
     pub mems: Vec<u64>
@@ -31,8 +33,8 @@ impl MemoryMap{
         };
     }
     
-    pub fn put(&mut self, key: String, mem: u64){
-        self.keys.push(key.clone());
+    pub fn put(&mut self, key: &str, mem: &u64){
+        self.keys.push(key.to_string());
         self.mems.push(mem.clone());
     }
     
@@ -44,17 +46,44 @@ impl MemoryMap{
         }
         return Err("Key Does Not Exist In The Map.");
     }
+    fn get_index2<'a>(mems: &'a Vec<u64>, mem: &'a u64) -> Result<usize, &'a str>{
+        for x in 0..mems.len(){
+            if mems.get(x).unwrap()==mem{
+                return Ok(x);
+            }
+        }
+        return Err("Mem Does Not Exist In The Map.");
+    }
     pub fn get(&self, key: &str) -> u64{
         match Self::get_index(&self.keys, key){
             Ok(x)  => return self.mems.get(x).unwrap().clone(),
-            Err(x) => return 0,
+            Err(_x) => return 0,
         };
     }
 
     pub fn contains_key(&self, key: &str) -> bool{
-        match(Self::get_index(&self.keys, key)){
-            Ok(x)  => return true,
-            Err(x) => return false,
+        match Self::get_index(&self.keys, key){
+            Ok(_x)  => return true,
+            Err(_x) => return false,
         };
+    }
+
+    pub fn remove_mem_if_exists(&mut self, mem: &u64){
+        let ind: usize=match Self::get_index2(&self.mems, &mem){
+            Ok(x)  => x,
+            Err(_x) => {
+                return ();
+            }
+        };
+        self.keys.remove(ind);
+        self.mems.remove(ind);
+    }
+
+    pub fn to_string(&self) -> String{
+        return format!(
+            "{}\n{}",
+            Universal::arr_to_string(&self.keys),
+            Universal::arr_to_string(&self.mems)
+        );
     }
 }
