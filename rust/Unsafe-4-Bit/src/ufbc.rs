@@ -67,7 +67,9 @@ impl UFBC{
             );
             let command: String=real_line[0].clone().to_lowercase();
             if !command.eq("label"){
-                if line.len()<2&&!(command.eq("nop")||line[0].eq("\n")||line[0].trim().is_empty()){
+                if line.len()<2&&!(
+                    command.eq("nop")||line[0].eq("\n")||line[0].trim().is_empty()
+                ){
                     warnings.push(
                         format!(
                             "{}{}",

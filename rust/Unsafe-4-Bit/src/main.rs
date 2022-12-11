@@ -18,6 +18,7 @@
  *
 **/
 
+mod command;
 mod flag_manager;
 mod memory_map;
 mod ufbc;
