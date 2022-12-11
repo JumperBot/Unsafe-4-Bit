@@ -43,9 +43,8 @@ impl UFBC{
                 return ();
             }
         };
-        let string: Regex=Regex::new("(.*)(\".*\")(.*)").unwrap();
         let dividers: Regex=Regex::new("[-|, \t]").unwrap();
-        let lines: Vec<String>=Self::get_lines(&code, &string, &dividers);
+        let lines: Vec<String>=Self::get_lines(&code, &Regex::new("(.*)(\".*\")(.*)").unwrap(), &dividers);
         let mut warnings: Vec<String>=Vec::<String>::new();
         let mut errors: Vec<String>=Vec::<String>::new();
         let mut cancel_optimizations: bool=false;
@@ -66,11 +65,48 @@ impl UFBC{
             let line: Vec<String>=Self::substitute_strings_and_labels(
                 &real_line, &mut memory_map, &label_invalids, &default_memory_map
             );
-            if !real_line[0].to_lowercase().eq("label"){
-                println!("{}", Universal::arr_to_string2(&real_line, '|'));
-                println!("{}", Universal::arr_to_string2(&line, '|'));
-                println!();
+            let command: String=real_line[0].clone().to_lowercase();
+            if !command.eq("label"){
+                if line.len()<2&&!(command.eq("nop")||line[0].eq("\n")||line[0].trim().is_empty()){
+                    warnings.push(
+                        format!(
+                            "{}{}",
+                            "Warning",
+                            {
+                                let mut temp: String=Universal::format_error(
+                                    &line, &[
+                                        "Command", &real_line[0],
+                                        "Will Be Ignored For It Has No Arguments"
+                                    ]
+                                );
+                                temp.replace_range(0..5, "");
+                                temp
+                            }
+                        )
+                    );
+                }else{
+                    //commands.add(Command.create(temp, realTemp, threads, binaryMap));
+                }
             }
+        }
+        if warnings.len()!=0{
+            print!("\u{001B}[93m");
+            for x in warnings{
+                println!("{}", x);
+            }
+            print!("\n\u{001B}[0m");
+        }
+        if errors.len()!=0{
+            Universal::err_exit({
+                let mut temp: String=String::new();
+                for x in errors{
+                    temp=format!(
+                        "{}{}\n",
+                        temp, x
+                    );
+                }
+                temp
+            });
         }
     }
 
