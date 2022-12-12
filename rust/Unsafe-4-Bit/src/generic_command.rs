@@ -19,7 +19,21 @@
 **/
 
 pub trait GenericCommand{
-    pub fn create() -> GenericCommand;
-    pub fn analyze() -> String;
-    pub fn compile() -> Vec<u16>;
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self> where Self: Sized;
+    fn analyze() -> Result<String, String> where Self: Sized;
+    fn compile() -> Vec<u16> where Self: Sized;
+}
+
+pub struct EmptyCommand{}
+
+impl GenericCommand for EmptyCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        return Box::new(EmptyCommand{});
+    }
+    fn analyze() -> Result<String, String>{
+        return Ok("".to_string());
+    }
+    fn compile() -> Vec<u16>{
+        return Vec::<u16>::new();
+    }
 }

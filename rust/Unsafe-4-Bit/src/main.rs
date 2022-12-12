@@ -20,9 +20,11 @@
 
 mod command;
 mod flag_manager;
+mod generic_command;
 mod memory_map;
 mod ufbc;
 mod universal;
+mod wvar_command;
 
 use flag_manager::FlagManager;
 use ufbc::UFBC;

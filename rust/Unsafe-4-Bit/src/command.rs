@@ -18,6 +18,8 @@
  *
 **/
 
+use crate::generic_command::EmptyCommand;
+use crate::generic_command::GenericCommand;
 use crate::memory_map::MemoryMap;
 
 pub struct Command<'a>{
@@ -31,8 +33,8 @@ pub struct Command<'a>{
 
 impl Command<'_>{
     pub fn new<'a>(line: &'a Vec<String>, real_line: &'a Vec<String>, binary_map: &'a MemoryMap) -> Command<'a>{
-        match binary_map.get(&line[0]){
-            _ => ()
+        let command: Box<dyn GenericCommand>=match binary_map.get(&line[0]){
+            _ => EmptyCommand::create(&real_line, &line),
             /*
                case 0:
                return new WvarCommand(line, realLine);
@@ -59,17 +61,15 @@ impl Command<'_>{
                case 16:
                cancelOptimization=true;
                return new NeedsArgLengthCommand(comInd, line, realLine);
-               default:
-               return null;
             */
-        }
+        };
         return Command{
             compiled: Vec::<u16>::new(),
             errors: String::new(),
             cancel_optimization: false,
-            binary_map: binary_map,
-            line: line,
-            real_line: real_line
+            binary_map: &binary_map,
+            line: &line,
+            real_line: &real_line
         };
     }
 }
