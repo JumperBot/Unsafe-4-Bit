@@ -21,14 +21,14 @@
 use crate::command::Command;
 use crate::generic_command::GenericCommand;
 
-pub struct WvarCommand{
+pub struct NvarCommand{
     real_line: Vec<String>,
     line: Vec<String>
 }
 
-impl GenericCommand for WvarCommand{
+impl GenericCommand for NvarCommand{
     fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
-        let out: WvarCommand=WvarCommand{
+        let out: NvarCommand=NvarCommand{
             real_line: real_line.clone(),
             line: line.clone(),
         };
@@ -36,15 +36,11 @@ impl GenericCommand for WvarCommand{
     }
     fn analyze(&self) -> String{
         let mut errors: String=String::new();
-        errors=Command::check_length(&self.real_line, &self.line, 256, errors);
-        errors=Command::check_all_if_mem_ind(&self.real_line, &self.line, errors);
+        errors=Command::check_length(&self.real_line, &self.line, 3, errors);
+        errors=Command::check_if_mem_ind(&self.real_line, &self.line, self.line[1].clone(), errors);
         return errors;
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(0, (self.line.len()+1).try_into().unwrap());
-        for x in 1..self.line.len(){
-            out.push(self.line[x].parse::<u8>().unwrap());
-        }
-        return out;
+        return vec!(1, self.line[1].parse::<u8>().unwrap());
     }
 }

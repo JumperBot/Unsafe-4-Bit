@@ -20,6 +20,7 @@
 
 use std::fs;
 
+use crate::command::Command;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
@@ -47,17 +48,29 @@ impl UFBC{
         let lines: Vec<String>=Self::get_lines(&code, &Regex::new("(.*)(\".*\")(.*)").unwrap(), &dividers);
         let mut warnings: Vec<String>=Vec::<String>::new();
         let mut errors: Vec<String>=Vec::<String>::new();
-        let mut cancel_optimizations: bool=false;
+        let mut cancel_optimization: bool=false;
         let mut compiled: Vec<Vec<u8>>=Vec::<Vec<u8>>::new();
         let mut memory_map: MemoryMap=MemoryMap::new();
         let default_memory_map: MemoryMap=MemoryMap{
-            keys: vec![
+            keys: vec!(
                 " ",
                 "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
                 "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
                 "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\n"
-            ].into_iter().map(|x| x.to_string()).collect::<Vec<String>>(),
+            ).into_iter().map(|x| x.to_string()).collect::<Vec<String>>(),
             mems: (0..38).collect::<Vec<u64>>(),
+        };
+        let binary_map: MemoryMap=MemoryMap{
+            keys: vec!(
+                "wvar", "nvar", "trim",
+                "add", "sub", "mul", "div", "mod", "rmod",
+                "nop",
+                "jm", "jl", "je", "jne",
+                "print", "read",
+                "wfile", "rfile", "dfile",
+                "wfunc", "dfunc"
+            ).into_iter().map(|x| x.to_string()).collect::<Vec<String>>(),
+            mems: (0..21).collect::<Vec<u64>>(),
         };
         let label_invalids: Regex=Regex::new("[${}]").unwrap();
         for x in lines.clone(){
@@ -87,6 +100,15 @@ impl UFBC{
                         )
                     );
                 }else{
+                    let command: Command=Command::new(&line, &real_line, &binary_map);
+                    if command.errors.len()!=0{
+                        errors.push(command.errors);
+                    }else{
+                        compiled.push(command.compiled);
+                    }
+                    if command.cancel_optimization{
+                        cancel_optimization=true;
+                    }
                     //commands.add(Command.create(temp, realTemp, threads, binaryMap));
                 }
             }
@@ -109,6 +131,12 @@ impl UFBC{
                 }
                 temp
             });
+        }
+        if compiled.len()!=0{
+            println!(
+                "{}",
+                Universal::arr_to_string(&compiled)
+            );
         }
     }
 
