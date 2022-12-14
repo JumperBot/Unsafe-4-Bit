@@ -36,8 +36,9 @@ impl GenericCommand for NvarCommand{
     }
     fn analyze(&self) -> String{
         let mut errors: String=String::new();
-        errors=Command::check_length(&self.real_line, &self.line, 3, errors);
-        errors=Command::check_if_mem_ind(&self.real_line, &self.line, self.line[1].clone(), errors);
+        errors=Command::check_arg_length(&self.real_line, &self.line, 1, errors);
+        errors=Command::check_if_mem_ind(&self.real_line, self.line[1].clone(), errors);
+        errors=Command::check_if_dangerous_mem_ind(&self.real_line, self.line[1].clone(), errors);
         return errors;
     }
     fn compile(&self) -> Vec<u8>{

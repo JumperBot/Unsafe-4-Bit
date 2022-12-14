@@ -36,8 +36,9 @@ impl GenericCommand for WvarCommand{
     }
     fn analyze(&self) -> String{
         let mut errors: String=String::new();
-        errors=Command::check_length(&self.real_line, &self.line, 256, errors);
+        errors=Command::check_arg_length_using_limit(&self.real_line, &self.line, 255, errors);
         errors=Command::check_all_if_mem_ind(&self.real_line, &self.line, errors);
+        errors=Command::check_if_dangerous_mem_ind(&self.real_line, self.line[1].clone(), errors);
         return errors;
     }
     fn compile(&self) -> Vec<u8>{

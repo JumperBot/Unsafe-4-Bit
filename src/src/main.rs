@@ -23,6 +23,7 @@ mod flag_manager;
 mod generic_command;
 mod memory_map;
 mod nvar_command;
+mod trim_command;
 mod ufbc;
 mod universal;
 mod wvar_command;

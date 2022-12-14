@@ -71,22 +71,52 @@ impl Command{
             cancel_optimization: false,
         };
     }
-    pub fn check_length(real_line: &Vec<String>, line: &Vec<String>, len_plus_one: usize, errors: String) -> String{
-        if line.len()>len_plus_one{
+    pub fn check_arg_length_using_limit(real_line: &Vec<String>, line: &Vec<String>, limit: usize, errors: String) -> String{
+        if line.len()-1>limit{
             return format!(
                 "{}\n{}",
                 errors,
                 Universal::format_error(
                     real_line, &[
                         "Command", &line[0],
-                        "Has Too Many Arguments",
+                        &format!(
+                            "{}{}{}",
+                            "Has More Than The Maximum ",
+                            limit,
+                            " Allowed Arguments"
+                        )
                     ]
                 )
             );
         }
         return errors;
     }
-    pub fn check_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>, ind: String, errors: String) -> String{
+    pub fn check_arg_length(real_line: &Vec<String>, line: &Vec<String>, len: usize, errors: String) -> String{
+        if line.len()-1!=len{
+            return format!(
+                "{}\n{}",
+                errors,
+                Universal::format_error(
+                    real_line, &[
+                        "Command", &line[0],
+                        &format!(
+                            "{}{}{}",
+                            "Needs No Less And No More Than ",
+                            match len{
+                                0 => "Zero",
+                                1 => "One",
+                                2 => "Two",
+                                _ => "Three",
+                            },
+                            " Arguments To Work"
+                        )
+                    ]
+                )
+            );
+        }
+        return errors;
+    }
+    pub fn check_if_mem_ind(real_line: &Vec<String>, ind: String, errors: String) -> String{
         let mut out: String=errors.clone();
         match ind.parse::<u64>(){
             Ok(x)  => {
@@ -121,14 +151,13 @@ impl Command{
     pub fn check_all_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>, errors: String) -> String{
         let mut out: String=errors.clone();
         for x in 1..line.len(){
-            out=Self::check_if_mem_ind(real_line, line, line[x].clone(), out);
+            out=Self::check_if_mem_ind(real_line, line[x].clone(), out);
         }
         return out;
     }
 
-    pub fn check_if_dangerous_mem_ind(real_line: &Vec<String>, line: &Vec<String>, errors: String) -> String{
+    pub fn check_if_dangerous_mem_ind(real_line: &Vec<String>, ind: String, errors: String) -> String{
         let mut out: String=errors.clone();
-        let ind: String=line[1].clone();
         match ind.parse::<u64>(){
             Ok(x) => {
                 if x<38{
@@ -136,7 +165,7 @@ impl Command{
                         "{}\n{}",
                         out,
                         Universal::format_error(
-                            line, &[
+                            &real_line, &[
                                 "Memory Index", &ind,
                                 "Endangers A Read-Only Memory Index"
                             ]
@@ -149,7 +178,7 @@ impl Command{
                     "{}\n{}",
                     out,
                     Universal::format_error(
-                        line, &[
+                        &real_line, &[
                             "Memory Index Expected Instead Of", &ind,
                             "Should Be Replaced With A Memory Index"
                         ]
