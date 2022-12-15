@@ -50,7 +50,7 @@ fn main(){
         compiler.compile();
     }
 }
-
+/*
 fn run(){
     let mut mem_ind: [u8; 256]=[0; 256];
     let mut mem: [char; 256]=['\u{0000}'; 256];
@@ -75,3 +75,4 @@ fn init_mem(mem: &mut [char]){
     }
     mem[37]='\n';
 }
+*/

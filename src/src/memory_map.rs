@@ -18,7 +18,7 @@
  *
 **/
 
-use crate::universal::Universal;
+//use crate::universal::Universal;
 
 pub struct MemoryMap{
     pub keys: Vec<String>,
@@ -79,6 +79,7 @@ impl MemoryMap{
         self.mems.remove(ind);
     }
 
+    /*
     pub fn to_string(&self) -> String{
         return format!(
             "{}\n{}",
@@ -86,4 +87,5 @@ impl MemoryMap{
             Universal::arr_to_string(&self.mems)
         );
     }
+    */
 }

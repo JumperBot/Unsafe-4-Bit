@@ -27,7 +27,7 @@ pub trait GenericCommand{
 pub struct EmptyCommand{}
 
 impl GenericCommand for EmptyCommand{
-    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+    fn create(_real_line: &Vec<String>, _line: &Vec<String>) -> Box<Self>{
         return Box::new(EmptyCommand{});
     }
     fn analyze(&self) -> String{

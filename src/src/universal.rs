@@ -24,26 +24,24 @@ pub struct Universal{}
 
 impl Universal{
     pub fn convert_u32_to_char(code: u32) -> char{
-        let c=match char::from_u32(code){
+        return match char::from_u32(code){
             None => '\u{0000}',
             Some(c) => c,
         };
-        return c;
     }
+    /*
     pub fn convert_borrowed_u32_to_char(code: &u32) -> char{
-        let c=match char::from_u32(*code){
+        return match char::from_u32(*code){
             None => '\u{0000}',
             Some(c) => c,
         };
-        return c;
     }
+    */
 
     pub fn arr_to_string<T: std::fmt::Debug>(arr: &[T]) -> String{
         let mut out: String=String::new();
-        let mut i: usize=0;
-        while i != arr.len(){
+        for i in 0..arr.len(){
             out=format!("{out}{:?}", arr[i]);
-            i+=1;
             if i != arr.len(){
                 out+=", ";
             }
@@ -51,18 +49,18 @@ impl Universal{
         return out;
     }
 
+    /*
     pub fn arr_to_string2<T: std::fmt::Debug>(arr: &[T], c: char) -> String{
         let mut out: String=String::new();
-        let mut i: usize=0;
-        while i != arr.len(){
+        for i in 0..arr.len(){
             out=format!("{out}{:?}", arr[i]);
-            i+=1;
             if i != arr.len(){
                 out+=&String::from(c);
             }
         }
         return out;
     }
+    */
 
     pub fn err_exit(err_msg: String){
         println!(
@@ -261,25 +259,15 @@ impl Universal{
         }
         return out;
     }
-    /*
-  public static String convertUnicode(final String in){
-    if(in.length()<6)return in;
-    String temp=in;
-    // Regex slow ._.
-    for(int i=0;i<temp.length()-6;i++){
-      if(temp.substring(i, i+2).toLowerCase().equals("uu")){
-        boolean confirmed=true;
-        for(int i2=i+2;i2<6;i2++)
-          if(!isDigit(temp.charAt(i2)))confirmed=false;
-        if(confirmed)
-          temp=new StringBuilder(temp.substring(0, i))
-            .append((char)toIntAbsolute(
-              temp.substring(i+2, i+6)
-            ))
-            .append(temp.substring(i+6)).toString();
-      }
+    pub fn unwrap_result<T, U, O, E>(result: Result<T, U>, mut ok: O, mut err: E)
+    where
+        Self: Sized,
+        O: FnMut(T) -> (),
+        E: FnMut() -> ()
+    {
+        match result{
+            Ok(x)  => ok(x),
+            Err(_) => err()
+        };
     }
-    return temp;
-  }
-  */
 }

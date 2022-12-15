@@ -138,6 +138,9 @@ impl UFBC{
                 Universal::arr_to_string(&compiled)
             );
         }
+        if !cancel_optimization{
+            //TODO: Add the functionality
+        }
     }
 
     fn substitute_strings_and_labels(

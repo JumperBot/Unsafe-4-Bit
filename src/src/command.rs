@@ -22,6 +22,7 @@ use crate::generic_command::EmptyCommand;
 use crate::generic_command::GenericCommand;
 use crate::memory_map::MemoryMap;
 use crate::nvar_command::NvarCommand;
+use crate::trim_command::TrimCommand;
 use crate::universal::Universal;
 use crate::wvar_command::WvarCommand;
 
@@ -36,6 +37,7 @@ impl Command{
         let command: Box<dyn GenericCommand>=match binary_map.get(&line[0].to_lowercase()){
             0 => WvarCommand::create(&real_line, &line),
             1 => NvarCommand::create(&real_line, &line),
+            2 => TrimCommand::create(&real_line, &line),
             _ => EmptyCommand::create(&real_line, &line),
             /*
                case 0:
@@ -117,36 +119,34 @@ impl Command{
         return errors;
     }
     pub fn check_if_mem_ind(real_line: &Vec<String>, ind: String, errors: String) -> String{
-        let mut out: String=errors.clone();
-        match ind.parse::<u64>(){
-            Ok(x)  => {
-                if x>255{
-                    out=format!(
-                        "{}\n{}",
-                        out,
-                        Universal::format_error(
-                            real_line, &[
-                                "Memory Index", &ind,
-                                "Is Larger Than 255 And Will Not Point To Memory"
-                            ]
-                        )
-                    );
-                }
-            },
-            Err(_) => {
+        let mut out: String=String::new();
+        let mut out2: String=String::new();
+        Universal::unwrap_result(
+            ind.parse::<u64>(),
+            |x| if x>255{
                 out=format!(
                     "{}\n{}",
-                    out,
+                    errors,
                     Universal::format_error(
-                        &real_line, &[
-                            "Memory Index Expected Instead Of", &ind,
-                            "Should Be Replaced With A Memory Index"
+                        real_line, &[
+                            "Memory Index", &ind,
+                            "Is Larger Than 255 And Will Not Point To Memory"
                         ]
                     )
                 );
-            }
-        };
-        return out;
+            },
+            || out2=format!(
+                "{}\n{}",
+                errors,
+                Universal::format_error(
+                    &real_line, &[
+                        "Memory Index Expected Instead Of", &ind,
+                        "Should Be Replaced With A Memory Index"
+                    ]
+                )
+            )
+        );
+        return if out.len()>1{out}else{out2};
     }
     pub fn check_all_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>, errors: String) -> String{
         let mut out: String=errors.clone();
