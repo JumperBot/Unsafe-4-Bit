@@ -36,41 +36,41 @@ impl GenericCommand for TrimCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
-        let mut errors: String=String::new();
-        errors=Command::check_arg_length(&self.real_line, &self.line, 2, errors);
-        errors=Command::check_if_mem_ind(&self.real_line, self.line[1].clone(), errors);
-        errors=Command::check_if_dangerous_mem_ind(&self.real_line, self.line[1].clone(), errors);
-        match self.line[2].parse::<u64>(){
-            Ok(x)  => {
-                if x>255{
-                    errors=format!(
-                        "{}\n{}",
-                        errors,
-                        Universal::format_error(
-                            &self.line, &[
-                                "Trim Length", &self.line[2],
-                                "Is Larger Than 255 And Will Not Be Compiled Properly"
-                            ]
-                        )
-                    );
-                }
-            }
-            Err(_) => {
-                errors=format!(
-                    "{}\n{}",
-                    errors,
-                    Universal::format_error(
-                        &self.line, &[
-                            "Trim Length Expected Instead Of", &self.line[2],
-                            "Should Be Replaced With A Trim Length"
-                        ]
-                    )
-                );
-            }
+        let errors: String=Command::check_if_dangerous_mem_ind(
+            &self.real_line, self.line[1].clone(), Command::check_if_mem_ind(
+                &self.real_line, self.line[1].clone(), Command::check_arg_length(
+                    &self.real_line, &self.line, 2, String::new()
+                )
+            )
+        );
+        let res: Result<u64, _>=self.line[2].parse::<u64>();
+        if res.is_err(){
+            return format!(
+                "{}\n{}",
+                errors,
+                Universal::format_error(
+                    &self.line, &[
+                        "Trim Length Expected Instead Of", &self.line[2],
+                        "Should Be Replaced With A Trim Length"
+                    ]
+                )
+            );
+        }
+        if res.unwrap()>255{
+            return format!(
+                "{}\n{}",
+                errors,
+                Universal::format_error(
+                    &self.line, &[
+                        "Trim Length", &self.line[2],
+                        "Is Larger Than 255 And Will Not Be Compiled Properly"
+                    ]
+                )
+            );
         }
         return errors;
     }
     fn compile(&self) -> Vec<u8>{
-        return vec!(1, self.line[1].parse::<u8>().unwrap());
+        return vec!(2, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
     }
 }

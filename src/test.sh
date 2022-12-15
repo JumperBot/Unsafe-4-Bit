@@ -5,7 +5,7 @@ UFB_MAIN_TEST="../test/UFB/Main.ufb"
 
 cargo build -r
 mv $UFB_RELEASE_BIN_TEMP $UFB_RELEASE_BIN
-sudo find . -name "*.d" -type f –delete
+sudo find . -type f -name "*.d" -delete
 rmdir $UFB_RELEASE_DIR/examples
 rmdir $UFB_RELEASE_DIR/incremental
 \time -v $UFB_RELEASE_BIN -c $UFB_MAIN_TEST

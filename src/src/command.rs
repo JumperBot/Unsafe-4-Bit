@@ -21,6 +21,7 @@
 use crate::generic_command::EmptyCommand;
 use crate::generic_command::GenericCommand;
 use crate::memory_map::MemoryMap;
+use crate::math_command::MathCommand;
 use crate::nvar_command::NvarCommand;
 use crate::trim_command::TrimCommand;
 use crate::universal::Universal;
@@ -35,17 +36,12 @@ pub struct Command{
 impl Command{
     pub fn new(line: &Vec<String>, real_line: &Vec<String>, binary_map: &MemoryMap) -> Command{
         let command: Box<dyn GenericCommand>=match binary_map.get(&line[0].to_lowercase()){
-            0 => WvarCommand::create(&real_line, &line),
-            1 => NvarCommand::create(&real_line, &line),
-            2 => TrimCommand::create(&real_line, &line),
-            _ => EmptyCommand::create(&real_line, &line),
+            0       => WvarCommand::create(&real_line, &line),
+            1       => NvarCommand::create(&real_line, &line),
+            2       => TrimCommand::create(&real_line, &line),
+            (3..=8) => MathCommand::create(&real_line, &line),
+            _       => EmptyCommand::create(&real_line, &line),
             /*
-               case 0:
-               return new WvarCommand(line, realLine);
-               case 2:
-               return new TrimCommand(line, realLine);
-               case 3: case 4: case 5: case 6: case 7: case 8:
-               return new MathCommand(comInd, line, realLine);
                case 9:
                return new NopCommand(line, realLine);
                case 10: case 11: case 12: case 13:
@@ -67,9 +63,17 @@ impl Command{
                return new NeedsArgLengthCommand(comInd, line, realLine);
             */
         };
+        let err: String=command.analyze();
+        if err.len()!=0{
+            return Command{
+                compiled: command.compile(),
+                errors: err,
+                cancel_optimization: false
+            };
+        }
         return Command{
             compiled: command.compile(),
-            errors: command.analyze(),
+            errors: String::new(),
             cancel_optimization: false,
         };
     }

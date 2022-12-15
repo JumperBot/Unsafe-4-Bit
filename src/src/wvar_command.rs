@@ -35,11 +35,13 @@ impl GenericCommand for WvarCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
-        let mut errors: String=String::new();
-        errors=Command::check_arg_length_using_limit(&self.real_line, &self.line, 255, errors);
-        errors=Command::check_all_if_mem_ind(&self.real_line, &self.line, errors);
-        errors=Command::check_if_dangerous_mem_ind(&self.real_line, self.line[1].clone(), errors);
-        return errors;
+        return Command::check_if_dangerous_mem_ind(
+            &self.real_line, self.line[1].clone(), Command::check_all_if_mem_ind(
+                &self.real_line, &self.line, Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255, String::new()
+                )
+            )
+        );
     }
     fn compile(&self) -> Vec<u8>{
         let mut out: Vec<u8>=vec!(0, (self.line.len()+1).try_into().unwrap());

@@ -34,6 +34,6 @@ impl GenericCommand for EmptyCommand{
         return String::new();
     }
     fn compile(&self) -> Vec<u8>{
-        return Vec::<u8>::new();
+        return vec!(255);
     }
 }

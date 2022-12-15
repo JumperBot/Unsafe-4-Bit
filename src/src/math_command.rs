@@ -21,29 +21,39 @@
 use crate::command::Command;
 use crate::generic_command::GenericCommand;
 
-pub struct NvarCommand{
+pub struct MathCommand{
     real_line: Vec<String>,
-    line: Vec<String>
+    line: Vec<String>,
+    ind: u64
 }
 
-impl GenericCommand for NvarCommand{
+impl GenericCommand for MathCommand{
     fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
-        let out: NvarCommand=NvarCommand{
+        let out: MathCommand=MathCommand{
             real_line: real_line.clone(),
             line: line.clone(),
+            ind: match line[0].as_str(){
+                "add"  => 3,
+                "sub"  => 4,
+                "mul"  => 5,
+                "div"  => 6,
+                "mod"  => 7,
+                "rmod" => 8,
+                _      => 9
+            }
         };
         return Box::new(out);
     }
     fn analyze(&self) -> String{
         return Command::check_if_dangerous_mem_ind(
-            &self.real_line, self.line[1].clone(), Command::check_if_mem_ind(
-                &self.real_line, self.line[1].clone(), Command::check_arg_length(
-                    &self.real_line, &self.line, 1, String::new()
+            &self.real_line, self.line[1].clone(), Command::check_all_if_mem_ind(
+                &self.real_line, &self.line, Command::check_arg_length(
+                    &self.real_line, &self.line, 2, String::new()
                 )
             )
         );
     }
     fn compile(&self) -> Vec<u8>{
-        return vec!(1, self.line[1].parse::<u8>().unwrap());
+        return vec!(self.ind as u8, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
     }
 }
