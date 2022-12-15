@@ -12,13 +12,13 @@
 [![UFBDesc.apng](./UFBDesc.apng)](./UFBDesc.apng)
 ---
 
-> Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built on top of the Java programming language.
+> Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built with Rust.
 
 ---
 
 UFB reminds you of its ***lower-level counterparts*** as you manage your ***"RAM"***.
 
-The [256 bytes of memory](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
+The [256 items in memory](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
 
 This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
@@ -32,7 +32,7 @@ This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
 Download the ***latest*** `.jar` file:
 
-https://github.com/JumperBot/Unsafe-4-Bit/raw/master/build/UFB.jar
+https://github.com/JumperBot/Unsafe-4-Bit/raw/master/build/unsafe-4-bit
 
 Or clone the repository and get continous updates:
 
