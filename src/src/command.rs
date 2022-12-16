@@ -27,6 +27,8 @@ use crate::trim_command::TrimCommand;
 use crate::universal::Universal;
 use crate::wvar_command::WvarCommand;
 
+use itertools::Itertools;
+
 pub struct Command{
     pub compiled: Vec<u8>,
     pub errors: String,
@@ -77,119 +79,109 @@ impl Command{
             cancel_optimization: false,
         };
     }
-    pub fn check_arg_length_using_limit(real_line: &Vec<String>, line: &Vec<String>, limit: usize, errors: String) -> String{
+    pub fn check_arg_length_using_limit(real_line: &Vec<String>, line: &Vec<String>, limit: usize) -> String{
         if line.len()-1>limit{
-            return format!(
-                "{}\n{}",
-                errors,
-                Universal::format_error(
-                    real_line, &[
-                        "Command", &line[0],
-                        &format!(
-                            "{}{}{}",
-                            "Has More Than The Maximum ",
-                            limit,
-                            " Allowed Arguments"
-                        )
-                    ]
-                )
+            return Universal::format_error(
+                real_line, &[
+                    "Command", &line[0],
+                    &format!(
+                        "{}{}{}",
+                        "Has More Than The Maximum ",
+                        limit,
+                        " Allowed Arguments"
+                    )
+                ]
             );
         }
-        return errors;
+        return String::new();
     }
-    pub fn check_arg_length(real_line: &Vec<String>, line: &Vec<String>, len: usize, errors: String) -> String{
-        if line.len()-1!=len{
-            return format!(
-                "{}\n{}",
-                errors,
-                Universal::format_error(
-                    real_line, &[
-                        "Command", &line[0],
-                        &format!(
-                            "{}{}{}",
-                            "Needs No Less And No More Than ",
-                            match len{
-                                0 => "Zero",
-                                1 => "One",
-                                2 => "Two",
-                                _ => "Three",
-                            },
-                            " Arguments To Work"
-                        )
-                    ]
-                )
+    pub fn check_arg_length(real_line: &Vec<String>, line: &Vec<String>, len: usize) -> String{
+        if line.len()!=len+1{
+            println!("{}", line.len()-1);
+            println!("{}", Universal::arr_to_string(&line));
+            return Universal::format_error(
+                real_line, &[
+                    "Command", &line[0],
+                    &format!(
+                        "{}{}{}",
+                        "Needs No Less And No More Than ",
+                        match len{
+                            0 => "Zero",
+                            1 => "One",
+                            2 => "Two",
+                            _ => "Three",
+                        },
+                        " Arguments To Work"
+                    )
+                ]
             );
         }
-        return errors;
+        return String::new();
     }
-    pub fn check_if_mem_ind(real_line: &Vec<String>, ind: String, errors: String) -> String{
-        let mut out: String=String::new();
-        let mut out2: String=String::new();
-        Universal::unwrap_result(
-            ind.parse::<u64>(),
-            |x| if x>255{
-                out=format!(
-                    "{}\n{}",
-                    errors,
-                    Universal::format_error(
+    pub fn check_if_mem_ind(real_line: &Vec<String>, ind: String) -> String{
+        match ind.parse::<u64>(){
+            Ok(x)  => {
+                if x>255{
+                    return Universal::format_error(
                         real_line, &[
                             "Memory Index", &ind,
                             "Is Larger Than 255 And Will Not Point To Memory"
                         ]
-                    )
-                );
-            },
-            || out2=format!(
-                "{}\n{}",
-                errors,
-                Universal::format_error(
-                    &real_line, &[
-                        "Memory Index Expected Instead Of", &ind,
-                        "Should Be Replaced With A Memory Index"
-                    ]
-                )
-            )
-        );
-        return if out.len()>1{out}else{out2};
-    }
-    pub fn check_all_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>, errors: String) -> String{
-        let mut out: String=errors.clone();
-        for x in 1..line.len(){
-            out=Self::check_if_mem_ind(real_line, line[x].clone(), out);
-        }
-        return out;
-    }
-
-    pub fn check_if_dangerous_mem_ind(real_line: &Vec<String>, ind: String, errors: String) -> String{
-        let mut out: String=errors.clone();
-        match ind.parse::<u64>(){
-            Ok(x) => {
-                if x<38{
-                    out=format!(
-                        "{}\n{}",
-                        out,
-                        Universal::format_error(
-                            &real_line, &[
-                                "Memory Index", &ind,
-                                "Endangers A Read-Only Memory Index"
-                            ]
-                        )
                     );
                 }
             },
             Err(_) => {
-                out=format!(
-                    "{}\n{}",
-                    out,
-                    Universal::format_error(
-                        &real_line, &[
-                            "Memory Index Expected Instead Of", &ind,
-                            "Should Be Replaced With A Memory Index"
-                        ]
-                    )
+                return Universal::format_error(
+                    &real_line, &[
+                        "Memory Index Expected Instead Of", &ind,
+                        "Should Be Replaced With A Memory Index"
+                    ]
                 );
             }
         };
+        return String::new();
+    }
+    pub fn check_all_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>) -> String{
+        let mut out: String=String::new();
+        for x in 1..line.len(){
+            out=Self::check_if_mem_ind(real_line, line[x].clone());
+        }
         return out;
+    }
+
+    pub fn check_if_dangerous_mem_ind(real_line: &Vec<String>, ind: String) -> String{
+        match ind.parse::<u64>(){
+            Ok(x) => {
+                if x<38{
+                    return Universal::format_error(
+                        &real_line, &[
+                            "Memory Index", &ind,
+                            "Endangers A Read-Only Memory Index"
+                        ]
+                    );
+                }
+            },
+            Err(_) => {
+                return Universal::format_error(
+                    &real_line, &[
+                        "Memory Index Expected Instead Of", &ind,
+                        "Should Be Replaced With A Memory Index"
+                    ]
+                );
+            }
+        };
+        return String::new();
+    }
+
+    pub fn errors_to_string(vec: Vec<String>) -> String{
+        let mut out: String=String::new();
+        for x in vec.iter().unique(){
+            out=format!(
+                "{}\n{}",
+                out,
+                x
+            );
+        }
+        return out.trim().to_string();
     }
 }

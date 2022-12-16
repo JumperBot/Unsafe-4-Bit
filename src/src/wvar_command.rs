@@ -35,10 +35,16 @@ impl GenericCommand for WvarCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
-        return Command::check_if_dangerous_mem_ind(
-            &self.real_line, self.line[1].clone(), Command::check_all_if_mem_ind(
-                &self.real_line, &self.line, Command::check_arg_length_using_limit(
-                    &self.real_line, &self.line, 255, String::new()
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
                 )
             )
         );

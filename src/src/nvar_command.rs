@@ -35,10 +35,16 @@ impl GenericCommand for NvarCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
-        return Command::check_if_dangerous_mem_ind(
-            &self.real_line, self.line[1].clone(), Command::check_if_mem_ind(
-                &self.real_line, self.line[1].clone(), Command::check_arg_length(
-                    &self.real_line, &self.line, 1, String::new()
+        return Command::errors_to_string(
+            vec!(
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_if_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_arg_length(
+                    &self.real_line, &self.line, 1
                 )
             )
         );

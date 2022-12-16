@@ -164,7 +164,6 @@ impl Universal{
                         if labels.contains_key(&key){
                             out.push(labels.get(&key).to_string());
                         }else{
-                            println!("This => {}", &key);
                             Self::err_exit(Self::format_error(
                                 &vec!(Self::convert_unicode(&input)),
                                 &[
@@ -258,16 +257,5 @@ impl Universal{
             }
         }
         return out;
-    }
-    pub fn unwrap_result<T, U, O, E>(result: Result<T, U>, mut ok: O, mut err: E)
-    where
-        Self: Sized,
-        O: FnMut(T) -> (),
-        E: FnMut() -> ()
-    {
-        match result{
-            Ok(x)  => ok(x),
-            Err(_) => err()
-        };
     }
 }

@@ -36,18 +36,20 @@ impl GenericCommand for TrimCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
-        let errors: String=Command::check_if_dangerous_mem_ind(
-            &self.real_line, self.line[1].clone(), Command::check_if_mem_ind(
-                &self.real_line, self.line[1].clone(), Command::check_arg_length(
-                    &self.real_line, &self.line, 2, String::new()
-                )
-            )
+        let mut errors: Vec<String>=vec!(
+            Command::check_if_dangerous_mem_ind(
+                &self.real_line, self.line[1].clone()
+            ),
+            Command::check_if_mem_ind(
+                &self.real_line, self.line[1].clone()
+            ),
+            Command::check_arg_length(
+                &self.real_line, &self.line, 2
+            ),
         );
         let res: Result<u64, _>=self.line[2].parse::<u64>();
         if res.is_err(){
-            return format!(
-                "{}\n{}",
-                errors,
+            errors.push(
                 Universal::format_error(
                     &self.line, &[
                         "Trim Length Expected Instead Of", &self.line[2],
@@ -57,9 +59,7 @@ impl GenericCommand for TrimCommand{
             );
         }
         if res.unwrap()>255{
-            return format!(
-                "{}\n{}",
-                errors,
+            errors.push(
                 Universal::format_error(
                     &self.line, &[
                         "Trim Length", &self.line[2],
@@ -68,7 +68,7 @@ impl GenericCommand for TrimCommand{
                 )
             );
         }
-        return errors;
+        return Command::errors_to_string(errors);
     }
     fn compile(&self) -> Vec<u8>{
         return vec!(2, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());

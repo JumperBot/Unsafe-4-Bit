@@ -157,7 +157,10 @@ impl UFBC{
         let mut out: Vec<String>=Vec::<String>::new();
         for x in real_line.clone(){
             if x.starts_with("\"")&&x.ends_with("\""){
-                for x2 in Universal::convert_to_mem(&x, true, &labels, &default_memory_map){
+                let mut temp: String=x.clone();
+                temp.replace_range(0..1, "");
+                temp.replace_range(temp.len()-1..temp.len(), "");
+                for x2 in Universal::convert_to_mem(&temp, true, &labels, &default_memory_map){
                     out.push(x2);
                 }
             }else if x.starts_with("${")&&x.ends_with("}"){
