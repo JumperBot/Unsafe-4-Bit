@@ -38,12 +38,9 @@ impl Command{
             (3..=8)   => MathCommand::create(&real_line, &line),
             9         => NopCommand::create(&real_line, &line),
             (10..=13) => JumpCommand::create(&real_line, &line),
+            14        => PrintCommand::create(&real_line, &line),
             _         => UnrecognizedCommand::create(&real_line, &line),
             /*
-                case 10: case 11: case 12: case 13:
-                return new JumpCommand(comInd, line, realLine);
-                case 14:
-                return new PrintCommand(line, realLine);
                 case 15:
                 cancelOptimization=true;
                 case 1:
@@ -62,16 +59,17 @@ impl Command{
         let err: String=command.analyze();
         if err.len()!=0{
             return Command{
-                compiled: command.compile(),
+                compiled: Vec::<u8>::new(),
                 errors: err,
-                cancel_optimization: false
+                cancel_optimization: true
+            };
+        }else{
+            return Command{
+                compiled: command.compile(),
+                errors: String::new(),
+                cancel_optimization: false,
             };
         }
-        return Command{
-            compiled: command.compile(),
-            errors: String::new(),
-            cancel_optimization: false,
-        };
     }
     pub fn check_arg_length_using_limit(real_line: &Vec<String>, line: &Vec<String>, limit: usize) -> String{
         if line.len()-1>limit{
@@ -467,5 +465,39 @@ impl GenericCommand for JumpCommand{
     }
     fn compile(&self) -> Vec<u8>{
         return vec!(self.ind as u8, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
+    }
+}
+
+pub struct PrintCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for PrintCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: PrintCommand=PrintCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        let mut out: Vec<u8>=vec!(14);
+        for x in 1..self.line.len(){
+            out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        return out;
     }
 }

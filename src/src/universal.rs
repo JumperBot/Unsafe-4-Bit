@@ -104,9 +104,6 @@ impl Universal{
     pub fn convert_to_mem(input: &str, contains_labels: bool, labels: &MemoryMap, mem_map: &MemoryMap) -> Vec<String>{
         let mut out: Vec<String>=Vec::<String>::new();
         let mut back_slash: bool=false;
-        let mut mem_indicator:bool=false;
-        let mut is_label: bool=false;
-        let mut place_holder: String="".to_string();
         if !contains_labels{
             for x in input.chars(){
                 if mem_map.contains_key(&x.to_string()){
@@ -145,6 +142,9 @@ impl Universal{
             }
             return out;
         };
+        let mut mem_indicator:bool=false;
+        let mut is_label: bool=false;
+        let mut place_holder: String="".to_string();
         for x in input.chars(){
             if x=='$'{
                 mem_indicator=true;
@@ -185,7 +185,7 @@ impl Universal{
                     place_holder="".to_string();
                 }else{
                     if place_holder.len()==4{
-                        place_holder.replace_range(0..0, "");
+                        place_holder.replace_range(0..1, "");
                         out.push(place_holder);
                         place_holder="".to_string();
                         mem_indicator=false;

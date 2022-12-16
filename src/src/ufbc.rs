@@ -109,7 +109,6 @@ impl UFBC{
                     if command.cancel_optimization{
                         cancel_optimization=true;
                     }
-                    //commands.add(Command.create(temp, realTemp, threads, binaryMap));
                 }
             }
         }
