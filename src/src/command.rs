@@ -32,12 +32,13 @@ pub struct Command{
 impl Command{
     pub fn new(line: &Vec<String>, real_line: &Vec<String>, binary_map: &MemoryMap) -> Command{
         let command: Box<dyn GenericCommand>=match binary_map.get(&line[0].to_lowercase()){
-            0       => WvarCommand::create(&real_line, &line),
-            1       => NvarCommand::create(&real_line, &line),
-            2       => TrimCommand::create(&real_line, &line),
-            (3..=8) => MathCommand::create(&real_line, &line),
-            9       => NopCommand::create(&real_line, &line),
-            _       => EmptyCommand::create(&real_line, &line),
+            0         => WvarCommand::create(&real_line, &line),
+            1         => NvarCommand::create(&real_line, &line),
+            2         => TrimCommand::create(&real_line, &line),
+            (3..=8)   => MathCommand::create(&real_line, &line),
+            9         => NopCommand::create(&real_line, &line),
+            (10..=13) => JumpCommand::create(&real_line, &line),
+            _         => UnrecognizedCommand::create(&real_line, &line),
             /*
                 case 10: case 11: case 12: case 13:
                 return new JumpCommand(comInd, line, realLine);
@@ -182,14 +183,25 @@ pub trait GenericCommand{
     fn compile(&self) -> Vec<u8>;
 }
 
-pub struct EmptyCommand{}
+pub struct UnrecognizedCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
 
-impl GenericCommand for EmptyCommand{
-    fn create(_real_line: &Vec<String>, _line: &Vec<String>) -> Box<Self>{
-        return Box::new(EmptyCommand{});
+impl GenericCommand for UnrecognizedCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        return Box::new(UnrecognizedCommand{
+            real_line: real_line.clone(),
+            line: line.clone()
+        });
     }
     fn analyze(&self) -> String{
-        return String::new();
+        return Universal::format_error(
+            &self.real_line, &[
+                "Command", &self.line[0],
+                "Does Not Exist"
+            ]
+        );
     }
     fn compile(&self) -> Vec<u8>{
         return vec!(255);
@@ -247,6 +259,12 @@ impl GenericCommand for NvarCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
+        let length_err: String=Command::check_arg_length(
+            &self.real_line, &self.line, 1
+        );
+        if length_err.len()!=0{
+            return length_err;
+        }
         return Command::errors_to_string(
             vec!(
                 Command::check_if_dangerous_mem_ind(
@@ -255,9 +273,6 @@ impl GenericCommand for NvarCommand{
                 Command::check_if_mem_ind(
                     &self.real_line, self.line[1].clone()
                 ),
-                Command::check_arg_length(
-                    &self.real_line, &self.line, 1
-                )
             )
         );
     }
@@ -280,15 +295,18 @@ impl GenericCommand for TrimCommand{
         return Box::new(out);
     }
     fn analyze(&self) -> String{
+        let length_err: String=Command::check_arg_length(
+            &self.real_line, &self.line, 2
+        );
+        if length_err.len()!=0{
+            return length_err;
+        }
         let mut errors: Vec<String>=vec!(
             Command::check_if_dangerous_mem_ind(
                 &self.real_line, self.line[1].clone()
             ),
             Command::check_if_mem_ind(
                 &self.real_line, self.line[1].clone()
-            ),
-            Command::check_arg_length(
-                &self.real_line, &self.line, 2
             ),
         );
         let res: Result<u64, _>=self.line[2].parse::<u64>();
@@ -337,12 +355,18 @@ impl GenericCommand for MathCommand{
                 "div"  => 6,
                 "mod"  => 7,
                 "rmod" => 8,
-                _      => 9
+                _      => 255
             }
         };
         return Box::new(out);
     }
     fn analyze(&self) -> String{
+        let length_err: String=Command::check_arg_length(
+            &self.real_line, &self.line, 2
+        );
+        if length_err.len()!=0{
+            return length_err;
+        }
         return Command::errors_to_string(
             vec!(
                 Command::check_if_dangerous_mem_ind(
@@ -351,9 +375,6 @@ impl GenericCommand for MathCommand{
                 Command::check_all_if_mem_ind(
                     &self.real_line, &self.line
                 ),
-                Command::check_arg_length(
-                    &self.real_line, &self.line, 2
-                )
             )
         );
     }
@@ -382,5 +403,69 @@ impl GenericCommand for NopCommand{
     }
     fn compile(&self) -> Vec<u8>{
         return vec!(9);
+    }
+}
+
+pub struct JumpCommand{
+    real_line: Vec<String>,
+    line: Vec<String>,
+    ind: u64
+}
+
+impl GenericCommand for JumpCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: JumpCommand=JumpCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+            ind: match line[0].as_str(){
+                "jm"  => 10,
+                "jl"  => 11,
+                "je"  => 12,
+                "jne" => 13,
+                _     => 255
+            }
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        let length_err: String=Command::check_arg_length(
+            &self.real_line, &self.line, 3
+        );
+        if length_err.len()!=0{
+            return length_err;
+        }
+        let mut errors: Vec<String>=vec!(
+            Command::check_if_mem_ind(
+                &self.real_line, self.line[1].clone()
+            ),
+            Command::check_if_mem_ind(
+                &self.real_line, self.line[2].clone()
+            ),
+        );
+        let res: Result<u64, _>=self.line[3].parse::<u64>();
+        if res.is_err(){
+            errors.push(
+                Universal::format_error(
+                    &self.line, &[
+                        "Command Number Expected Instead Of", &self.line[3],
+                        "Should Be Replaced With A Command Number"
+                    ]
+                )
+            );
+        }
+        if res.unwrap()>65535{
+            errors.push(
+                Universal::format_error(
+                    &self.line, &[
+                        "Command Number", &self.line[3],
+                        "Is Larger Than 65535 And Will Not Be Compiled Properly"
+                    ]
+                )
+            );
+        }
+        return Command::errors_to_string(errors);
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(self.ind as u8, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
     }
 }
