@@ -18,15 +18,8 @@
  *
 **/
 
-use crate::generic_command::EmptyCommand;
-use crate::generic_command::GenericCommand;
 use crate::memory_map::MemoryMap;
-use crate::math_command::MathCommand;
-use crate::nop_command::NopCommand;
-use crate::nvar_command::NvarCommand;
-use crate::trim_command::TrimCommand;
 use crate::universal::Universal;
-use crate::wvar_command::WvarCommand;
 
 use itertools::Itertools;
 
@@ -46,24 +39,24 @@ impl Command{
             9       => NopCommand::create(&real_line, &line),
             _       => EmptyCommand::create(&real_line, &line),
             /*
-               case 10: case 11: case 12: case 13:
-               return new JumpCommand(comInd, line, realLine);
-               case 14:
-               return new PrintCommand(line, realLine);
-               case 15:
-               cancelOptimization=true;
-               case 1:
-               return new NeedsOneMemCommand(comInd, line, realLine);
-               case 17:
-               cancelOptimization=true;
-               return new RfileCommand(line, realLine);
-               case 18:
-               case 19:
-               case 20:
-               case 16:
-               cancelOptimization=true;
-               return new NeedsArgLengthCommand(comInd, line, realLine);
-            */
+                case 10: case 11: case 12: case 13:
+                return new JumpCommand(comInd, line, realLine);
+                case 14:
+                return new PrintCommand(line, realLine);
+                case 15:
+                cancelOptimization=true;
+                case 1:
+                return new NeedsOneMemCommand(comInd, line, realLine);
+                case 17:
+                cancelOptimization=true;
+                return new RfileCommand(line, realLine);
+                case 18:
+                case 19:
+                case 20:
+                case 16:
+                cancelOptimization=true;
+                return new NeedsArgLengthCommand(comInd, line, realLine);
+                */
         };
         let err: String=command.analyze();
         if err.len()!=0{
@@ -97,8 +90,6 @@ impl Command{
     }
     pub fn check_arg_length(real_line: &Vec<String>, line: &Vec<String>, len: usize) -> String{
         if line.len()!=len+1{
-            println!("{}", line.len()-1);
-            println!("{}", Universal::arr_to_string(&line));
             return Universal::format_error(
                 real_line, &[
                     "Command", &line[0],
@@ -183,5 +174,213 @@ impl Command{
             );
         }
         return out.trim().to_string();
+    }
+}
+pub trait GenericCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self> where Self: Sized;
+    fn analyze(&self) -> String;
+    fn compile(&self) -> Vec<u8>;
+}
+
+pub struct EmptyCommand{}
+
+impl GenericCommand for EmptyCommand{
+    fn create(_real_line: &Vec<String>, _line: &Vec<String>) -> Box<Self>{
+        return Box::new(EmptyCommand{});
+    }
+    fn analyze(&self) -> String{
+        return String::new();
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(255);
+    }
+}
+
+pub struct WvarCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for WvarCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: WvarCommand=WvarCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                )
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        let mut out: Vec<u8>=vec!(0, (self.line.len()+1).try_into().unwrap());
+        for x in 1..self.line.len(){
+            out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        return out;
+    }
+}
+
+pub struct NvarCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for NvarCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: NvarCommand=NvarCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_if_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_arg_length(
+                    &self.real_line, &self.line, 1
+                )
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(1, self.line[1].parse::<u8>().unwrap());
+    }
+}
+
+pub struct TrimCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for TrimCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: TrimCommand=TrimCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        let mut errors: Vec<String>=vec!(
+            Command::check_if_dangerous_mem_ind(
+                &self.real_line, self.line[1].clone()
+            ),
+            Command::check_if_mem_ind(
+                &self.real_line, self.line[1].clone()
+            ),
+            Command::check_arg_length(
+                &self.real_line, &self.line, 2
+            ),
+        );
+        let res: Result<u64, _>=self.line[2].parse::<u64>();
+        if res.is_err(){
+            errors.push(
+                Universal::format_error(
+                    &self.line, &[
+                        "Trim Length Expected Instead Of", &self.line[2],
+                        "Should Be Replaced With A Trim Length"
+                    ]
+                )
+            );
+        }
+        if res.unwrap()>255{
+            errors.push(
+                Universal::format_error(
+                    &self.line, &[
+                        "Trim Length", &self.line[2],
+                        "Is Larger Than 255 And Will Not Be Compiled Properly"
+                    ]
+                )
+            );
+        }
+        return Command::errors_to_string(errors);
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(2, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
+    }
+}
+
+pub struct MathCommand{
+    real_line: Vec<String>,
+    line: Vec<String>,
+    ind: u64
+}
+
+impl GenericCommand for MathCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: MathCommand=MathCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+            ind: match line[0].as_str(){
+                "add"  => 3,
+                "sub"  => 4,
+                "mul"  => 5,
+                "div"  => 6,
+                "mod"  => 7,
+                "rmod" => 8,
+                _      => 9
+            }
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+                Command::check_arg_length(
+                    &self.real_line, &self.line, 2
+                )
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(self.ind as u8, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
+    }
+}
+
+pub struct NopCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for NopCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: NopCommand=NopCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::check_arg_length(
+            &self.real_line, &self.line, 0
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(9);
     }
 }
