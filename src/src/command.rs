@@ -22,6 +22,7 @@ use crate::generic_command::EmptyCommand;
 use crate::generic_command::GenericCommand;
 use crate::memory_map::MemoryMap;
 use crate::math_command::MathCommand;
+use crate::nop_command::NopCommand;
 use crate::nvar_command::NvarCommand;
 use crate::trim_command::TrimCommand;
 use crate::universal::Universal;
@@ -42,10 +43,9 @@ impl Command{
             1       => NvarCommand::create(&real_line, &line),
             2       => TrimCommand::create(&real_line, &line),
             (3..=8) => MathCommand::create(&real_line, &line),
+            9       => NopCommand::create(&real_line, &line),
             _       => EmptyCommand::create(&real_line, &line),
             /*
-               case 9:
-               return new NopCommand(line, realLine);
                case 10: case 11: case 12: case 13:
                return new JumpCommand(comInd, line, realLine);
                case 14:
