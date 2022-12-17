@@ -19,6 +19,8 @@
 **/
 
 use std::fs;
+use std::fs::File;
+use std::io::Write;
 
 use crate::command::Command;
 use crate::memory_map::MemoryMap;
@@ -49,7 +51,7 @@ impl UFBC{
         let mut warnings: Vec<String>=Vec::<String>::new();
         let mut errors: Vec<String>=Vec::<String>::new();
         let mut cancel_optimization: bool=false;
-        let mut compiled: Vec<Vec<u8>>=Vec::<Vec<u8>>::new();
+        let mut compiled: Vec<u8>=Vec::<u8>::new();
         let mut memory_map: MemoryMap=MemoryMap::new();
         let default_memory_map: MemoryMap=MemoryMap{
             keys: vec!(
@@ -104,7 +106,9 @@ impl UFBC{
                     if !command.errors.is_empty(){
                         errors.push(command.errors);
                     }else{
-                        compiled.push(command.compiled);
+                        for x in command.compiled{
+                            compiled.push(x);
+                        }
                     }
                     if command.cancel_optimization{
                         cancel_optimization=true;
@@ -137,9 +141,15 @@ impl UFBC{
                 Universal::arr_to_string(&compiled)
             );
         }
-        if !cancel_optimization{
-            //TODO: Add the functionality
-        }
+        let mut file: File=File::create(
+            format!(
+                "{}b",
+                &self.file_name
+            )
+        ).unwrap();
+        file.write_all(
+            &compiled
+        );
     }
 
     fn substitute_strings_and_labels(

@@ -259,7 +259,7 @@ impl GenericCommand for WvarCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(0, (self.line.len()+1).try_into().unwrap());
+        let mut out: Vec<u8>=vec!(0, (self.line.len()-1).try_into().unwrap());
         for x in 1..self.line.len(){
             out.push(self.line[x].parse::<u8>().unwrap());
         }
@@ -424,7 +424,7 @@ impl GenericCommand for NopCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        return vec!(9);
+        return vec!(9, 0);
     }
 }
 
@@ -488,7 +488,14 @@ impl GenericCommand for JumpCommand{
         return Command::errors_to_string(errors);
     }
     fn compile(&self) -> Vec<u8>{
-        return vec!(self.ind as u8, self.line[1].parse::<u8>().unwrap(), self.line[2].parse::<u8>().unwrap());
+        let command_num: i32=self.line[3].parse::<i32>().unwrap();
+        return vec!(
+            self.ind as u8,
+            self.line[1].parse::<u8>().unwrap(),
+            self.line[2].parse::<u8>().unwrap(),
+            (command_num >> 8) as u8,
+            (command_num << 8 >> 8) as u8
+        );
     }
 }
 
@@ -509,7 +516,7 @@ impl GenericCommand for PrintCommand{
         return Command::errors_to_string(
             vec!(
                 Command::check_arg_length_using_limit(
-                    &self.real_line, &self.line, 255
+                    &self.real_line, &self.line, 254
                 ),
                 Command::check_all_if_mem_ind(
                     &self.real_line, &self.line
@@ -518,9 +525,9 @@ impl GenericCommand for PrintCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(14, (self.line.len()+1).try_into().unwrap());
-        for x in 1..self.line.len(){
-            out.push(self.line[x].parse::<u8>().unwrap());
+        let mut out: Vec<u8>=vec!(14, (self.line.len()-1).try_into().unwrap());
+        for x in &self.line[1..]{
+            out.push(x.parse::<u8>().unwrap());
         }
         return out;
     }
@@ -588,7 +595,7 @@ impl GenericCommand for WfileCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(16, (self.line.len()+1).try_into().unwrap());
+        let mut out: Vec<u8>=vec!(16, (self.line.len()-1).try_into().unwrap());
         for x in 1..self.line.len(){
             out.push(self.line[x].parse::<u8>().unwrap());
         }
@@ -625,7 +632,7 @@ impl GenericCommand for RfileCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(17, (self.line.len()+1).try_into().unwrap());
+        let mut out: Vec<u8>=vec!(17, (self.line.len()-1).try_into().unwrap());
         for x in 1..self.line.len(){
             out.push(self.line[x].parse::<u8>().unwrap());
         }
@@ -659,7 +666,7 @@ impl GenericCommand for DfileCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(16, (self.line.len()+1).try_into().unwrap());
+        let mut out: Vec<u8>=vec!(16, (self.line.len()-1).try_into().unwrap());
         for x in 1..self.line.len(){
             out.push(self.line[x].parse::<u8>().unwrap());
         }
