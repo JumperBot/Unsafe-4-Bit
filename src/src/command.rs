@@ -30,8 +30,35 @@ pub struct Command{
 }
 
 impl Command{
+    /*
+     * 0    -	0000	-	wvar	|	1	-	0001	-	nvar
+     * 2	-	0010	-	trim	|	3	-	0011	-	add
+	 * 4	-	0100	-	sub		|   5   -	0101	-	mul
+	 * 6	-	0110	-	div		|   7	-	0111	-	mod
+	 * 8	-	1000	-	rmod	|	9	-	1001	-	nop
+	 * 10	-	1010	-	jm		|	11	-	1011    -   jl
+	 * 12	-	1100	-	je		|	13	-	1101	-	jne
+	 * 14	-	1110	-	print	|	15	-	1111	-	read
+	**/
+    /*
+     * 16   -   00010000    -   wfile
+     * 17   -   00010001    -   rfile
+     * 18   -   00010010    -   dfile
+     * 19   -   00010011    -   wfunc
+     * 20   -   00010100    -   dfunc
+    **/
     pub fn new(line: &Vec<String>, real_line: &Vec<String>, binary_map: &MemoryMap) -> Command{
-        let command: Box<dyn GenericCommand>=match binary_map.get(&line[0].to_lowercase()){
+        if !binary_map.contains_key(&line[0].to_lowercase()){
+            let unrecognized: Box<UnrecognizedCommand>=UnrecognizedCommand::create(&real_line, &line);
+            return Command{
+                compiled: Vec::<u8>::new(),
+                errors: unrecognized.analyze(),
+                cancel_optimization: true,
+            };
+        }
+        let mut cancel_optimization: bool=false;
+        let ind: u64=binary_map.get(&line[0].to_lowercase());
+        let command: Box<dyn GenericCommand>=match ind{
             0         => WvarCommand::create(&real_line, &line),
             1         => NvarCommand::create(&real_line, &line),
             2         => TrimCommand::create(&real_line, &line),
@@ -39,25 +66,22 @@ impl Command{
             9         => NopCommand::create(&real_line, &line),
             (10..=13) => JumpCommand::create(&real_line, &line),
             14        => PrintCommand::create(&real_line, &line),
-            _         => UnrecognizedCommand::create(&real_line, &line),
-            /*
-                case 15:
-                cancelOptimization=true;
-                case 1:
-                return new NeedsOneMemCommand(comInd, line, realLine);
-                case 17:
-                cancelOptimization=true;
-                return new RfileCommand(line, realLine);
-                case 18:
-                case 19:
-                case 20:
-                case 16:
-                cancelOptimization=true;
-                return new NeedsArgLengthCommand(comInd, line, realLine);
-                */
+            (15..=20) =>    {
+                                cancel_optimization=true;
+                                match ind{
+                                    15 => ReadCommand::create(&real_line, &line),
+                                    16 => WfileCommand::create(&real_line, &line),
+                                    17 => RfileCommand::create(&real_line, &line),
+                                    18 => DfileCommand::create(&real_line, &line),
+                                    //19 => WfuncCommand::create(&real_line, &line),
+                                    //20 => DfuncCommand::create(&real_line, &line),
+                                    _  => UnrecognizedCommand::create(&real_line, &line)
+                                }
+                            },
+            _         => UnrecognizedCommand::create(&real_line, &line)
         };
         let err: String=command.analyze();
-        if err.len()!=0{
+        if !err.is_empty(){
             return Command{
                 compiled: Vec::<u8>::new(),
                 errors: err,
@@ -67,7 +91,7 @@ impl Command{
             return Command{
                 compiled: command.compile(),
                 errors: String::new(),
-                cancel_optimization: false,
+                cancel_optimization: cancel_optimization
             };
         }
     }
@@ -494,7 +518,148 @@ impl GenericCommand for PrintCommand{
         );
     }
     fn compile(&self) -> Vec<u8>{
-        let mut out: Vec<u8>=vec!(14);
+        let mut out: Vec<u8>=vec!(14, (self.line.len()+1).try_into().unwrap());
+        for x in 1..self.line.len(){
+            out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        return out;
+    }
+}
+
+pub struct ReadCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for ReadCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: ReadCommand=ReadCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        let length_err: String=Command::check_arg_length(
+            &self.real_line, &self.line, 1
+        );
+        if length_err.len()!=0{
+            return length_err;
+        }
+        return Command::errors_to_string(
+            vec!(
+                Command::check_if_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                ),
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        return vec!(15, self.line[1].parse::<u8>().unwrap());
+    }
+}
+
+pub struct WfileCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for WfileCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: WfileCommand=WfileCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        let mut out: Vec<u8>=vec!(16, (self.line.len()+1).try_into().unwrap());
+        for x in 1..self.line.len(){
+            out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        return out;
+    }
+}
+
+pub struct RfileCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for RfileCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: RfileCommand=RfileCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+                Command::check_if_dangerous_mem_ind(
+                    &self.real_line, self.line[1].clone()
+                )
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        let mut out: Vec<u8>=vec!(17, (self.line.len()+1).try_into().unwrap());
+        for x in 1..self.line.len(){
+            out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        return out;
+    }
+}
+
+pub struct DfileCommand{
+    real_line: Vec<String>,
+    line: Vec<String>
+}
+
+impl GenericCommand for DfileCommand{
+    fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self>{
+        let out: DfileCommand=DfileCommand{
+            real_line: real_line.clone(),
+            line: line.clone(),
+        };
+        return Box::new(out);
+    }
+    fn analyze(&self) -> String{
+        return Command::errors_to_string(
+            vec!(
+                Command::check_arg_length_using_limit(
+                    &self.real_line, &self.line, 255
+                ),
+                Command::check_all_if_mem_ind(
+                    &self.real_line, &self.line
+                ),
+            )
+        );
+    }
+    fn compile(&self) -> Vec<u8>{
+        let mut out: Vec<u8>=vec!(16, (self.line.len()+1).try_into().unwrap());
         for x in 1..self.line.len(){
             out.push(self.line[x].parse::<u8>().unwrap());
         }

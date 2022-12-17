@@ -63,7 +63,7 @@ trim	${hello}	1
 print	${hello}
 nvar	${hello}
 
-/*
+/**/
 nop
 nop
 nop
@@ -74,7 +74,7 @@ nop
 nop
 nop
 nop
-*/
+/**/
 
 wvar	${hello}	"2"
 div		${hello}	"4"
@@ -84,7 +84,7 @@ add		${hello}	${hello}
 print	"${hello}\n"
 nvar	${hello}
 
-/* 30|
+/* 30|*/
 wvar	248	13	1		18	11
 read	252
 jne		248	252	35
@@ -96,26 +96,26 @@ print	14	15	20	0		13	1		18	11	37
 nvar	248
 nvar	252
 nvar	254
-*/
+/**/
 
 // This throws a compilation error
 // unknownCommand 99
 
 // Works perfectly fine
 
-// rfile 38  "Hello.ufb"
-// print "Hello.ufb content:\n"
-// print 38
-// print "\n"
-// wfile 38  "copyMe/hm/Hello-Copy.ufb"
-// wfile 38  "copyMe/hm/Hello-Copy2.ufb"
-// wfile 38  "copyMe/hm/Hello-Copy3.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
-// rfile 38  "copyMe/hm/Hello-Copy.ufb"
-// print "copyMe/hm/Hello-Copy.ufb content:\n"
-// print 38
-// print "\n"
-// dfile "copyMe"
-// nvar  38
+rfile 38  "Hello.ufb"
+print "Hello.ufb content:\n"
+print 38
+print "\n"
+wfile 38  "copyMe/hm/Hello-Copy.ufb"
+wfile 38  "copyMe/hm/Hello-Copy2.ufb"
+wfile 38  "copyMe/hm/Hello-Copy3.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
+rfile 38  "copyMe/hm/Hello-Copy.ufb"
+print "copyMe/hm/Hello-Copy.ufb content:\n"
+print 38
+print "\n"
+dfile "copyMe"
+nvar  38

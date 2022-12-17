@@ -9,7 +9,3 @@ sudo find . -type f -name "*.d" -delete
 rmdir $UFB_RELEASE_DIR/examples
 rmdir $UFB_RELEASE_DIR/incremental
 \time -v $UFB_RELEASE_BIN -c $UFB_MAIN_TEST
-flamegraph --root --open -- $UFB_RELEASE_BIN -c $UFB_MAIN_TEST
-sleep 2
-sudo rm perf.data*
-sudo rm flamegraph.svg

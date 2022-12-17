@@ -101,7 +101,7 @@ impl UFBC{
                     );
                 }else{
                     let command: Command=Command::new(&line, &real_line, &binary_map);
-                    if command.errors.len()!=0{
+                    if !command.errors.is_empty(){
                         errors.push(command.errors);
                     }else{
                         compiled.push(command.compiled);
@@ -119,7 +119,7 @@ impl UFBC{
             }
             print!("\n\u{001B}[0m");
         }
-        if errors.len()!=0{
+        if !errors.is_empty(){
             Universal::err_exit({
                 let mut temp: String=String::new();
                 for x in errors{
