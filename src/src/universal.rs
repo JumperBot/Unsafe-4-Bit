@@ -25,7 +25,7 @@ pub struct Universal{}
 impl Universal{
     pub fn convert_u32_to_char(code: u32) -> char{
         return match char::from_u32(code){
-            None => '\u{0000}',
+            None    => '\u{0000}',
             Some(c) => c,
         };
     }
@@ -144,7 +144,7 @@ impl Universal{
         };
         let mut mem_indicator:bool=false;
         let mut is_label: bool=false;
-        let mut place_holder: String="".to_string();
+        let mut place_holder: String=String::new();
         for x in input.chars(){
             if x=='$'{
                 mem_indicator=true;
@@ -173,7 +173,7 @@ impl Universal{
                                 ]
                             ));
                         }
-                        place_holder="".to_string();
+                        place_holder=String::new();
                         mem_indicator=false;
                         is_label=false;
                     }
@@ -182,12 +182,12 @@ impl Universal{
                     for converted in Self::convert_to_mem(&place_holder, false, &labels, &mem_map){
                         out.push(converted);
                     }
-                    place_holder="".to_string();
+                    place_holder=String::new();
                 }else{
                     if place_holder.len()==4{
                         place_holder.replace_range(0..1, "");
                         out.push(place_holder);
-                        place_holder="".to_string();
+                        place_holder=String::new();
                         mem_indicator=false;
                     }
                 }

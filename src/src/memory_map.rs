@@ -57,21 +57,21 @@ impl MemoryMap{
     pub fn get(&self, key: &str) -> u64{
         match Self::get_index(&self.keys, key){
             Ok(x)  => return self.mems.get(x).unwrap().clone(),
-            Err(_x) => return 0,
+            Err(_) => return 0,
         };
     }
 
     pub fn contains_key(&self, key: &str) -> bool{
         match Self::get_index(&self.keys, key){
-            Ok(_x)  => return true,
-            Err(_x) => return false,
+            Ok(_)  => return true,
+            Err(_) => return false,
         };
     }
 
     pub fn remove_mem_if_exists(&mut self, mem: &u64){
         let ind: usize=match Self::get_index2(&self.mems, &mem){
             Ok(x)  => x,
-            Err(_x) => {
+            Err(_) => {
                 return ();
             }
         };

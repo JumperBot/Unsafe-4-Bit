@@ -284,7 +284,7 @@ impl GenericCommand for NvarCommand{
         let length_err: String=Command::check_arg_length(
             &self.real_line, &self.line, 1
         );
-        if length_err.len()!=0{
+        if !length_err.is_empty(){
             return length_err;
         }
         return Command::errors_to_string(
@@ -320,7 +320,7 @@ impl GenericCommand for TrimCommand{
         let length_err: String=Command::check_arg_length(
             &self.real_line, &self.line, 2
         );
-        if length_err.len()!=0{
+        if !length_err.is_empty(){
             return length_err;
         }
         let mut errors: Vec<String>=vec!(
@@ -386,7 +386,7 @@ impl GenericCommand for MathCommand{
         let length_err: String=Command::check_arg_length(
             &self.real_line, &self.line, 2
         );
-        if length_err.len()!=0{
+        if !length_err.is_empty(){
             return length_err;
         }
         return Command::errors_to_string(
@@ -453,7 +453,7 @@ impl GenericCommand for JumpCommand{
         let length_err: String=Command::check_arg_length(
             &self.real_line, &self.line, 3
         );
-        if length_err.len()!=0{
+        if !length_err.is_empty(){
             return length_err;
         }
         let mut errors: Vec<String>=vec!(
@@ -550,7 +550,7 @@ impl GenericCommand for ReadCommand{
         let length_err: String=Command::check_arg_length(
             &self.real_line, &self.line, 1
         );
-        if length_err.len()!=0{
+        if !length_err.is_empty(){
             return length_err;
         }
         return Command::errors_to_string(

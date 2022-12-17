@@ -50,7 +50,6 @@ impl UFBC{
         let lines: Vec<String>=Self::get_lines(&code, &Regex::new("(.*)(\".*\")(.*)").unwrap(), &dividers);
         let mut warnings: Vec<String>=Vec::<String>::new();
         let mut errors: Vec<String>=Vec::<String>::new();
-        let mut cancel_optimization: bool=false;
         let mut compiled: Vec<u8>=Vec::<u8>::new();
         let mut memory_map: MemoryMap=MemoryMap::new();
         let default_memory_map: MemoryMap=MemoryMap{
@@ -110,13 +109,10 @@ impl UFBC{
                             compiled.push(x);
                         }
                     }
-                    if command.cancel_optimization{
-                        cancel_optimization=true;
-                    }
                 }
             }
         }
-        if warnings.len()!=0{
+        if !warnings.is_empty(){
             print!("\u{001B}[93m");
             for x in warnings{
                 println!("{}", x);
@@ -135,21 +131,13 @@ impl UFBC{
                 temp
             });
         }
-        if compiled.len()!=0{
-            println!(
-                "{}",
-                Universal::arr_to_string(&compiled)
-            );
-        }
-        let mut file: File=File::create(
-            format!(
-                "{}b",
-                &self.file_name
-            )
-        ).unwrap();
-        file.write_all(
-            &compiled
-        );
+        match File::create(format!("{}b", &self.file_name)){
+            Ok(mut x)  =>   match x.write_all(&compiled){
+                                Ok(_)  => (),
+                                Err(x) => Universal::err_exit(x.to_string())
+                            },
+            Err(x) => Universal::err_exit(x.to_string())
+        };
     }
 
     fn substitute_strings_and_labels(
@@ -259,7 +247,7 @@ impl UFBC{
         let multi_liners: Regex=Regex::new("/\\*(?:.|\n)*?+\\*/").unwrap();
         let empty_lines: Regex=Regex::new("\n{2,}").unwrap();
         let empty_end_line: Regex=Regex::new("\n$").unwrap();
-        let empty: String="".to_string();
+        let empty: String=String::new();
         return empty_end_line.replace(
             &empty_lines.replace_all(
                 &comments.replace_all(

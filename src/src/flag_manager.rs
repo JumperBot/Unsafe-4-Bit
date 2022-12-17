@@ -43,6 +43,6 @@ impl FlagManager{
                 return x.to_string();
             }
         }
-        return "".to_string();
+        return String::new();
     }
 }
