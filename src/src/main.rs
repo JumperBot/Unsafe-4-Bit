@@ -21,10 +21,12 @@
 mod command;
 mod flag_manager;
 mod memory_map;
+mod runner;
 mod ufbc;
 mod universal;
 
 use flag_manager::FlagManager;
+use runner::Runner;
 use ufbc::UFBC;
 use universal::Universal;
 
@@ -34,41 +36,18 @@ fn main(){
     let flags: FlagManager=FlagManager::new(
         &env::args().collect::<Vec<String>>()
     );
-    if flags.file_name.len()==0 {
+    if flags.file_name.is_empty(){
         Universal::err_exit(
             "No File Input Found, Terminating.".to_string()
         );
     }
-    if flags.compile_flag {
+    if flags.compile_flag{
         let compiler: UFBC=UFBC{
-            file_name: flags.file_name,
+            file_name: flags.file_name
         };
         compiler.compile();
+    }else{
+        let runner: Runner=Runner::new(flags.file_name);
+        runner.run();
     }
 }
-/*
-fn run(){
-    let mut mem_ind: [u8; 256]=[0; 256];
-    let mut mem: [char; 256]=['\u{0000}'; 256];
-    init_mem(&mut mem);
-    println!("Memory:");
-    println!("{}", Universal::arr_to_string(&mem));
-    println!("Memory Index Bounds:");
-    println!("{}", Universal::arr_to_string(&mem_ind));
-}
-
-fn init_mem(mem: &mut [char]){
-    mem[0]=' ';
-    let mut i: usize=0;
-    while i != 26{
-        mem[i+1]=Universal::convert_u32_to_char(('A' as u32)+i as u32);
-        i+=1;
-    }
-    i=0;
-    while i != 10{
-        mem[i+27]=Universal::convert_u32_to_char(('0' as u32)+i as u32);
-        i+=1;
-    }
-    mem[37]='\n';
-}
-*/

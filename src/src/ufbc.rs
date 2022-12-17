@@ -35,8 +35,8 @@ pub struct UFBC{
 impl UFBC{
     pub fn compile(&self){
         let code: String=match fs::read_to_string(&self.file_name){
-            Ok(content) => Self::remove_useless(&content),
-            Err(_e) => {
+            Ok(x)  => Self::remove_useless(&x),
+            Err(_) => {
                 Universal::err_exit(
                     concat!(
                         "File Provided Does Not Exist...\n",
