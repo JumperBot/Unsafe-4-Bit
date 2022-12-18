@@ -164,6 +164,58 @@ impl Runner{
         self.write(&ind, &mut out.chars());
     }
     
+    fn find_period(arr: &[char]) -> Option<usize>{
+        let half: usize=arr.len()/2;
+        for x in 0..half+1{
+            if arr[x]=='.'{
+                return Some(x);
+            }
+            if arr[arr.len()-1-x]=='.'{
+                return Some(arr.len()-x);
+            }
+        }
+        return None;
+    }
+    fn to_num(arr: &[char]) -> f64{
+        match Self::find_period(&arr){
+            None    => {
+                let mut out: f64=0.0;
+                for x in arr{
+                    if !Universal::is_digit(x.clone()){
+                        return Self::hash(&arr).into();
+                    }
+                    out+=<u32 as Into<f64>>::into(x.clone() as u32);
+                    out*=10.0;
+                }
+                return out;
+            },
+            Some(x) => {
+                let mut out: [f64; 2]=[0.0; 2];
+                for y in 0..x{
+                    if !Universal::is_digit(arr[y].clone()){
+                        return Self::hash(&arr).into();
+                    }
+                    out[0]+=<u32 as Into<f64>>::into(arr[y] as u32);
+                    out[0]*=10.0;
+                    let y2=x+1+y;
+                    if !Universal::is_digit(arr[y2].clone()){
+                        return Self::hash(&arr).into();
+                    }
+                    out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32);
+                    out[1]/=10.0;
+                }
+                return (out[0]/10.0)+out[1];
+            }
+        }
+    }
+    fn hash(arr: &[char]) -> u32{
+        let mut hash: u32=0;
+        for x in arr{
+            hash=31*hash+(x.clone() as u32);
+        };
+        return hash;
+    }
+    
     fn print(&mut self){
         let arg_count: u8=self.next();
         let mut out: String=String::new();
