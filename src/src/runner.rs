@@ -21,68 +21,131 @@
 use crate::universal::Universal;
 
 use std::fs::File;
-use std::fs::Metadata;
+use std::str::Chars;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom::Start;
 
 pub struct Runner{
-    file_name: String,
+    file: File,
+    file_size: u64,
+    ptr: u64,
     mem_ind: [u8; 256],
     mem: [char; 256]
 }
 
 impl Runner{
     pub fn new(file_name: String) -> Runner{
-        return Runner{
-            file_name: file_name,
-            mem_ind: [0; 256],
-            mem: Self::init_mem()
-        }
-    }
-    pub fn run(&mut self){
-        let mut file: File=match File::open(&self.file_name){
-            Ok(x)  => x,
-            Err(x) => {
-                Universal::err_exit(
-                    format!(
-                        "{}{}\n{}",
-                        "File Provided Does Not Exist...\n",
-                        x.to_string(),
-                        "Terminating..."
-                    )
-                );
-                return ();
-            }
-        };
-        match file.metadata(){
-            Err(x) => {
-                Universal::err_exit(
-                    x.to_string()
-                );
-            },
+        match File::open(&file_name){
+            Err(x) => Universal::err_exit(
+                format!(
+                    "{}{}\n{}",
+                    "File Provided Does Not Exist...\n",
+                    x.to_string(),
+                    "Terminating..."
+                )
+            ),
             Ok(x)  => {
-                let metadata: Metadata=x;
-                let size: u64=metadata.len();
-                let mut buf: [u8; 1]=[0; 1];
-                for x in 0..size{
-                    println!("{}", Self::next(&mut file, &mut buf, x));
-                }
+                match x.metadata(){
+                    Err(y) => Universal::err_exit(
+                        y.to_string()
+                    ),
+                    Ok(y)  => {
+                        return Runner{
+                            file: x,
+                            file_size: y.len(),
+                            ptr: 0,
+                            mem_ind: [0; 256],
+                            mem: Self::init_mem()
+                        };
+                    }
+                };
             }
         };
+        return Self::new(file_name);
+    }
+
+    pub fn run(&mut self){
+        while self.ptr!=self.file_size{
+            match self.next(){
+                0 => self.wvar(),
+                1 => {
+                    let ind: u8=self.next();
+                    self.nvar(&ind);
+                },
+                _ => break
+            }
+        }
+        println!(
+            "{}\n\n{}",
+            Universal::arr_to_string(&self.mem),
+            Universal::arr_to_string(&self.mem_ind)
+        );
     }
     
-    fn next(file: &mut File, buf: &mut [u8; 1], ptr: u64) -> u8{
-        match file.seek(Start(ptr)){
+    fn wvar(&mut self){
+        let arg_count: u8=self.next()-1;
+        let ind: u8=self.next();
+        let resident: Vec<char>=self.rvar(&ind);
+        self.nvar(&ind);
+        let mut out: String=String::new();
+        for _ in 0..arg_count{
+            let ptr: u8=self.next();
+            if ptr==ind{
+                for x in &resident{
+                    out=format!("{}{}", out, x);
+                }
+            }else{
+                for x in self.rvar(&ptr){
+                    out=format!("{}{}", out, x);
+                }
+            }
+        }
+        out=Universal::convert_unicode(&out);
+        let mut chars: Chars=out.chars();
+        for x in 0..out.len(){
+            self.mem[x+(ind as usize)]=chars.next().unwrap();
+        }
+        self.mem_ind[ind as usize]=ind+(out.len() as u8)-1;
+    }
+
+    fn rvar(&mut self, ind: &u8) -> Vec<char>{
+        let ind_usize: usize=ind.clone() as usize;
+        if self.mem_ind[ind_usize]==0||self.mem_ind[ind_usize]==ind.clone(){
+            return vec!(self.mem[ind_usize].clone());
+        }
+        let mut out: Vec<char>=Vec::<char>::new();
+        for x in 0..ind-self.mem_ind[ind_usize]{
+            out.push(self.mem[(ind_usize)+x as usize].clone());
+        }
+        return out;
+    }
+
+    fn nvar(&mut self, ind: &u8){
+        let ind_usize: usize=ind.clone() as usize;
+		if self.mem_ind[ind_usize]==0{
+            return;
+        }
+        for x in ind_usize..self.mem_ind[ind_usize] as usize{
+            self.mem[x]='\u{0000}';
+        }
+		self.mem_ind[ind_usize]=0;
+    }
+
+    fn next(&mut self) -> u8{
+        let mut buf: [u8; 1]=[0; 1];
+        match self.file.seek(Start(self.ptr)){
             Ok(_)  => (),
             Err(x) => Universal::err_exit(x.to_string())
         };
-        match file.read_exact(buf){
+        match self.file.read_exact(&mut buf){
             Ok(_)  => (),
             Err(x) => Universal::err_exit(x.to_string())
         };
+        self.ptr+=1;
         return buf[0];
     }
+
     fn init_mem() -> [char; 256]{
         let mut mem: [char; 256]=['\u{0000}'; 256];
         mem[0]=' ';

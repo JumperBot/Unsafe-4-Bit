@@ -232,28 +232,47 @@ impl Universal{
         return val>47&&val<58;
     }
     pub fn convert_unicode(input: &str) -> String{
-        if input.len()<6 {
+        if input.len()<6{
             return input.to_string();
         }
         let mut out: String=String::new();
         let mut possible_match: bool=false;
         let mut place_holder: String=String::new();
         for x in input.chars(){
+            if place_holder.len()==6{
+                out=format!(
+                    "{}{}",
+                    &out,
+                    Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                );
+                place_holder=String::new();
+                possible_match=false;
+            }
             if possible_match{
-                if place_holder.len()==6{
-                    out=format!("{}{}", &out, Self::convert_u32_to_char(place_holder.parse::<u32>().unwrap()));
-                }else if x.to_lowercase().to_string()!="u"{
+                if x.to_lowercase().to_string().eq("u"){
                     if place_holder.len()>2{
+                        possible_match=false;
+                        out=format!("{}{}u", &out, &place_holder);
+                    }else{
+                        place_holder=format!("{}u", &place_holder);
+                    }
+                }else if Self::is_digit(x.clone()){
+                    if place_holder.len()==1{
+                        possible_match=false;
+                        out=format!("{}{}", &out, &place_holder);
+                    }else{
                         place_holder=format!("{}{}", &place_holder, &x);
                     }
-                }else if place_holder.len()!=1{
-                    possible_match=false;
-                    out=format!("{}{}", &out, &place_holder);
                 }
-            }
-            if x.to_lowercase().to_string()=="u"{
+            }else if x.to_lowercase().to_string().eq("u"){
                 possible_match=true;
                 place_holder="u".to_string();
+            }else{
+                out=format!(
+                    "{}{}",
+                    &out,
+                    &x
+                );
             }
         }
         return out;

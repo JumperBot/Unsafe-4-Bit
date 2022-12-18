@@ -1,7 +1,7 @@
 #!/bin/bash
 UFB_RELEASE_DIR="target/release"
-UFB_RELEASE_BIN_TEMP="$UFB_RELEASE_DIR/unsafe-4-bit"
-UFB_RELEASE_BIN="../build/unsafe-4-bit"
+UFB_RELEASE_BIN_TEMP="$UFB_RELEASE_DIR/ufb"
+UFB_RELEASE_BIN="../build/ufb"
 UFB_MAIN_TEST="../test/UFB/Main.ufb"
 
 # https://stackoverflow.com/a/60779604/16915219
