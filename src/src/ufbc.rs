@@ -36,12 +36,14 @@ impl UFBC{
     pub fn compile(&self){
         let code: String=match fs::read_to_string(&self.file_name){
             Ok(x)  => Self::remove_useless(&x),
-            Err(_) => {
+            Err(x) => {
                 Universal::err_exit(
-                    concat!(
+                    format!(
+                        "{}{}\n{}",
                         "File Provided Does Not Exist...\n",
+                        x.to_string(),
                         "Terminating..."
-                    ).to_string()
+                    )
                 );
                 return ();
             }

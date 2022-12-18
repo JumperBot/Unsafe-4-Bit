@@ -47,7 +47,7 @@ fn main(){
         };
         compiler.compile();
     }else{
-        let runner: Runner=Runner::new(flags.file_name);
+        let mut runner: Runner=Runner::new(flags.file_name);
         runner.run();
     }
 }

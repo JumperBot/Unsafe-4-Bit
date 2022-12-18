@@ -20,29 +20,71 @@
 
 use crate::universal::Universal;
 
+use std::fs::File;
+use std::fs::Metadata;
+use std::io::Read;
+use std::io::Seek;
+use std::io::SeekFrom::Start;
+
 pub struct Runner{
     file_name: String,
-    mem_ind: Box<[u8]>,
-    mem: Box<[char]>
+    mem_ind: [u8; 256],
+    mem: [char; 256]
 }
 
 impl Runner{
     pub fn new(file_name: String) -> Runner{
         return Runner{
             file_name: file_name,
-            mem_ind: Box::new([0; 256]),
+            mem_ind: [0; 256],
             mem: Self::init_mem()
         }
     }
-    pub fn run(&self){
-        println!("Memory:");
-        println!("{}", Universal::arr_to_string(&self.mem));
-        println!("Memory Index Bounds:");
-        println!("{}", Universal::arr_to_string(&self.mem_ind));
+    pub fn run(&mut self){
+        let mut file: File=match File::open(&self.file_name){
+            Ok(x)  => x,
+            Err(x) => {
+                Universal::err_exit(
+                    format!(
+                        "{}{}\n{}",
+                        "File Provided Does Not Exist...\n",
+                        x.to_string(),
+                        "Terminating..."
+                    )
+                );
+                return ();
+            }
+        };
+        match file.metadata(){
+            Err(x) => {
+                Universal::err_exit(
+                    x.to_string()
+                );
+            },
+            Ok(x)  => {
+                let metadata: Metadata=x;
+                let size: u64=metadata.len();
+                let mut buf: [u8; 1]=[0; 1];
+                for x in 0..size{
+                    println!("{}", Self::next(&mut file, &mut buf, x));
+                }
+            }
+        };
     }
     
-    fn init_mem() -> Box<[char]>{
-        let mut mem: [char;256]=['\u{0000}'; 256];
+    fn next(file: &mut File, buf: &mut [u8; 1], ptr: u64) -> u8{
+        match file.seek(Start(ptr)){
+            Ok(_)  => (),
+            Err(x) => Universal::err_exit(x.to_string())
+        };
+        match file.read_exact(buf){
+            Ok(_)  => (),
+            Err(x) => Universal::err_exit(x.to_string())
+        };
+        return buf[0];
+    }
+    fn init_mem() -> [char; 256]{
+        let mut mem: [char; 256]=['\u{0000}'; 256];
         mem[0]=' ';
         let mut i: usize=0;
         while i != 26{
@@ -55,6 +97,6 @@ impl Runner{
             i+=1;
         }
         mem[37]='\n';
-        return Box::new(mem);
+        return mem;
     }
 }
