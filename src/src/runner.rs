@@ -21,10 +21,12 @@
 use crate::universal::Universal;
 
 use std::fs::File;
-use std::str::Chars;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom::Start;
+use std::str::Chars;
+use std::thread;
+use std::time::Duration;
 
 pub struct Runner{
     file: File,
@@ -68,12 +70,15 @@ impl Runner{
     pub fn run(&mut self){
         while self.ptr!=self.file_size{
             match self.next(){
-                0 => self.wvar(),
-                1 => {
+                0  => self.wvar(),
+                1  => {
                     let ind: u8=self.next();
                     self.nvar(&ind);
                 },
-                _ => break
+                2  => self.trim(),
+                9  => thread::sleep(Duration::from_millis(10)),
+                14 => self.print(),
+                _  => break
             }
         }
         println!(
@@ -87,7 +92,6 @@ impl Runner{
         let arg_count: u8=self.next()-1;
         let ind: u8=self.next();
         let resident: Vec<char>=self.rvar(&ind);
-        self.nvar(&ind);
         let mut out: String=String::new();
         for _ in 0..arg_count{
             let ptr: u8=self.next();
@@ -103,10 +107,20 @@ impl Runner{
         }
         out=Universal::convert_unicode(&out);
         let mut chars: Chars=out.chars();
-        for x in 0..out.len(){
-            self.mem[x+(ind as usize)]=chars.next().unwrap();
+        self.write(&ind, &mut chars);
+    }
+    fn write(&mut self, ind: &u8, chars: &mut Chars){
+        self.nvar(&ind);
+        let ind_usize: usize=ind.clone() as usize;
+        let len: usize=chars.as_str().len();
+        for x in 0..len{
+            if x==256{
+                self.mem_ind[ind_usize]=255;
+                return;
+            }
+            self.mem[x+ind_usize]=chars.next().unwrap();
         }
-        self.mem_ind[ind as usize]=ind+(out.len() as u8)-1;
+        self.mem_ind[ind_usize]=ind+(len as u8)-1;
     }
 
     fn rvar(&mut self, ind: &u8) -> Vec<char>{
@@ -115,8 +129,8 @@ impl Runner{
             return vec!(self.mem[ind_usize].clone());
         }
         let mut out: Vec<char>=Vec::<char>::new();
-        for x in 0..ind-self.mem_ind[ind_usize]{
-            out.push(self.mem[(ind_usize)+x as usize].clone());
+        for x in ind_usize..=self.mem_ind[ind_usize] as usize{
+            out.push(self.mem[x as usize].clone());
         }
         return out;
     }
@@ -130,6 +144,40 @@ impl Runner{
             self.mem[x]='\u{0000}';
         }
 		self.mem_ind[ind_usize]=0;
+    }
+
+    fn trim(&mut self){
+        let ind: u8=self.next();
+        let trim_size: u8=self.next();
+        if trim_size==0{
+            self.nvar(&ind);
+            return;
+        }
+        let resident: Vec<char>=self.rvar(&ind);
+        if trim_size as usize>=resident.len(){
+            return;
+        }
+        let mut out: String=String::new();
+        for x in 0..trim_size as usize{
+            out=format!("{}{}", out, resident[x]);
+        }
+        self.write(&ind, &mut out.chars());
+    }
+    
+    fn print(&mut self){
+        let arg_count: u8=self.next();
+        let mut out: String=String::new();
+		for _ in 0..arg_count as usize{
+            let ind: u8=self.next();
+            for x in self.rvar(&ind){
+                out=format!(
+                    "{}{}",
+                    out,
+                    x
+                );
+            }
+        }
+        print!("{}", Universal::convert_unicode(&out));
     }
 
     fn next(&mut self) -> u8{
