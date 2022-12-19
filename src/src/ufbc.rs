@@ -21,6 +21,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::str::Chars;
 
 use crate::command::Command;
 use crate::memory_map::MemoryMap;
@@ -48,8 +49,7 @@ impl UFBC{
                 return ();
             }
         };
-        let dividers: Regex=Regex::new("[-|, \t]").unwrap();
-        let lines: Vec<String>=Self::get_lines(&code, &Regex::new("(.*)(\".*\")(.*)").unwrap(), &dividers);
+        let lines: Vec<String>=Self::get_lines(&code);
         let mut warnings: Vec<String>=Vec::<String>::new();
         let mut errors: Vec<String>=Vec::<String>::new();
         let mut compiled: Vec<u8>=Vec::<u8>::new();
@@ -75,11 +75,10 @@ impl UFBC{
             ).into_iter().map(|x| x.to_string()).collect::<Vec<String>>(),
             mems: (0..21).collect::<Vec<u64>>(),
         };
-        let label_invalids: Regex=Regex::new("[${}]").unwrap();
         for x in lines.clone(){
-            let real_line: Vec<String>=Self::split_line(&x, &dividers);
+            let real_line: Vec<String>=Self::split_line(&x);
             let line: Vec<String>=Self::substitute_strings_and_labels(
-                &real_line, &mut memory_map, &label_invalids, &default_memory_map
+                &real_line, &mut memory_map, &default_memory_map
             );
             let command: String=real_line[0].clone().to_lowercase();
             if !command.eq("label"){
@@ -137,11 +136,10 @@ impl UFBC{
     }
 
     fn substitute_strings_and_labels(
-        real_line: &Vec<String>, labels: &mut MemoryMap,
-        label_invalids: &Regex, default_memory_map: &MemoryMap
+        real_line: &Vec<String>, labels: &mut MemoryMap, default_memory_map: &MemoryMap
     ) -> Vec<String>{
         if real_line[0].to_lowercase().eq("label"){
-            Self::assign_labels(&real_line, labels, &label_invalids);
+            Self::assign_labels(&real_line, labels);
             return Vec::<String>::new();
         }
         return Self::substitute_strings(&real_line, &labels, &default_memory_map);
@@ -175,7 +173,7 @@ impl UFBC{
         }
         return out;
     }
-    fn assign_labels(real_line: &Vec<String>, labels: &mut MemoryMap, label_invalids: &Regex){
+    fn assign_labels(real_line: &Vec<String>, labels: &mut MemoryMap){
         if real_line.len()!=3{
             Universal::err_exit(Universal::format_error(
                 &real_line, &[
@@ -204,32 +202,53 @@ impl UFBC{
                 ]
             ));
         }
-        let label: String=label_invalids.replace_all(&real_line[2], "").to_string();
+        let label: String=real_line[2].replace("[${}]", "");
         labels.remove_mem_if_exists(&label_mem_ind);
         labels.put(&label, &label_mem_ind);
     }
 
-    fn split_line(line: &str, dividers: &Regex) -> Vec<String>{
-        let mut out: Vec<String>=dividers.split(line).into_iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        out.retain(|s| s.clone().len()>0);
+    fn split_line(line: &str) -> Vec<String>{
+        let mut out: Vec<String>=Vec::<String>::new();
+        let mut buf: String=String::new();
+        for x in line.to_string().chars(){
+            if "[-|, \t]".contains(x.clone()){
+                if !buf.is_empty(){
+                    out.push(buf);
+                    buf=String::new();
+                }
+            }else{
+                buf=format!("{buf}{x}");
+            }
+        }
+        if !buf.is_empty(){
+            out.push(buf);
+        }
         return out;
     }
 
-    fn get_lines(code: &str, string: &Regex, dividers: &Regex) -> Vec<String>{
-        let line: Regex=Regex::new("(\n)+").unwrap();
-        let orig_lines: Vec<String>=line.split(code)
-                                      .into_iter()
-                                      .map(|s| s.to_string())
-                                      .collect::<Vec<String>>();
-        return Self::replace_dividers(
-            &Self::convert_dividers_in_string(&orig_lines, &string, &dividers), &dividers
-        );
+    fn get_lines(code: &str) -> Vec<String>{
+        let mut lines: Vec<String>=Vec::<String>::new();
+        let mut buf: String=String::new();
+        for x in code.to_string().chars(){
+            if x=='\n'{
+                if !buf.is_empty(){
+                    lines.push(buf);
+                    buf=String::new();
+                }
+            }else{
+                buf=format!("{buf}{x}");
+            }
+        }
+        if !buf.is_empty(){
+            lines.push(buf);
+        }
+        return Self::replace_dividers(&Self::convert_dividers_in_string(&lines));
     }
 
-    fn replace_dividers(lines: &Vec<String>, dividers: &Regex) -> Vec<String>{
+    fn replace_dividers(lines: &Vec<String>) -> Vec<String>{
         let mut out: Vec<String>=Vec::<String>::new();
         for line in lines{
-            out.push(dividers.replace_all(&line, " ").to_string());
+            out.push(line.replace("[-|, \t]", " "));
         }
         return out;
     }
@@ -237,43 +256,45 @@ impl UFBC{
     fn remove_useless(code: &str) -> String{
         let comments: Regex=Regex::new("//[^\n]+").unwrap();
         let multi_liners: Regex=Regex::new("/\\*(?:.|\n)*?+\\*/").unwrap();
-        let empty_lines: Regex=Regex::new("\n{2,}").unwrap();
-        let empty_end_line: Regex=Regex::new("\n$").unwrap();
         let empty: String=String::new();
-        return empty_end_line.replace(
-            &empty_lines.replace_all(
-                &comments.replace_all(
-                    &multi_liners.replace_all(
-                        code, &empty
-                    ).to_string(), &empty
-                ).to_string(), "\n"
-            ).to_string(), ""
+        return comments.replace_all(
+            &multi_liners.replace_all(
+                code, &empty
+            ).to_string(), &empty
         ).to_string();
     }
 
-    fn convert_dividers_in_string(
-        lines: &Vec<String>, string: &Regex, dividers: &Regex
-    ) -> Vec<String>{
+    fn convert_dividers_in_string(lines: &Vec<String>) -> Vec<String>{
         let mut out: Vec<String>=Vec::<String>::new();
         for line in lines{
-            match string.captures(&line){
-                None => out.push(line.to_string()),
-                Some(cap) => out.push(
+            // https://stackoverflow.com/a/70877609/16915219
+            let chars: Chars=line.chars();
+            let char_count: usize=chars.clone().count();
+            if let Some(x)=chars.rev().position(|c| c=='\"'){
+                let first_index: usize=line.find("\"").unwrap();
+                let last_index: usize=char_count-x-1;
+                let mut captures: [String; 3]=[String::new(), String::new(), String::new()];
+                captures[0]=line[..first_index].to_string();
+                captures[1]=line[first_index..last_index].to_string();
+                captures[2]=line[last_index..].to_string();
+                out.push(
                     format!(
                         "{}{}{}",
-                        cap.get(1).unwrap().as_str(),
-                        Self::escape_dividers_in_string(cap.get(2).unwrap().as_str().to_string(), &dividers),
-                        cap.get(3).unwrap().as_str()
+                        captures[0].clone(),
+                        Self::escape_dividers_in_string(captures[1].clone()),
+                        captures[2].clone()
                     )
-                ),
+                );
+            }else{
+                out.push(line.to_string());
             }
         }
         return out;
     }
-    fn escape_dividers_in_string(input: String, dividers: &Regex) -> String{
+    fn escape_dividers_in_string(input: String) -> String{
         let mut res: String=String::new();
         for x in input.chars(){
-            res=if dividers.is_match(&String::from(x)){
+            res=if "-|, \t".contains(x.clone()){
                 format!("{}{}", res, Self::escape_divider(x))
             }else{
                 format!("{}{}", res, x)
