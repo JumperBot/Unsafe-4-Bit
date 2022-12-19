@@ -250,23 +250,29 @@ impl Universal{
             }
             if possible_match{
                 if x.to_lowercase().to_string().eq("u"){
-                    if place_holder.len()>2{
+                    if place_holder.len()!=1{
                         possible_match=false;
-                        out=format!("{}{}u", &out, &place_holder);
+                        out=format!("{}{}{}", &out, &place_holder, &x);
+                        place_holder=String::new();
                     }else{
-                        place_holder=format!("{}u", &place_holder);
+                        place_holder=format!("{}{}", &place_holder, &x);
                     }
                 }else if Self::is_digit(x.clone()){
                     if place_holder.len()==1{
                         possible_match=false;
-                        out=format!("{}{}", &out, &place_holder);
+                        out=format!("{}{}{}", &out, &place_holder, &x);
+                        place_holder=String::new();
                     }else{
                         place_holder=format!("{}{}", &place_holder, &x);
                     }
+                }else{
+                    possible_match=false;
+                    out=format!("{}{}{}", &out, &place_holder, &x);
+                    place_holder=String::new();
                 }
             }else if x.to_lowercase().to_string().eq("u"){
                 possible_match=true;
-                place_holder="u".to_string();
+                place_holder=x.to_string();
             }else{
                 out=format!(
                     "{}{}",

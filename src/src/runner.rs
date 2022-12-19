@@ -69,16 +69,18 @@ impl Runner{
 
     pub fn run(&mut self){
         while self.ptr!=self.file_size{
-            match self.next(){
-                0  => self.wvar(),
-                1  => {
-                    let ind: u8=self.next();
-                    self.nvar(&ind);
+            let ind: u8=self.next();
+            match ind{
+                0     => self.wvar(),
+                1     => {
+                            let ind: u8=self.next();
+                            self.nvar(&ind);
                 },
-                2  => self.trim(),
-                9  => thread::sleep(Duration::from_millis(10)),
-                14 => self.print(),
-                _  => break
+                2     => self.trim(),
+                3..=8 => self.math(&ind),
+                9     => thread::sleep(Duration::from_millis(10)),
+                14    => self.print(),
+                _     => break
             }
         }
         println!(
@@ -114,11 +116,25 @@ impl Runner{
         let ind_usize: usize=ind.clone() as usize;
         let len: usize=chars.as_str().len();
         for x in 0..len{
-            if x==256{
+            if x+ind_usize==256{
                 self.mem_ind[ind_usize]=255;
                 return;
             }
             self.mem[x+ind_usize]=chars.next().unwrap();
+        }
+        self.mem_ind[ind_usize]=ind+(len as u8)-1;
+    }
+    fn write_arr(&mut self, ind: &u8, arr: &[char]){
+        self.nvar(&ind);
+        let ind_usize: usize=ind.clone() as usize;
+        let len: usize=arr.len();
+        for x in 0..len{
+            let ptr: usize=x+ind_usize;
+            if ptr==256{
+                self.mem_ind[ind_usize]=255;
+                return;
+            }
+            self.mem[ptr]=arr[x];
         }
         self.mem_ind[ind_usize]=ind+(len as u8)-1;
     }
@@ -157,13 +173,39 @@ impl Runner{
         if trim_size as usize>=resident.len(){
             return;
         }
-        let mut out: String=String::new();
-        for x in 0..trim_size as usize{
-            out=format!("{}{}", out, resident[x]);
-        }
-        self.write(&ind, &mut out.chars());
+        self.write_arr(&ind, &resident[0..trim_size as usize]);
     }
     
+    fn math(&mut self, op: &u8){
+        let ind1: u8=self.next();
+        let ind2: u8=self.next();
+        let val1: Vec<char>=self.rvar(&ind1);
+        let val2: Vec<char>=self.rvar(&ind2);
+        let num1: f64=Self::to_num(&val1);
+        let num2: f64=Self::to_num(&val2);
+        let out: f64;
+        match op{
+            3 => out=num1+num2,
+            4 => out=num1-num2,
+            5 => out=num1*num2,
+            _ =>{
+                if num2==0.0{
+                    self.write_arr(&ind1, &['i'; 1]);
+                    return;
+                }
+                match op{
+                    6 => out=num1/num2,
+                    7 => out=num1%num2,
+                    _ => out=((num1/num2) as u32) as f64,
+                }
+            }
+        }
+        if out%1.0==0.0{
+            self.write(&ind1, &mut (out as u32).to_string().chars());
+        }else{
+            self.write(&ind1, &mut out.to_string().chars());
+        }
+    }
     fn find_period(arr: &[char]) -> Option<usize>{
         let half: usize=arr.len()/2;
         for x in 0..half+1{
