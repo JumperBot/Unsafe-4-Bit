@@ -28,6 +28,8 @@ use std::io::SeekFrom::Start;
 use std::str::Chars;
 use std::thread;
 use std::time::Duration;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 pub struct Runner{
     file: File,
@@ -43,33 +45,28 @@ impl Runner{
         if let Err(ref x)=res{
             Universal::err_exit(
                 format!(
-                    "{}{}\n{}",
-                    "File Provided Does Not Exist...\n",
+                    "File Provided Does Not Exist...\n{}\nTerminating...",
                     x.to_string(),
-                    "Terminating..."
                 )
             );
         }
-        if let Ok(x)=res{
-            let res: Result<Metadata, _>=x.metadata();
-            if let Err(ref y)=res{
-                Universal::err_exit(y.to_string());
-            }
-            if let Ok(y)=res{
-                return Runner{
-                    file: x,
-                    file_size: y.len(),
-                    ptr: 0,
-                    mem_ind: [0; 256],
-                    mem: Self::init_mem()
-                };
-            }
+        let file: File=res.unwrap();
+        let res2: Result<Metadata, _>=file.metadata();
+        if let Err(ref y)=res2{
+            Universal::err_exit(y.to_string());
+        }
+        return Runner{
+            file: file,
+            file_size: res2.unwrap().len(),
+            ptr: 0,
+            mem_ind: [0; 256],
+            mem: Self::init_mem()
         };
-        return Self::new(file_name);
     }
 
     pub fn run(&mut self){
         let ten_millis: Duration=Duration::from_millis(10);
+        let start: u128=SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
         while self.ptr!=self.file_size{
             let com: u8=self.next();
             match com{
@@ -87,6 +84,10 @@ impl Runner{
             }
         }
         println!(
+            "Took {}ms To Interpret The Program",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()-start
+        );
+        println!(
             "{}\n\n{}",
             Universal::arr_to_string(&self.mem),
             Universal::arr_to_string(&self.mem_ind)
@@ -102,19 +103,19 @@ impl Runner{
             let ptr: u8=self.next();
             if ptr==ind{
                 for x in &resident{
-                    out=format!("{}{}", out, x);
+                    out=format!("{out}{x}");
                 }
             }else{
                 for x in self.rvar(&ptr){
-                    out=format!("{}{}", out, x);
+                    out=format!("{out}{x}");
                 }
             }
         }
         out=Universal::convert_unicode(&out);
         let mut chars: Chars=out.chars();
-        self.write(&ind, &mut chars);
+        self.write_chars(&ind, &mut chars);
     }
-    fn write(&mut self, ind: &u8, chars: &mut Chars){
+    fn write_chars(&mut self, ind: &u8, chars: &mut Chars){
         self.nvar(&ind);
         let ind_usize: usize=ind.clone() as usize;
         let len: usize=chars.as_str().len();
@@ -186,27 +187,24 @@ impl Runner{
         let val2: Vec<char>=self.rvar(&ind2);
         let num1: f64=Self::to_num(&val1);
         let num2: f64=Self::to_num(&val2);
+        if num2==0.0&&op>&5{
+            self.write_arr(&ind1, &['i'; 1]);
+            return;
+        }
         let out: f64;
         match op{
             3 => out=num1+num2,
             4 => out=num1-num2,
             5 => out=num1*num2,
-            _ =>{
-                if num2==0.0{
-                    self.write_arr(&ind1, &['i'; 1]);
-                    return;
-                }
-                match op{
-                    6 => out=num1/num2,
-                    7 => out=num1%num2,
-                    _ => out=((num1/num2) as u32) as f64,
-                }
-            }
+            6 => out=num1/num2,
+            7 => out=num1%num2,
+            8 => out=((num1/num2) as u32) as f64,
+            _ => return
         }
         if out%1.0==0.0{
-            self.write(&ind1, &mut (out as u32).to_string().chars());
+            self.write_chars(&ind1, &mut (out as u32).to_string().chars());
         }else{
-            self.write(&ind1, &mut out.to_string().chars());
+            self.write_chars(&ind1, &mut out.to_string().chars());
         }
     }
     fn find_period(arr: &[char]) -> Option<usize>{
@@ -236,7 +234,7 @@ impl Runner{
                 out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32)-48.0;
                 out[1]/=10.0;
             }
-            return (out[0]/10.0)+out[1]
+            return (out[0]/10.0)+out[1];
         }
         let mut out: f64=0.0;
         for x in arr{
@@ -262,11 +260,7 @@ impl Runner{
 		for _ in 0..arg_count as usize{
             let ind: u8=self.next();
             for x in self.rvar(&ind){
-                out=format!(
-                    "{}{}",
-                    out,
-                    x
-                );
+                out=format!("{out}{x}");
             }
         }
         print!("{}", Universal::convert_unicode(&out));
