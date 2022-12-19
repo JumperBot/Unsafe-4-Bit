@@ -156,7 +156,7 @@ impl Runner{
 		if self.mem_ind[ind_usize]==0{
             return;
         }
-        for x in ind_usize..self.mem_ind[ind_usize] as usize{
+        for x in ind_usize..=self.mem_ind[ind_usize] as usize{
             self.mem[x]='\u{0000}';
         }
 		self.mem_ind[ind_usize]=0;
@@ -226,10 +226,10 @@ impl Runner{
                     if !Universal::is_digit(x.clone()){
                         return Self::hash(&arr).into();
                     }
-                    out+=<u32 as Into<f64>>::into(x.clone() as u32);
+                    out+=<u32 as Into<f64>>::into(x.clone() as u32)-48.0;
                     out*=10.0;
                 }
-                return out;
+                return out/10.0;
             },
             Some(x) => {
                 let mut out: [f64; 2]=[0.0; 2];
@@ -237,13 +237,13 @@ impl Runner{
                     if !Universal::is_digit(arr[y].clone()){
                         return Self::hash(&arr).into();
                     }
-                    out[0]+=<u32 as Into<f64>>::into(arr[y] as u32);
+                    out[0]+=<u32 as Into<f64>>::into(arr[y] as u32)-48.0;
                     out[0]*=10.0;
                     let y2=x+1+y;
                     if !Universal::is_digit(arr[y2].clone()){
                         return Self::hash(&arr).into();
                     }
-                    out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32);
+                    out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32)-48.0;
                     out[1]/=10.0;
                 }
                 return (out[0]/10.0)+out[1];
