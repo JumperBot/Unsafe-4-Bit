@@ -17,7 +17,6 @@
  *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
 **/
-
 mod command;
 mod flag_manager;
 mod memory_map;
@@ -32,22 +31,18 @@ use universal::Universal;
 
 use std::env;
 
-fn main(){
-    let flags: FlagManager=FlagManager::new(
-        &env::args().collect::<Vec<String>>()
-    );
-    if flags.file_name.is_empty(){
-        Universal::err_exit(
-            "No File Input Found, Terminating.".to_string()
-        );
+fn main() {
+    let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
+    if flags.file_name.is_empty() {
+        Universal::err_exit("No File Input Found, Terminating.".to_string());
     }
-    if flags.compile_flag{
-        let compiler: UFBC=UFBC{
-            file_name: flags.file_name
+    if flags.compile_flag {
+        let compiler: UFBC = UFBC {
+            file_name: flags.file_name,
         };
         compiler.compile();
-    }else{
-        let mut runner: Runner=Runner::new(flags.file_name);
+    } else {
+        let mut runner: Runner = Runner::new(flags.file_name);
         runner.run();
     }
 }
