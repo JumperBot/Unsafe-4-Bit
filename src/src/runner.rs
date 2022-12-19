@@ -21,6 +21,7 @@
 use crate::universal::Universal;
 
 use std::fs::File;
+use std::fs::Metadata;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom::Start;
@@ -38,29 +39,29 @@ pub struct Runner{
 
 impl Runner{
     pub fn new(file_name: String) -> Runner{
-        match File::open(&file_name){
-            Err(x) => Universal::err_exit(
+        let res: Result<File, _>=File::open(&file_name);
+        if let Err(ref x)=res{
+            Universal::err_exit(
                 format!(
                     "{}{}\n{}",
                     "File Provided Does Not Exist...\n",
                     x.to_string(),
                     "Terminating..."
                 )
-            ),
-            Ok(x)  => {
-                match x.metadata(){
-                    Err(y) => Universal::err_exit(
-                        y.to_string()
-                    ),
-                    Ok(y)  => {
-                        return Runner{
-                            file: x,
-                            file_size: y.len(),
-                            ptr: 0,
-                            mem_ind: [0; 256],
-                            mem: Self::init_mem()
-                        };
-                    }
+            );
+        }
+        if let Ok(x)=res{
+            let res: Result<Metadata, _>=x.metadata();
+            if let Err(ref y)=res{
+                Universal::err_exit(y.to_string());
+            }
+            if let Ok(y)=res{
+                return Runner{
+                    file: x,
+                    file_size: y.len(),
+                    ptr: 0,
+                    mem_ind: [0; 256],
+                    mem: Self::init_mem()
                 };
             }
         };
@@ -68,19 +69,21 @@ impl Runner{
     }
 
     pub fn run(&mut self){
+        let ten_millis: Duration=Duration::from_millis(10);
         while self.ptr!=self.file_size{
-            let ind: u8=self.next();
-            match ind{
-                0     => self.wvar(),
-                1     => {
+            let com: u8=self.next();
+            match com{
+                0       => self.wvar(),
+                1       => {
                             let ind: u8=self.next();
                             self.nvar(&ind);
                 },
-                2     => self.trim(),
-                3..=8 => self.math(&ind),
-                9     => thread::sleep(Duration::from_millis(10)),
-                14    => self.print(),
-                _     => break
+                2       => self.trim(),
+                3..=8   => self.math(&com),
+                9       => thread::sleep(ten_millis.clone()),
+                //10..=13 => self.jump(&com),
+                14      => self.print(),
+                _       => break
             }
         }
         println!(
@@ -128,13 +131,13 @@ impl Runner{
         self.nvar(&ind);
         let ind_usize: usize=ind.clone() as usize;
         let len: usize=arr.len();
-        for x in 0..len{
+        for (x, c) in arr.iter().enumerate(){
             let ptr: usize=x+ind_usize;
             if ptr==256{
                 self.mem_ind[ind_usize]=255;
                 return;
             }
-            self.mem[ptr]=arr[x];
+            self.mem[ptr]=c.clone();
         }
         self.mem_ind[ind_usize]=ind+(len as u8)-1;
     }
@@ -145,8 +148,8 @@ impl Runner{
             return vec!(self.mem[ind_usize].clone());
         }
         let mut out: Vec<char>=Vec::<char>::new();
-        for x in ind_usize..=self.mem_ind[ind_usize] as usize{
-            out.push(self.mem[x as usize].clone());
+        for x in &self.mem[ind_usize..=self.mem_ind[ind_usize] as usize]{
+            out.push(x.clone());
         }
         return out;
     }
@@ -207,8 +210,7 @@ impl Runner{
         }
     }
     fn find_period(arr: &[char]) -> Option<usize>{
-        let half: usize=arr.len()/2;
-        for x in 0..half+1{
+        for x in 0..arr.len()/2+1{
             if arr[x]=='.'{
                 return Some(x);
             }
@@ -219,36 +221,32 @@ impl Runner{
         return None;
     }
     fn to_num(arr: &[char]) -> f64{
-        match Self::find_period(&arr){
-            None    => {
-                let mut out: f64=0.0;
-                for x in arr{
-                    if !Universal::is_digit(x.clone()){
-                        return Self::hash(&arr).into();
-                    }
-                    out+=<u32 as Into<f64>>::into(x.clone() as u32)-48.0;
-                    out*=10.0;
+        if let Some(x)=Self::find_period(&arr){
+            let mut out: [f64; 2]=[0.0; 2];
+            for y in 0..x{
+                let y2=x+1+y;
+                if !(
+                    Universal::is_digit(arr[y].clone())||
+                    Universal::is_digit(arr[y2].clone())
+                ){
+                    return Self::hash(&arr).into();
                 }
-                return out/10.0;
-            },
-            Some(x) => {
-                let mut out: [f64; 2]=[0.0; 2];
-                for y in 0..x{
-                    if !Universal::is_digit(arr[y].clone()){
-                        return Self::hash(&arr).into();
-                    }
-                    out[0]+=<u32 as Into<f64>>::into(arr[y] as u32)-48.0;
-                    out[0]*=10.0;
-                    let y2=x+1+y;
-                    if !Universal::is_digit(arr[y2].clone()){
-                        return Self::hash(&arr).into();
-                    }
-                    out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32)-48.0;
-                    out[1]/=10.0;
-                }
-                return (out[0]/10.0)+out[1];
+                out[0]+=<u32 as Into<f64>>::into(arr[y] as u32)-48.0;
+                out[0]*=10.0;
+                out[1]+=<u32 as Into<f64>>::into(arr[y2] as u32)-48.0;
+                out[1]/=10.0;
             }
+            return (out[0]/10.0)+out[1]
         }
+        let mut out: f64=0.0;
+        for x in arr{
+            if !Universal::is_digit(x.clone()){
+                return Self::hash(&arr).into();
+            }
+            out+=<u32 as Into<f64>>::into(x.clone() as u32)-48.0;
+            out*=10.0;
+        }
+        return out/10.0;
     }
     fn hash(arr: &[char]) -> u32{
         let mut hash: u32=0;
@@ -276,14 +274,12 @@ impl Runner{
 
     fn next(&mut self) -> u8{
         let mut buf: [u8; 1]=[0; 1];
-        match self.file.seek(Start(self.ptr)){
-            Ok(_)  => (),
-            Err(x) => Universal::err_exit(x.to_string())
-        };
-        match self.file.read_exact(&mut buf){
-            Ok(_)  => (),
-            Err(x) => Universal::err_exit(x.to_string())
-        };
+        if let Err(x)=self.file.seek(Start(self.ptr)){
+            Universal::err_exit(x.to_string());
+        }
+        if let Err(x)=self.file.read_exact(&mut buf){
+            Universal::err_exit(x.to_string())
+        }
         self.ptr+=1;
         return buf[0];
     }
@@ -291,15 +287,11 @@ impl Runner{
     fn init_mem() -> [char; 256]{
         let mut mem: [char; 256]=['\u{0000}'; 256];
         mem[0]=' ';
-        let mut i: usize=0;
-        while i != 26{
-            mem[i+1]=Universal::convert_u32_to_char(('A' as u32)+i as u32);
-            i+=1;
+        for x in 0..26{
+            mem[x+1]=Universal::convert_u32_to_char(('A' as u32)+x as u32);
         }
-        i=0;
-        while i != 10{
-            mem[i+27]=Universal::convert_u32_to_char(('0' as u32)+i as u32);
-            i+=1;
+        for x in 0..10{
+            mem[x+27]=Universal::convert_u32_to_char(('0' as u32)+x as u32);
         }
         mem[37]='\n';
         return mem;

@@ -88,17 +88,15 @@ impl UFBC{
                 ){
                     warnings.push(
                         format!(
-                            "{}{}",
-                            "Warning",
+                            "Warning{}",
                             {
-                                let mut temp: String=Universal::format_error(
+                                let temp: String=Universal::format_error(
                                     &line, &[
                                         "Command", &real_line[0],
                                         "Will Be Ignored For It Has No Arguments"
                                     ]
                                 );
-                                temp.replace_range(0..5, "");
-                                temp
+                                temp[5..].to_string()
                             }
                         )
                     );
@@ -117,7 +115,7 @@ impl UFBC{
         if !warnings.is_empty(){
             print!("\u{001B}[93m");
             for x in warnings{
-                println!("{}", x);
+                println!("{x}");
             }
             print!("\n\u{001B}[0m");
         }
@@ -125,20 +123,16 @@ impl UFBC{
             Universal::err_exit({
                 let mut temp: String=String::new();
                 for x in errors{
-                    temp=format!(
-                        "{}{}\n",
-                        temp, x
-                    );
+                    temp=format!("{temp}{x}\n");
                 }
                 temp
             });
         }
         match File::create(format!("{}b", &self.file_name)){
-            Ok(mut x)  =>   match x.write_all(&compiled){
-                                Ok(_)  => (),
-                                Err(x) => Universal::err_exit(x.to_string())
+            Ok(mut x)  =>   if let Err(y)=x.write_all(&compiled){
+                                Universal::err_exit(y.to_string());
                             },
-            Err(x) => Universal::err_exit(x.to_string())
+            Err(x)     =>   Universal::err_exit(x.to_string())
         };
     }
 
@@ -156,18 +150,14 @@ impl UFBC{
         let mut out: Vec<String>=Vec::<String>::new();
         for x in real_line.clone(){
             if x.starts_with("\"")&&x.ends_with("\""){
-                let mut temp: String=x.clone();
-                temp.replace_range(0..1, "");
-                temp.replace_range(temp.len()-1..temp.len(), "");
-                for x2 in Universal::convert_to_mem(&temp, true, &labels, &default_memory_map){
+                let temp: String=x.clone()[1..].to_string();
+                for x2 in Universal::convert_to_mem(&temp[..temp.len()-1], true, &labels, &default_memory_map){
                     out.push(x2);
                 }
             }else if x.starts_with("${")&&x.ends_with("}"){
                 let key: String={
-                    let mut temp: String=x.clone();
-                    temp.replace_range(0..2, "");
-                    temp.replace_range(temp.len()-1..temp.len(), "");
-                    temp
+                    let temp: String=x.clone()[2..].to_string();
+                    temp[..temp.len()-1].to_string()
                 };
                 if labels.contains_key(&key){
                     out.push(labels.get(&key).to_string());

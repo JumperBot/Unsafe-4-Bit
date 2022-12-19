@@ -87,25 +87,20 @@ impl Command{
                 errors: err,
                 cancel_optimization: true
             };
-        }else{
-            return Command{
-                compiled: command.compile(),
-                errors: String::new(),
-                cancel_optimization: cancel_optimization
-            };
         }
+        return Command{
+            compiled: command.compile(),
+            errors: String::new(),
+            cancel_optimization: cancel_optimization
+        };
     }
+
     pub fn check_arg_length_using_limit(real_line: &Vec<String>, line: &Vec<String>, limit: usize) -> String{
         if line.len()-1>limit{
             return Universal::format_error(
                 real_line, &[
                     "Command", &line[0],
-                    &format!(
-                        "{}{}{}",
-                        "Has More Than The Maximum ",
-                        limit,
-                        " Allowed Arguments"
-                    )
+                    &format!("Has More Than The Maximum {limit} Allowed Arguments")
                 ]
             );
         }
@@ -117,15 +112,13 @@ impl Command{
                 real_line, &[
                     "Command", &line[0],
                     &format!(
-                        "{}{}{}",
-                        "Needs No Less And No More Than ",
+                        "Needs No Less And No More Than {} Arguments To Work",
                         match len{
                             0 => "Zero",
                             1 => "One",
                             2 => "Two",
                             _ => "Three",
-                        },
-                        " Arguments To Work"
+                        }
                     )
                 ]
             );
@@ -133,72 +126,61 @@ impl Command{
         return String::new();
     }
     pub fn check_if_mem_ind(real_line: &Vec<String>, ind: String) -> String{
-        match ind.parse::<u64>(){
-            Ok(x)  => {
-                if x>255{
-                    return Universal::format_error(
-                        real_line, &[
-                            "Memory Index", &ind,
-                            "Is Larger Than 255 And Will Not Point To Memory"
-                        ]
-                    );
-                }
-            },
-            Err(_) => {
+        if let Ok(x)=ind.parse::<u64>(){
+            if x>255{
                 return Universal::format_error(
-                    &real_line, &[
-                        "Memory Index Expected Instead Of", &ind,
-                        "Should Be Replaced With A Memory Index"
+                    real_line, &[
+                        "Memory Index", &ind,
+                        "Is Larger Than 255 And Will Not Point To Memory"
                     ]
                 );
             }
-        };
-        return String::new();
+            return String::new();
+        }
+        return Universal::format_error(
+            &real_line, &[
+                "Memory Index Expected Instead Of", &ind,
+                "Should Be Replaced With A Memory Index"
+            ]
+        );
     }
     pub fn check_all_if_mem_ind(real_line: &Vec<String>, line: &Vec<String>) -> String{
         let mut out: String=String::new();
-        for x in 1..line.len(){
-            out=Self::check_if_mem_ind(real_line, line[x].clone());
+        for x in &line[1..]{
+            out=Self::check_if_mem_ind(real_line, x.clone());
         }
         return out;
     }
 
     pub fn check_if_dangerous_mem_ind(real_line: &Vec<String>, ind: String) -> String{
-        match ind.parse::<u64>(){
-            Ok(x) => {
-                if x<38{
-                    return Universal::format_error(
-                        &real_line, &[
-                            "Memory Index", &ind,
-                            "Endangers A Read-Only Memory Index"
-                        ]
-                    );
-                }
-            },
-            Err(_) => {
+        if let Ok(x)=ind.parse::<u64>(){
+            if x<38{
                 return Universal::format_error(
                     &real_line, &[
-                        "Memory Index Expected Instead Of", &ind,
-                        "Should Be Replaced With A Memory Index"
+                        "Memory Index", &ind,
+                        "Endangers A Read-Only Memory Index"
                     ]
                 );
             }
-        };
-        return String::new();
+            return String::new();
+        }
+        return Universal::format_error(
+            &real_line, &[
+                "Memory Index Expected Instead Of", &ind,
+                "Should Be Replaced With A Memory Index"
+            ]
+        );
     }
 
     pub fn errors_to_string(vec: Vec<String>) -> String{
         let mut out: String=String::new();
         for x in vec.iter().unique(){
-            out=format!(
-                "{}\n{}",
-                out,
-                x
-            );
+            out=format!("{out}\n{x}");
         }
         return out.trim().to_string();
     }
 }
+
 pub trait GenericCommand{
     fn create(real_line: &Vec<String>, line: &Vec<String>) -> Box<Self> where Self: Sized;
     fn analyze(&self) -> String;

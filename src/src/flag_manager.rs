@@ -22,6 +22,7 @@ pub struct FlagManager{
     pub compile_flag: bool,
     pub file_name: String,
 }
+
 impl FlagManager{
     pub fn new(args: &Vec<String>) -> FlagManager{
         return FlagManager{

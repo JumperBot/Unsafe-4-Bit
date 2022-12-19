@@ -29,81 +29,37 @@ impl Universal{
             Some(c) => c,
         };
     }
-    /*
-    pub fn convert_borrowed_u32_to_char(code: &u32) -> char{
-        return match char::from_u32(*code){
-            None => '\u{0000}',
-            Some(c) => c,
-        };
-    }
-    */
 
     pub fn arr_to_string<T: std::fmt::Debug>(arr: &[T]) -> String{
         let mut out: String=String::new();
-        for i in 0..arr.len(){
-            out=format!("{out}{:?}", arr[i]);
-            if i != arr.len(){
-                out+=", ";
-            }
+        for x in arr{
+            out=format!("{out}{:?}, ", x);
         }
-        return out;
+        return out[..out.len()-2].to_string();
     }
-
-    /*
-    pub fn arr_to_string2<T: std::fmt::Debug>(arr: &[T], c: char) -> String{
-        let mut out: String=String::new();
-        for i in 0..arr.len(){
-            out=format!("{out}{:?}", arr[i]);
-            if i != arr.len(){
-                out+=&String::from(c);
-            }
-        }
-        return out;
-    }
-    */
 
     pub fn err_exit(err_msg: String){
-        println!(
-            "\u{001B}[91m{}\u{001B}[0m",
-            err_msg
-        );
+        println!("\u{001B}[91m{err_msg}\u{001B}[0m");
         std::process::exit(1);
     }
 
     pub fn manage_padding(input: String, padding: usize) -> String{
-        let mut out=String::new();
-        while out.len()+input.len() != padding{
-            out=out+"0";
-        }
-        return format!("{}{}", out, input);
+        return format!("{:0>width$}", input, width=padding);
     }
 
     pub fn format_error(line: &Vec<String>, input: &[&str]) -> String{
-        let mut arr:String=Self::arr_to_string(line);
-        arr.replace_range(0..1, "");
-        arr.replace_range(arr.len()-1..arr.len(), "");
-        arr=arr.replace("\", \"", " ");
+        let mut arr:String=Self::arr_to_string(line)[1..].to_string();
+        arr=arr[..arr.len()-1].to_string().replace("\", \"", " ");
         return format!(
-            "{}{}{}{}",
-            "Error: |\n",
-            format!(
-                "    {}: |\n",
-                input[0]
-            ),
-            format!(
-                "        \"{}\" {}: |\n",
-                input[1], input[2]
-            ),
-            format!(
-                "            {}",
-                arr
-            )
+            "Error: |\n    {}: |\n        \"{}\" {}: |\n            {arr}",
+            input[0], input[1], input[2]
         );
     }
 
     pub fn convert_to_mem(input: &str, contains_labels: bool, labels: &MemoryMap, mem_map: &MemoryMap) -> Vec<String>{
         let mut out: Vec<String>=Vec::<String>::new();
         let mut back_slash: bool=false;
+        let u: String="21".to_string();
         if !contains_labels{
             for x in input.chars(){
                 if mem_map.contains_key(&x.to_string()){
@@ -112,8 +68,8 @@ impl Universal{
                     if x=='\\'{
                         if back_slash{
                             back_slash=false;
-                            out.push("21".to_string());
-                            out.push("21".to_string());
+                            out.push(u.clone());
+                            out.push(u.clone());
                             for x2 in Self::manage_padding(('\\' as u32).to_string(), 4).chars(){
                                 out.push(mem_map.get(&x2.to_string()).to_string());
                             }
@@ -124,16 +80,16 @@ impl Universal{
                         if x=='n'{
                             out.push("37".to_string());
                         }else{
-                            out.push("21".to_string());
-                            out.push("21".to_string());
+                            out.push(u.clone());
+                            out.push(u.clone());
                             for x2 in Self::manage_padding((x as u32).to_string(), 4).chars(){
                                 out.push(mem_map.get(&x2.to_string()).to_string());
                             }
                         }
                         back_slash=false;
                     }else{
-                        out.push("21".to_string());
-                        out.push("21".to_string());
+                        out.push(u.clone());
+                        out.push(u.clone());
                         for x2 in Self::manage_padding((x as u32).to_string(), 4).chars(){
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         }
@@ -156,10 +112,8 @@ impl Universal{
                 }else if is_label{
                     if x=='}'{
                         let key: String={
-                            let mut temp: String=place_holder.clone();
-                            temp.replace_range(0..2, "");
-                            temp.replace_range(temp.len()-1..temp.len(), "");
-                            temp
+                            let temp: String=place_holder.clone()[2..].to_string();
+                            temp[..temp.len()-1].to_string()
                         };
                         if labels.contains_key(&key){
                             out.push(labels.get(&key).to_string());
@@ -185,8 +139,7 @@ impl Universal{
                     place_holder=String::new();
                 }else{
                     if place_holder.len()==4{
-                        place_holder.replace_range(0..1, "");
-                        out.push(place_holder);
+                        out.push(place_holder[1..].to_string());
                         place_holder=String::new();
                         mem_indicator=false;
                     }
@@ -197,8 +150,8 @@ impl Universal{
                 if x=='\\'{
                     if back_slash{
                         back_slash=false;
-                        out.push("21".to_string());
-                        out.push("21".to_string());
+                        out.push(u.clone());
+                        out.push(u.clone());
                         for x2 in Self::manage_padding((x as u32).to_string(), 4).chars(){
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         }
@@ -209,16 +162,16 @@ impl Universal{
                     if x=='n'{
                         out.push("37".to_string());
                     }else{
-                        out.push("21".to_string());
-                        out.push("21".to_string());
+                        out.push(u.clone());
+                        out.push(u.clone());
                         for x2 in Self::manage_padding((x as u32).to_string(), 4).chars(){
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         }
                     }
                     back_slash=false;
                 }else{
-                    out.push("21".to_string());
-                    out.push("21".to_string());
+                    out.push(u.clone());
+                    out.push(u.clone());
                     for x2 in Self::manage_padding((x as u32).to_string(), 4).chars(){
                         out.push(mem_map.get(&x2.to_string()).to_string());
                     }
