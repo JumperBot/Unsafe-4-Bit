@@ -98,7 +98,6 @@ impl Runner {
                     // thread::sleep(Duration::from_millis(10*self.next()));
                     // Or In Other Words:
                     // No Operations For The Next 2,550 Milliseconds
-                    self.next();
                     thread::sleep(ten_millis.clone());
                 }
                 10..=13 => self.jump(&com),
@@ -325,7 +324,7 @@ impl Runner {
                 0 => self.ptr+=self.next() as u64,
                 1 => self.ptr+=1,
                 2..=8 => self.ptr+=2,
-                9 => self.ptr+=1,
+                9 => (),
                 10..=13 => self.ptr+=4,
                 14 => self.ptr+=self.next() as u64,
                 15 => self.ptr+=1,

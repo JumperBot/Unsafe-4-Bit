@@ -394,7 +394,7 @@ impl GenericCommand for NopCommand {
         return Command::check_arg_length(&self.real_line, &self.line, 0);
     }
     fn compile(&self) -> Vec<u8> {
-        return vec![9, 0];
+        return vec![9];
     }
 }
 
