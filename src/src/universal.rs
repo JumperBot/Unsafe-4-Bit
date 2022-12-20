@@ -198,8 +198,7 @@ impl Universal {
         for x in input.chars() {
             if place_holder.len() == 6 {
                 out = format!(
-                    "{}{}",
-                    &out,
+                    "{out}{}",
                     Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
                 );
                 place_holder = String::new();
@@ -209,30 +208,41 @@ impl Universal {
                 if x.to_lowercase().to_string().eq("u") {
                     if place_holder.len() != 1 {
                         possible_match = false;
-                        out = format!("{}{}{}", &out, &place_holder, &x);
+                        out = format!("{out}{place_holder}{x}");
                         place_holder = String::new();
                     } else {
-                        place_holder = format!("{}{}", &place_holder, &x);
+                        place_holder = format!("{place_holder}{x}");
                     }
                 } else if Self::is_digit(x.clone()) {
                     if place_holder.len() == 1 {
                         possible_match = false;
-                        out = format!("{}{}{}", &out, &place_holder, &x);
+                        out = format!("{out}{place_holder}{x}");
                         place_holder = String::new();
                     } else {
-                        place_holder = format!("{}{}", &place_holder, &x);
+                        place_holder = format!("{place_holder}{x}");
                     }
                 } else {
                     possible_match = false;
-                    out = format!("{}{}{}", &out, &place_holder, &x);
+                    out = format!("{out}{place_holder}{x}");
                     place_holder = String::new();
                 }
             } else if x.to_lowercase().to_string().eq("u") {
                 possible_match = true;
                 place_holder = x.to_string();
             } else {
-                out = format!("{}{}", &out, &x);
+                out = format!("{out}{x}");
             }
+            if place_holder.len() == 6 {
+                out = format!(
+                    "{out}{}",
+                    Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                );
+                place_holder = String::new();
+                possible_match = false;
+            }
+        }
+        if !place_holder.is_empty() {
+            out = format!("{out}{place_holder}");
         }
         return out;
     }
