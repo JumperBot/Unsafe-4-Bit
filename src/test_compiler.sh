@@ -3,7 +3,6 @@
 UFB_MAIN_TEST="../test/UFB/Main.ufb"
 UFB_DEBUG_BIN="target/debug/ufb"
 
-cargo clean
 cargo build
 
 # https://stackoverflow.com/a/60779604/16915219
@@ -14,5 +13,3 @@ echo "^ Maximum resident set size (kilobytes) ^"
 ts=$(date +%s%N)
 "$UFB_DEBUG_BIN" -c "$UFB_MAIN_TEST"
 echo "It took $((($(date +%s%N) - $ts)/1000000))ms, yo."
-
-sudo rm target -r

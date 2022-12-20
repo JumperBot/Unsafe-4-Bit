@@ -21,9 +21,11 @@ use crate::universal::Universal;
 
 use std::fs::File;
 use std::fs::Metadata;
+use std::io;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom::Start;
+use std::io::Stdin;
 use std::str::Chars;
 use std::thread;
 use std::time::Duration;
@@ -36,6 +38,7 @@ pub struct Runner {
     ptr: u64,
     mem_ind: [u8; 256],
     mem: [char; 256],
+    byte_ind: Vec<u64>,
 }
 
 impl Runner {
@@ -58,6 +61,7 @@ impl Runner {
             ptr: 0,
             mem_ind: [0; 256],
             mem: Self::init_mem(),
+            byte_ind: Vec::<u64>::new(),
         };
     }
 
@@ -68,6 +72,9 @@ impl Runner {
             .unwrap()
             .as_millis();
         while self.ptr != self.file_size {
+            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
+                self.byte_ind.push(self.ptr.clone());
+            }
             let com: u8 = self.next();
             match com {
                 0 => self.wvar(),
@@ -77,9 +84,29 @@ impl Runner {
                 }
                 2 => self.trim(),
                 3..=8 => self.math(&com),
-                9 => thread::sleep(ten_millis.clone()),
-                //10..=13 => self.jump(&com),
+                9 => {
+                    // TODO: Add Multi-Nop Functionality
+                    // In The Future,
+                    // nop 255
+                    // Means:
+                    // thread::sleep(Duration::from_millis(10*self.next()));
+                    // Or In Other Words:
+                    // No Operations For The Next 2,550 Milliseconds
+                    self.next();
+                    thread::sleep(ten_millis.clone());
+                }
+                10..=13 => self.jump(&com),
                 14 => self.print(),
+                15 => {
+                    let stdin: Stdin = io::stdin();
+                    let mut buf: String = String::new();
+                    if let Err(x) = stdin.read_line(&mut buf) {
+                        Universal::err_exit(format!("{x}"))
+                    }
+                    let ind: u8 = self.next();
+                    self.write_chars(&ind, &mut buf.chars());
+                }
+                // TODO: Add Other Commands
                 _ => break,
             }
         }
@@ -129,6 +156,10 @@ impl Runner {
                 return;
             }
             self.mem[x + ind_usize] = chars.next().unwrap();
+            if x + ind_usize == 255 {
+                self.mem_ind[ind_usize] = 255;
+                return;
+            }
         }
         self.mem_ind[ind_usize] = ind + (len as u8) - 1;
     }
@@ -143,6 +174,10 @@ impl Runner {
                 return;
             }
             self.mem[ptr] = c.clone();
+            if x + ind_usize == 255 {
+                self.mem_ind[ind_usize] = 255;
+                return;
+            }
         }
         self.mem_ind[ind_usize] = ind + (len as u8) - 1;
     }
@@ -202,11 +237,11 @@ impl Runner {
             5 => out = num1 * num2,
             6 => out = num1 / num2,
             7 => out = num1 % num2,
-            8 => out = ((num1 / num2) as u32) as f64,
+            8 => out = ((num1 / num2) as i64) as f64,
             _ => return,
         }
         if out % 1.0 == 0.0 {
-            self.write_chars(&ind1, &mut (out as u32).to_string().chars());
+            self.write_chars(&ind1, &mut (out as i64).to_string().chars());
         } else {
             self.write_chars(&ind1, &mut out.to_string().chars());
         }
@@ -255,6 +290,45 @@ impl Runner {
         return hash;
     }
 
+    fn jump(&mut self, op: &u8) {
+        let ind1: u8 = self.next();
+        let ind2: u8 = self.next();
+        let val1: Vec<char> = self.rvar(&ind1);
+        let val2: Vec<char> = self.rvar(&ind2);
+        let com: u16 = self.next_u16();
+        if (op == &10 && Self::to_num(&val1) > Self::to_num(&val2))
+            || (op == &11 && Self::to_num(&val1) < Self::to_num(&val2))
+            || (op == &12 && val1.eq(&val2))
+            || (op == &13 && !val1.eq(&val2))
+        {
+            if com < self.byte_ind.len() as u16 {
+                self.ptr = self.byte_ind[com.clone() as usize].clone();
+                return;
+            }
+            self.skip(&com);
+        }
+    }
+    fn skip(&mut self, com: &u16) {
+        while com != &(self.byte_ind.len() as u16) && self.ptr < self.file_size {
+            self.byte_ind.push(self.ptr.clone());
+            let cur: u8 = self.next();
+            match cur{
+                0 => self.ptr+=self.next() as u64,
+                1 => self.ptr+=1,
+                2..=8 => self.ptr+=2,
+                9 => self.ptr+=1,
+                10..=13 => self.ptr+=4,
+                14 => self.ptr+=self.next() as u64,
+                15 => self.ptr+=1,
+                // TODO: Add Other Commands
+                _ => panic!(
+                        "You Forgot To Add Command Number {cur} To The Skip Index... As Always...\n{}, {}, {}, {}, {}, {}",
+                        self.next(), self.next(), self.next(), self.next(), self.next(), self.next()
+                    ),
+            }
+        }
+    }
+
     fn print(&mut self) {
         let arg_count: u8 = self.next();
         let mut out: String = String::new();
@@ -277,6 +351,17 @@ impl Runner {
         }
         self.ptr += 1;
         return buf[0];
+    }
+    fn next_u16(&mut self) -> u16 {
+        let mut buf: [u8; 2] = [0; 2];
+        if let Err(x) = self.file.seek(Start(self.ptr)) {
+            Universal::err_exit(x.to_string());
+        }
+        if let Err(x) = self.file.read_exact(&mut buf) {
+            Universal::err_exit(x.to_string())
+        }
+        self.ptr += 2;
+        return ((buf[0] as u16) << 8) | (buf[1] as u16);
     }
 
     fn init_mem() -> [char; 256] {
