@@ -19,13 +19,17 @@
 **/
 use crate::universal::Universal;
 
+use std::fs;
 use std::fs::File;
 use std::fs::Metadata;
 use std::io;
+use std::io::ErrorKind;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom::Start;
 use std::io::Stdin;
+use std::io::Write;
+use std::path::Path;
 use std::str::Chars;
 use std::thread;
 use std::time::Duration;
@@ -34,6 +38,7 @@ use std::time::UNIX_EPOCH;
 
 pub struct Runner {
     file: File,
+    file_name: String,
     file_size: u64,
     ptr: u64,
     mem_ind: [u8; 256],
@@ -57,6 +62,7 @@ impl Runner {
         }
         return Runner {
             file: file,
+            file_name: file_name,
             file_size: res2.unwrap().len(),
             ptr: 0,
             mem_ind: [0; 256],
@@ -106,6 +112,9 @@ impl Runner {
                     let ind: u8 = self.next();
                     self.write_chars(&ind, &mut buf.chars());
                 }
+                16 => self.wfile(),
+                // 17 => self.rfile(),
+                // 18 => self.dfile(),
                 // TODO: Add Other Commands
                 _ => break,
             }
@@ -339,6 +348,70 @@ impl Runner {
             }
         }
         print!("{}", Universal::convert_unicode(&out));
+    }
+
+    fn wfile(&mut self) {
+        let arg_count: u8 = self.next() - 1;
+        let ind: u8 = self.next();
+        let mut file_name: String = String::new();
+        for _ in 0..arg_count as usize {
+            let ind: u8 = self.next();
+            for x in self.rvar(&ind) {
+                file_name = format!("{file_name}{x}");
+            }
+        }
+        file_name = Universal::convert_unicode(&file_name);
+        if Path::new(&file_name).is_relative() {
+            if let Some(x) = Path::new(&self.file_name)
+                .canonicalize()
+                .unwrap()
+                .as_path()
+                .parent()
+            {
+                file_name = format!("{}/{file_name}", x.display());
+            }
+        }
+        let mut out: String = String::new();
+        for x in self.rvar(&ind) {
+            out = format!("{out}{x}");
+        }
+        match File::open(&file_name) {
+            Err(x) => {
+                if x.kind() == ErrorKind::PermissionDenied {
+                    Universal::err_exit(x.to_string());
+                }
+                match File::create(&file_name) {
+                    Err(x) => match x.kind() {
+                        ErrorKind::PermissionDenied => Universal::err_exit(x.to_string()),
+                        ErrorKind::NotFound => {
+                            if let Some(x) = Path::new(&file_name).parent() {
+                                if let Err(x) = fs::create_dir_all(x) {
+                                    Universal::err_exit(x.to_string());
+                                }
+                            }
+                            if let Err(x) = File::create(&file_name).unwrap().write(out.as_bytes())
+                            {
+                                Universal::err_exit(x.to_string());
+                            }
+                        }
+                        _ => Universal::err_exit(x.to_string()),
+                    },
+                    Ok(mut x) => {
+                        if let Err(x) = x.write(out.as_bytes()) {
+                            Universal::err_exit(x.to_string());
+                        }
+                    }
+                }
+            }
+            Ok(_) => match File::create(&file_name) {
+                Ok(mut x) => {
+                    if let Err(x) = x.write(out.as_bytes()) {
+                        Universal::err_exit(x.to_string());
+                    }
+                }
+                Err(x) => Universal::err_exit(x.to_string()),
+            },
+        }
     }
 
     fn next(&mut self) -> u8 {
