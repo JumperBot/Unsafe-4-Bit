@@ -34,6 +34,7 @@ use std::env;
 fn main() {
     let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
     if flags.version_flag {
+        // TODO: Always Change Version Tag Here And At Cargo.toml
         println!("UFB Version: v1.6.0\nFlag Triggered, Continuing Anyway...\n\n");
     }
     if flags.license_flag {
