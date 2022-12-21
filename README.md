@@ -92,7 +92,7 @@ and [compile](https://github.com/JumperBot/Unsafe-4-Bit/wiki/The-Compiler) and [
 /*
 Write "Hello World" to memory index: 38
 */
-wvar  38  "Hello World"
+wvar  38  "Hello World "
 // Print the variable residing in memory index: 38
 print 38
 /* Jump to command no. 0
