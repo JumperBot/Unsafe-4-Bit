@@ -38,10 +38,8 @@ impl UFBC {
             Ok(x) => Self::remove_useless(&x),
             Err(x) => {
                 Universal::err_exit(format!(
-                    "{}{}\n{}",
-                    "File Provided Does Not Exist...\n",
+                    "File Provided Does Not Exist...\n{}\nTerminating...",
                     x.to_string(),
-                    "Terminating..."
                 ));
                 return ();
             }

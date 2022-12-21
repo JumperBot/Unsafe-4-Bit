@@ -44,10 +44,13 @@ pub struct Runner {
     mem_ind: [u8; 256],
     mem: [char; 256],
     byte_ind: Vec<u64>,
+    perfmes: bool,
+    nanosec: bool,
+    commmes: bool,
 }
 
 impl Runner {
-    pub fn new(file_name: String) -> Runner {
+    pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
         let res: Result<File, _> = File::open(&file_name);
         if let Err(ref x) = res {
             Universal::err_exit(format!(
@@ -68,69 +71,110 @@ impl Runner {
             mem_ind: [0; 256],
             mem: Self::init_mem(),
             byte_ind: Vec::<u64>::new(),
+            perfmes: perfmes,
+            nanosec: nanosec,
+            commmes: commmes,
         };
     }
 
     pub fn run(&mut self) {
         let ten_millis: Duration = Duration::from_millis(10);
-        let start: u128 = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
+        let start: u128;
+        if self.perfmes {
+            match SystemTime::now().duration_since(UNIX_EPOCH) {
+                Ok(x) => {
+                    if self.nanosec {
+                        start = x.as_nanos();
+                    } else {
+                        start = x.as_millis();
+                    }
+                }
+                Err(_) => start = 0,
+            };
+        } else {
+            start = 0;
+        }
         while self.ptr != self.file_size {
             if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
                 self.byte_ind.push(self.ptr.clone());
             }
             let com: u8 = self.next();
+            let start: u128;
+            if self.commmes {
+                match SystemTime::now().duration_since(UNIX_EPOCH) {
+                    Ok(x) => {
+                        if self.nanosec {
+                            start = x.as_nanos();
+                        } else {
+                            start = x.as_millis();
+                        }
+                    }
+                    Err(_) => start = 0,
+                };
+            } else {
+                start = 0;
+            }
             match com {
                 0 => self.wvar(),
                 1 => {
                     let ind: u8 = self.next();
                     self.nvar(&ind);
-                }
+                },
                 2 => self.trim(),
                 3..=8 => self.math(&com),
-                9 => {
-                    // TODO: Add Multi-Nop Functionality
-                    // In The Future,
-                    // nop 255
-                    // Means:
-                    // thread::sleep(Duration::from_millis(10*self.next()));
-                    // Or In Other Words:
-                    // No Operations For The Next 2,550 Milliseconds
-                    thread::sleep(ten_millis.clone());
-                }
+                9 => thread::sleep(ten_millis.clone()),
                 10..=13 => self.jump(&com),
                 14 => self.print(),
-                15 => {
-                    let stdin: Stdin = io::stdin();
-                    let mut buf: String = String::new();
-                    if let Err(x) = stdin.read_line(&mut buf) {
-                        Universal::err_exit(format!("{x}"))
-                    }
-                    let ind: u8 = self.next();
-                    self.write_chars(&ind, &mut buf.chars());
-                }
+                15 => self.read(),
                 16 => self.wfile(),
-                // 17 => self.rfile(),
-                // 18 => self.dfile(),
-                // TODO: Add Other Commands
-                _ => break,
+                17 => self.rfile(),
+                18 => self.dfile(),
+                // TODO: Add Multi-Nop Functionality
+                // In The Future,
+                // nop 255
+                // Means:
+                // thread::sleep(Duration::from_millis(10*self.next()));
+                // Or In Other Words:
+                // No Operations For The Next 2,550 Milliseconds
+                _ => Universal::err_exit(format!(
+                        "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
+                    )),
+            }
+            if self.commmes {
+                if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                    if self.nanosec {
+                        println!("\nCommand Index {com} Took {}ns", x.as_nanos() - start);
+                    } else {
+                        println!("\nCommand Index {com} Took {}ms", x.as_millis() - start);
+                    }
+                } else {
+                    println!("\nCommand Index {com} Took ?~");
+                }
             }
         }
-        println!(
-            "Took {}ms To Interpret The Program",
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis()
-                - start
-        );
-        println!(
-            "{}\n\n{}",
-            Universal::arr_to_string(&self.mem),
-            Universal::arr_to_string(&self.mem_ind)
-        );
+        let mut mem_leaks: String = String::new();
+        for i in 0..32 {
+            for ratio in 0..8 {
+                let ind: usize = i + (ratio * 32);
+                if self.mem_ind[ind] != 0 {
+                    mem_leaks = format!("{mem_leaks}\nMemory Leak At Index: {ind}");
+                }
+            }
+        }
+        if !mem_leaks.is_empty() {
+            Universal::err_exit(mem_leaks);
+        }
+        if self.perfmes {
+            if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                if self.nanosec {
+                    println!("Program Took {}ns", x.as_nanos() - start);
+                } else {
+                    println!("Program Took {}ms", x.as_millis() - start);
+                }
+            } else {
+                println!("Program Took ?~");
+            }
+        }
     }
 
     fn wvar(&mut self) {
@@ -328,6 +372,9 @@ impl Runner {
                 10..=13 => self.ptr+=4,
                 14 => self.ptr+=self.next() as u64,
                 15 => self.ptr+=1,
+                16 => self.ptr+=self.next() as u64,
+                17 => self.ptr+=self.next() as u64,
+                18 => self.ptr+=self.next() as u64,
                 // TODO: Add Other Commands
                 _ => panic!(
                         "You Forgot To Add Command Number {cur} To The Skip Index... As Always...\n{}, {}, {}, {}, {}, {}",
@@ -347,6 +394,23 @@ impl Runner {
             }
         }
         print!("{}", Universal::convert_unicode(&out));
+        if let Err(x) = io::stdout().flush() {
+            Universal::err_exit(x.to_string());
+        }
+    }
+
+    fn read(&mut self) {
+        print!("=>");
+        if let Err(x) = io::stdout().flush() {
+            Universal::err_exit(x.to_string());
+        }
+        let stdin: Stdin = io::stdin();
+        let mut buf: String = String::new();
+        if let Err(x) = stdin.read_line(&mut buf) {
+            Universal::err_exit(x.to_string());
+        }
+        let ind: u8 = self.next();
+        self.write_chars(&ind, &mut buf.chars());
     }
 
     fn wfile(&mut self) {
@@ -410,6 +474,68 @@ impl Runner {
                 }
                 Err(x) => Universal::err_exit(x.to_string()),
             },
+        }
+    }
+
+    fn rfile(&mut self) {
+        let arg_count: u8 = self.next() - 1;
+        let ind: u8 = self.next();
+        let mut file_name: String = String::new();
+        for _ in 0..arg_count as usize {
+            let ind: u8 = self.next();
+            for x in self.rvar(&ind) {
+                file_name = format!("{file_name}{x}");
+            }
+        }
+        file_name = Universal::convert_unicode(&file_name);
+        if Path::new(&file_name).is_relative() {
+            if let Some(x) = Path::new(&self.file_name)
+                .canonicalize()
+                .unwrap()
+                .as_path()
+                .parent()
+            {
+                file_name = format!("{}/{file_name}", x.display());
+            }
+        }
+        let out: String = match fs::read_to_string(&file_name) {
+            Ok(x) => x,
+            Err(x) => {
+                Universal::err_exit(format!(
+                    "File Provided Does Not Exist...\n{}\nTerminating...",
+                    x.to_string()
+                ));
+                String::new()
+            }
+        };
+        self.write_chars(&ind, &mut out.chars());
+    }
+
+    fn dfile(&mut self) {
+        let arg_count: u8 = self.next();
+        let mut file_name: String = String::new();
+        for _ in 0..arg_count as usize {
+            let ind: u8 = self.next();
+            for x in self.rvar(&ind) {
+                file_name = format!("{file_name}{x}");
+            }
+        }
+        file_name = Universal::convert_unicode(&file_name);
+        if Path::new(&file_name).is_relative() {
+            if let Some(x) = Path::new(&self.file_name)
+                .canonicalize()
+                .unwrap()
+                .as_path()
+                .parent()
+            {
+                file_name = format!("{}/{file_name}", x.display());
+            }
+        }
+        if let Err(x) = fs::remove_dir_all(&file_name) {
+            Universal::err_exit(format!(
+                "File Provided Does Not Exist...\n{}\nTerminating...",
+                x.to_string()
+            ));
         }
     }
 

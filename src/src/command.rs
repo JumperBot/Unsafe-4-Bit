@@ -346,7 +346,7 @@ impl GenericCommand for MathCommand {
         let out: MathCommand = MathCommand {
             real_line: real_line.clone(),
             line: line.clone(),
-            ind: match line[0].as_str() {
+            ind: match line[0].to_lowercase().as_str() {
                 "add" => 3,
                 "sub" => 4,
                 "mul" => 5,
@@ -409,7 +409,7 @@ impl GenericCommand for JumpCommand {
         let out: JumpCommand = JumpCommand {
             real_line: real_line.clone(),
             line: line.clone(),
-            ind: match line[0].as_str() {
+            ind: match line[0].to_lowercase().as_str() {
                 "jm" => 10,
                 "jl" => 11,
                 "je" => 12,
@@ -596,7 +596,7 @@ impl GenericCommand for DfileCommand {
         ]);
     }
     fn compile(&self) -> Vec<u8> {
-        let mut out: Vec<u8> = vec![16, (self.line.len() - 1).try_into().unwrap()];
+        let mut out: Vec<u8> = vec![18, (self.line.len() - 1).try_into().unwrap()];
         for x in 1..self.line.len() {
             out.push(self.line[x].parse::<u8>().unwrap());
         }

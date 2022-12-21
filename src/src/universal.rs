@@ -108,9 +108,9 @@ impl Universal {
         for x in input.chars() {
             if x == '$' {
                 mem_indicator = true;
-                place_holder = format!("{}{}", place_holder, x);
+                place_holder = format!("{place_holder}{x}");
             } else if mem_indicator {
-                place_holder = format!("{}{}", place_holder, x);
+                place_holder = format!("{place_holder}{x}");
                 if x == '{' {
                     is_label = true;
                 } else if is_label {
@@ -196,7 +196,7 @@ impl Universal {
         let mut possible_match: bool = false;
         let mut place_holder: String = String::new();
         for x in input.chars() {
-            if place_holder.len() == 6 {
+            if place_holder.len() >= 6 {
                 out = format!(
                     "{out}{}",
                     Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
@@ -232,7 +232,7 @@ impl Universal {
             } else {
                 out = format!("{out}{x}");
             }
-            if place_holder.len() == 6 {
+            if place_holder.len() >= 6 {
                 out = format!(
                     "{out}{}",
                     Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())

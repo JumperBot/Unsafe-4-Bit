@@ -70,12 +70,10 @@ print	14	15	20	0		13	1		18	11	37
 nvar	248 /* 64 */
 nvar	252
 nvar	254
-/*
 rfile 38  "Hello.ufb"
 print "Hello.ufb content:\n"
 print 38
 print "\n"
-*/
 wvar	38	"This is just some text!!!"
 wfile 38  "copyMe/hm/Hello-Copy.ufb"
 wfile 38  "copyMe/hm/Hello-Copy2.ufb"
@@ -83,11 +81,9 @@ wfile 38  "copyMe/hm/Hello-Copy3.ufb"
 wfile 38  "copyMe/hm2/Hello-Copy.ufb"
 wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
 wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
-/*
 rfile 38  "copyMe/hm/Hello-Copy.ufb"
 print "copyMe/hm/Hello-Copy.ufb content:\n"
 print 38
 print "\n"
 dfile "copyMe"
 nvar  38
-*/
