@@ -7,18 +7,18 @@
 
 ---
 
-[![Banner.png](./ShortenedBanner.png)](./ShortenedBanner.png)
+[![Banner.png](./ShortenedBanner.png)](./.github/ShortenedBanner.png)
 
-[![UFBDesc.apng](./UFBDesc.apng)](./UFBDesc.apng)
+[![UFBDesc.apng](./UFBDesc.apng)](./.github/UFBDesc.apng)
 ---
 
-> Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built on top of the Java programming language.
+> Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built with Rust.
 
 ---
 
 UFB reminds you of its ***lower-level counterparts*** as you manage your ***"RAM"***.
 
-The [256 bytes of memory](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
+The [256 items in memory](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
 
 This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
@@ -30,9 +30,9 @@ This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
 # :heavy_plus_sign: Installation :arrow_down:
 
-Download the ***latest*** `.jar` file:
+Download the ***latest*** binary:
 
-https://github.com/JumperBot/Unsafe-4-Bit/raw/master/build/UFB.jar
+https://github.com/JumperBot/Unsafe-4-Bit/blob/master/build/
 
 Or clone the repository and get continous updates:
 
@@ -92,7 +92,7 @@ and [compile](https://github.com/JumperBot/Unsafe-4-Bit/wiki/The-Compiler) and [
 /*
 Write "Hello World" to memory index: 38
 */
-wvar  38  "Hello World"
+wvar  38  "Hello World "
 // Print the variable residing in memory index: 38
 print 38
 /* Jump to command no. 0

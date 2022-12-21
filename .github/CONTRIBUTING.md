@@ -26,24 +26,6 @@ You must know this before contributing:
 
 ---
 
-### How to start writing "the" code
-
-The first and most important step is getting to know yourself and your setup:
-  - Can you write code in `Java`?
-    - Can you understand it's syntax ***properly***?
-    - Can you solve common problems that occur when writing a program?
-      - Have you experienced coding alone with no help?
-      - Do you know when and how to ask on [Stack Overflow](https://stackoverflow.com/)?
-    - Do you have your `Java` environment setup ready?
-      - Do you have a JDK that supports `Java-8` and above?
-        - Check it with `java --version` on your terminal.
-  - Do you know how to use `Git` or `GitHub` ***properly***?
-
-Next step would be ***\*drum-roll\**** forking the repository!
-  - You can now write the actual code.
-
----
-
 ### What to do when writing the code
 
   - Make the code **concise**.

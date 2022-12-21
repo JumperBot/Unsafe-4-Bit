@@ -1,62 +1,47 @@
-wvar  38, "Hello World111\n"
-//wvar	38,	8		5		12	12	15	0		23	15	18	12	4		28	28	28	37
-print	"$038That's a String!!!\n"
-nvar	38
-wvar	38,	"HELLO World111\n"// Woohoooo
-/**/
-/* This is
-	 a very long
-	 stupid thing-y
-	 we all call
-	 multi-line
-	 comments.
-*/
-/* 4| */
-trim	38,	5
-wvar	38, "$038\n"
-print	38
-add		38	38
-print	"$038\n"
-sub		38	38
-print	"$038\n"
-mul		38	38
-print	"$038\n"
-div		38	38
-print	"$038\n"
-mod		38	38
-print	"$038\n"
-rmod	38	38
-print	"$038\n"
-nvar	38
-/*
-read	251
-print	251	37
-nvar	251
-*/
-/* 20| */
-wvar	254	"0"
-wvar	252	"10"
-print	"NUMBER $254\n"
-add		254	"1"
-jl		254	252	22
+label 38  useMeLater
+wvar  ${useMeLater}, "Hello World111\n" /* 0 */
+print	"${useMeLater}That's a String!!!\n"
+nvar	${useMeLater}
+label 38  helloWorld
+wvar	${helloWorld}, "HELLO World111\n" /* 3 */
+label 38  hello
+trim	${hello},	5 /* 4 */
+wvar	${hello}, "${hello}\n"
+print	${hello}
+add		${hello}	${hello}
+print	"${hello}\n"
+sub		${hello}	${hello}
+print	"${hello}\n"
+mul		${hello}	${hello}
+print	"${hello}\n"
+div		${hello}	${hello}
+print	"${hello}\n"
+mod		${hello}	${hello}
+print	"${hello}\n"
+rmod	${hello}	${hello}
+print	"${hello}\n"
+nvar	${hello} /* 19 */
+label 254 i
+wvar	${i} "0" /* 20 */
+label 252 upperLimit
+wvar	${upperLimit} "10" /* 21 */
+print	"NUMBER ${i}\n"
+add		${i} "1"
+jl		${i} ${upperLimit}	22
 je		28	28	26
-print	"Hello\n"
+print	"Hello\n" /* 26 */
 print	"Goodbye!\n"
-nvar	252
-nvar	254
-
-wvar	38	"0"
-div		38	"0"
-print	38
-nvar	38
-
-wvar	38	"0"
-sub		38	28
-trim	38	1
-print	38
-nvar	38
-
-/*
+nvar	${upperLimit}
+nvar	${i}
+wvar	${hello}	"0"
+div		${hello}	"0"
+print	${hello}
+nvar	${hello}
+wvar	${hello}	"0"
+sub		${hello}	"1"
+trim	${hello}	1
+print	${hello}
+nvar	${hello} /* 38 */
 nop
 nop
 nop
@@ -67,48 +52,38 @@ nop
 nop
 nop
 nop
-*/
-
-wvar	38	"2"
-div		38	"4"
+wvar	${hello}	"2" /* 49 */
+div		${hello}	"4"
 print	"$039\n"
-print	"$038\n"
-add		38	38
-print	"$038\n"
-nvar	38
-
-/* 30|
+print	"${hello}\n"
+add		${hello}	${hello}
+print	"${hello}\n"
+nvar	${hello}
 wvar	248	13	1		18	11
 read	252
-jne		248	252	35
+jne		248	252	61 /* 58 */
 print	15	8		0		8		5		12	12	15	0		13	1		18	11	37
-je		0		0		38
-print	8		5		12	12	15	0		13	1		18	11	28	37
+je		0		0		64
+print	8		5		12	12	15	0		13	1		18	11	28	37 /* 61 */
 print	5		22	5		14	0		20	8		15	21	7		8		0		25	15	21	0		1		18	5		0
 print	14	15	20	0		13	1		18	11	37
-nvar	248
+nvar	248 /* 64 */
 nvar	252
 nvar	254
-*/
-
-// This throws a compilation error
-// unknownCommand 99
-
-// Works perfectly fine
-
-// rfile 38  "Hello.ufb"
-// print "Hello.ufb content:\n"
-// print 38
-// print "\n"
-// wfile 38  "copyMe/hm/Hello-Copy.ufb"
-// wfile 38  "copyMe/hm/Hello-Copy2.ufb"
-// wfile 38  "copyMe/hm/Hello-Copy3.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
-// wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
-// rfile 38  "copyMe/hm/Hello-Copy.ufb"
-// print "copyMe/hm/Hello-Copy.ufb content:\n"
-// print 38
-// print "\n"
-// dfile "copyMe"
-// nvar  38
+rfile 38  "Hello.ufb"
+print "Hello.ufb content:\n"
+print 38
+print "\n"
+wvar	38	"This is just some text!!!"
+wfile 38  "copyMe/hm/Hello-Copy.ufb"
+wfile 38  "copyMe/hm/Hello-Copy2.ufb"
+wfile 38  "copyMe/hm/Hello-Copy3.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy2.ufb"
+wfile 38  "copyMe/hm2/Hello-Copy3.ufb"
+rfile 38  "copyMe/hm/Hello-Copy.ufb"
+print "copyMe/hm/Hello-Copy.ufb content:\n"
+print 38
+print "\n"
+dfile "copyMe"
+nvar  38
