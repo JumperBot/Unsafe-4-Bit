@@ -62,12 +62,12 @@ impl UFBC {
         let binary_map: MemoryMap = MemoryMap {
             keys: vec![
                 "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm",
-                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "dfunc",
+                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile",
             ]
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>(),
-            mems: (0..21).collect::<Vec<u64>>(),
+            mems: (0..19).collect::<Vec<u64>>(),
         };
         for x in lines.clone() {
             let real_line: Vec<String> = Self::split_line(&x);
@@ -119,7 +119,8 @@ impl UFBC {
             Universal::err_exit({
                 let mut temp: String = String::new();
                 for x in errors {
-                    temp = format!("{temp}{x}\n");
+                    temp.push_str(&x);
+                    temp.push('\n');
                 }
                 temp
             });
@@ -235,7 +236,7 @@ impl UFBC {
                     buf = String::new();
                 }
             } else {
-                buf = format!("{buf}{x}");
+                buf.push(x);
             }
         }
         if !buf.is_empty() {
@@ -254,7 +255,7 @@ impl UFBC {
                     buf = String::new();
                 }
             } else {
-                buf = format!("{buf}{x}");
+                buf.push(x);
             }
         }
         if !buf.is_empty() {
@@ -275,39 +276,41 @@ impl UFBC {
         return Self::remove_line_comments(&Self::remove_multiline_comments(code));
     }
     fn remove_line_comments(code: &str) -> String {
-        let mut out: String=String::new();
+        let mut out: String = String::new();
         for x in Self::get_lines(code) {
-            if let Some(y)=x.find("//"){
-                out=format!("{out}\n{}", &x[..y]);
-            }else{
-                out=format!("{out}\n{x}");
+            if let Some(y) = x.find("//") {
+                out.push('\n');
+                out.push_str(&x[..y]);
+            } else {
+                out.push('\n');
+                out.push_str(&x);
             }
         }
         return out;
     }
     fn remove_multiline_comments(code: &str) -> String {
-        let mut out: String=String::new();
-        let mut x: usize=0;
-        while x<code.len(){
-            if x+1>=code.len(){
-                return format!("{out}{}", &code[x..x+1]);
+        let mut out: String = String::new();
+        let mut x: usize = 0;
+        while x < code.len() {
+            if x + 1 >= code.len() {
+                return format!("{out}{}", &code[x..x + 1]);
             }
-            if code[x..x+2].eq("/*"){
-                let mut ind: usize=2;
+            if code[x..x + 2].eq("/*") {
+                let mut ind: usize = 2;
                 loop {
-                    if x+ind+1>=code.len(){
+                    if x + ind + 1 >= code.len() {
                         return out;
                     }
-                    if code[x+ind..x+ind+2].eq("*/"){
-                        x+=ind+1;
+                    if code[x + ind..x + ind + 2].eq("*/") {
+                        x += ind + 1;
                         break;
                     }
-                    ind+=1;
+                    ind += 1;
                 }
-            }else{
-                out=format!("{out}{}", &code[x..x+1]);
+            } else {
+                out.push_str(&code[x..x + 1]);
             }
-            x+=1;
+            x += 1;
         }
         return out;
     }
@@ -336,11 +339,11 @@ impl UFBC {
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
         for x in input.chars() {
-            res = if "-|, \t".contains(x.clone()) {
-                format!("{}{}", res, Self::escape_divider(x))
+            if "-|, \t".contains(x.clone()) {
+                res.push_str(&Self::escape_divider(x));
             } else {
-                format!("{}{}", res, x)
-            };
+                res.push(x);
+            }
         }
         return res;
     }

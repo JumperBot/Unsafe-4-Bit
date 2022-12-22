@@ -187,7 +187,8 @@ impl Command {
         let mut vec2 = vec.clone();
         vec2.dedup();
         for x in vec2 {
-            out = format!("{out}\n{x}");
+            out.push('\n');
+            out.push_str(&x);
         }
         return out.trim().to_string();
     }
