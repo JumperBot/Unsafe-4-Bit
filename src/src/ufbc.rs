@@ -78,27 +78,25 @@ impl UFBC {
             );
             let command: String = real_line[0].clone().to_lowercase();
             if !command.eq("label") {
-                if line.len() < 2
-                    && !(command.eq("nop") || line[0].eq("\n") || line[0].trim().is_empty())
-                {
-                    warnings.push(format!("Warning{}", {
-                        let temp: String = Universal::format_error(
+                if line.len() < 2 && !(command.eq("nop") || line[0].trim().is_empty()) {
+                    warnings.push(format!(
+                        "Warning{}",
+                        &Universal::format_error(
                             &line,
                             &[
                                 "Command",
                                 &real_line[0],
                                 "Will Be Ignored For It Has No Arguments",
                             ],
-                        );
-                        temp[5..].to_string()
-                    }));
+                        )[5..]
+                    ));
                 } else {
-                    let command: Command = Command::new(&line, &real_line, &binary_map);
-                    if !command.errors.is_empty() {
-                        errors.push(command.errors);
-                    } else {
-                        for x in command.compiled {
-                            compiled.push(x);
+                    match Command::new(&line, &real_line, &binary_map) {
+                        Err(x) => errors.push(x),
+                        Ok(x) => {
+                            for y in x {
+                                compiled.push(y);
+                            }
                         }
                     }
                 }
@@ -154,20 +152,12 @@ impl UFBC {
         let mut out: Vec<String> = Vec::<String>::new();
         for x in real_line.clone() {
             if x.starts_with("\"") && x.ends_with("\"") {
-                let temp: String = x.clone()[1..].to_string();
-                for x2 in Universal::convert_to_mem(
-                    &temp[..temp.len() - 1],
-                    true,
-                    &labels,
-                    &default_memory_map,
-                ) {
+                let temp: String = x[1..x.len() - 1].to_string();
+                for x2 in Universal::convert_to_mem(&temp, true, &labels, &default_memory_map) {
                     out.push(x2);
                 }
             } else if x.starts_with("${") && x.ends_with("}") {
-                let key: String = {
-                    let temp: String = x.clone()[2..].to_string();
-                    temp[..temp.len() - 1].to_string()
-                };
+                let key: String = x[2..x.len() - 1].to_string();
                 if labels.contains_key(&key) {
                     out.push(labels.get(&key).to_string());
                 } else {
