@@ -27,8 +27,6 @@ use crate::command::Command;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
-use regex::Regex;
-
 pub struct UFBC {
     pub file_name: String,
 }
@@ -274,12 +272,44 @@ impl UFBC {
     }
 
     fn remove_useless(code: &str) -> String {
-        let comments: Regex = Regex::new("//[^\n]+").unwrap();
-        let multi_liners: Regex = Regex::new("/\\*(?:.|\n)*?+\\*/").unwrap();
-        let empty: String = String::new();
-        return comments
-            .replace_all(&multi_liners.replace_all(code, &empty).to_string(), &empty)
-            .to_string();
+        return Self::remove_line_comments(&Self::remove_multiline_comments(code));
+    }
+    fn remove_line_comments(code: &str) -> String {
+        let mut out: String=String::new();
+        for x in Self::get_lines(code) {
+            if let Some(y)=x.find("//"){
+                out=format!("{out}\n{}", &x[..y]);
+            }else{
+                out=format!("{out}\n{x}");
+            }
+        }
+        return out;
+    }
+    fn remove_multiline_comments(code: &str) -> String {
+        let mut out: String=String::new();
+        let mut x: usize=0;
+        while x<code.len(){
+            if x+1>=code.len(){
+                return format!("{out}{}", &code[x..x+1]);
+            }
+            if code[x..x+2].eq("/*"){
+                let mut ind: usize=2;
+                loop {
+                    if x+ind+1>=code.len(){
+                        return out;
+                    }
+                    if code[x+ind..x+ind+2].eq("*/"){
+                        x+=ind+1;
+                        break;
+                    }
+                    ind+=1;
+                }
+            }else{
+                out=format!("{out}{}", &code[x..x+1]);
+            }
+            x+=1;
+        }
+        return out;
     }
 
     fn convert_dividers_in_string(lines: &Vec<String>) -> Vec<String> {
@@ -291,15 +321,11 @@ impl UFBC {
             if let Some(x) = chars.rev().position(|c| c == '\"') {
                 let first_index: usize = line.find("\"").unwrap();
                 let last_index: usize = char_count - x - 1;
-                let mut captures: [String; 3] = [String::new(), String::new(), String::new()];
-                captures[0] = line[..first_index].to_string();
-                captures[1] = line[first_index..last_index].to_string();
-                captures[2] = line[last_index..].to_string();
                 out.push(format!(
                     "{}{}{}",
-                    captures[0].clone(),
-                    Self::escape_dividers_in_string(captures[1].clone()),
-                    captures[2].clone()
+                    &line[..first_index],
+                    Self::escape_dividers_in_string(line[first_index..last_index].to_string()),
+                    &line[last_index..]
                 ));
             } else {
                 out.push(line.to_string());
