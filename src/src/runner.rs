@@ -129,13 +129,6 @@ impl Runner {
                 16 => self.wfile(),
                 17 => self.rfile(),
                 18 => self.dfile(),
-                // TODO: Add Multi-Nop Functionality
-                // In The Future,
-                // nop 255
-                // Means:
-                // thread::sleep(Duration::from_millis(10*self.next()));
-                // Or In Other Words:
-                // No Operations For The Next 2,550 Milliseconds
                 _ => Universal::err_exit(format!(
                         "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
                     )),
@@ -186,11 +179,11 @@ impl Runner {
             let ptr: u8 = self.next();
             if ptr == ind {
                 for x in &resident {
-                    out = format!("{out}{x}");
+                    out.push(x.clone());
                 }
             } else {
                 for x in self.rvar(&ptr) {
-                    out = format!("{out}{x}");
+                    out.push(x);
                 }
             }
         }
@@ -390,7 +383,7 @@ impl Runner {
         for _ in 0..arg_count as usize {
             let ind: u8 = self.next();
             for x in self.rvar(&ind) {
-                out = format!("{out}{x}");
+                out.push(x);
             }
         }
         print!("{}", Universal::convert_unicode(&out));
@@ -413,30 +406,34 @@ impl Runner {
         self.write_chars(&ind, &mut buf.chars());
     }
 
-    fn wfile(&mut self) {
-        let arg_count: u8 = self.next() - 1;
-        let ind: u8 = self.next();
-        let mut file_name: String = String::new();
+    fn get_file_name(&mut self, arg_count: usize) -> String {
+        let mut out: String = String::new();
         for _ in 0..arg_count as usize {
             let ind: u8 = self.next();
             for x in self.rvar(&ind) {
-                file_name = format!("{file_name}{x}");
+                out.push(x);
             }
         }
-        file_name = Universal::convert_unicode(&file_name);
-        if Path::new(&file_name).is_relative() {
+        out = Universal::convert_unicode(&out);
+        if Path::new(&out).is_relative() {
             if let Some(x) = Path::new(&self.file_name)
                 .canonicalize()
                 .unwrap()
                 .as_path()
                 .parent()
             {
-                file_name = format!("{}/{file_name}", x.display());
+                out = format!("{}/{out}", x.display());
             }
         }
+        return out;
+    }
+    fn wfile(&mut self) {
+        let arg_count: u8 = self.next() - 1;
+        let ind: u8 = self.next();
+        let file_name: String = self.get_file_name(arg_count as usize);
         let mut out: String = String::new();
         for x in self.rvar(&ind) {
-            out = format!("{out}{x}");
+            out.push(x);
         }
         match File::open(&file_name) {
             Err(x) => {
@@ -480,24 +477,7 @@ impl Runner {
     fn rfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
-        let mut file_name: String = String::new();
-        for _ in 0..arg_count as usize {
-            let ind: u8 = self.next();
-            for x in self.rvar(&ind) {
-                file_name = format!("{file_name}{x}");
-            }
-        }
-        file_name = Universal::convert_unicode(&file_name);
-        if Path::new(&file_name).is_relative() {
-            if let Some(x) = Path::new(&self.file_name)
-                .canonicalize()
-                .unwrap()
-                .as_path()
-                .parent()
-            {
-                file_name = format!("{}/{file_name}", x.display());
-            }
-        }
+        let file_name: String = self.get_file_name(arg_count as usize);
         let out: String = match fs::read_to_string(&file_name) {
             Ok(x) => x,
             Err(x) => {
@@ -513,24 +493,7 @@ impl Runner {
 
     fn dfile(&mut self) {
         let arg_count: u8 = self.next();
-        let mut file_name: String = String::new();
-        for _ in 0..arg_count as usize {
-            let ind: u8 = self.next();
-            for x in self.rvar(&ind) {
-                file_name = format!("{file_name}{x}");
-            }
-        }
-        file_name = Universal::convert_unicode(&file_name);
-        if Path::new(&file_name).is_relative() {
-            if let Some(x) = Path::new(&self.file_name)
-                .canonicalize()
-                .unwrap()
-                .as_path()
-                .parent()
-            {
-                file_name = format!("{}/{file_name}", x.display());
-            }
-        }
+        let file_name: String = self.get_file_name(arg_count as usize);
         if let Err(x) = fs::remove_dir_all(&file_name) {
             Universal::err_exit(format!(
                 "File Provided Does Not Exist...\n{}\nTerminating...",

@@ -19,6 +19,8 @@
 **/
 use crate::memory_map::MemoryMap;
 
+use std::env::consts::OS;
+
 pub struct Universal {}
 
 impl Universal {
@@ -29,16 +31,20 @@ impl Universal {
         };
     }
 
-    pub fn arr_to_string<T: std::fmt::Debug>(arr: &[T]) -> String {
+    pub fn arr_to_string<T: std::fmt::Display>(arr: &[T]) -> String {
         let mut out: String = String::new();
         for x in arr {
-            out = format!("{out}{:?}, ", x);
+            out.push_str(&x.to_string());
         }
         return out[..out.len() - 2].to_string();
     }
 
     pub fn err_exit(err_msg: String) {
-        println!("\u{001B}[91m{err_msg}\u{001B}[0m");
+        if !OS.contains("windows") {
+            println!("\u{001B}[91m{err_msg}\u{001B}[0m");
+        } else {
+            println!("{err_msg}");
+        }
         std::process::exit(1);
     }
 
@@ -108,9 +114,9 @@ impl Universal {
         for x in input.chars() {
             if x == '$' {
                 mem_indicator = true;
-                place_holder = format!("{place_holder}{x}");
+                place_holder.push(x);
             } else if mem_indicator {
-                place_holder = format!("{place_holder}{x}");
+                place_holder.push(x);
                 if x == '{' {
                     is_label = true;
                 } else if is_label {
@@ -197,9 +203,9 @@ impl Universal {
         let mut place_holder: String = String::new();
         for x in input.chars() {
             if place_holder.len() >= 6 {
-                out = format!(
-                    "{out}{}",
-                    Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                out.push_str(
+                    &Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                        .to_string(),
                 );
                 place_holder = String::new();
                 possible_match = false;
@@ -208,41 +214,44 @@ impl Universal {
                 if x.to_lowercase().to_string().eq("u") {
                     if place_holder.len() != 1 {
                         possible_match = false;
-                        out = format!("{out}{place_holder}{x}");
+                        out.push_str(&place_holder);
+                        out.push(x);
                         place_holder = String::new();
                     } else {
-                        place_holder = format!("{place_holder}{x}");
+                        place_holder.push(x);
                     }
                 } else if Self::is_digit(x.clone()) {
                     if place_holder.len() == 1 {
                         possible_match = false;
-                        out = format!("{out}{place_holder}{x}");
+                        out.push_str(&place_holder);
+                        out.push(x);
                         place_holder = String::new();
                     } else {
-                        place_holder = format!("{place_holder}{x}");
+                        place_holder.push(x);
                     }
                 } else {
                     possible_match = false;
-                    out = format!("{out}{place_holder}{x}");
+                    out.push_str(&place_holder);
+                    out.push(x);
                     place_holder = String::new();
                 }
             } else if x.to_lowercase().to_string().eq("u") {
                 possible_match = true;
                 place_holder = x.to_string();
             } else {
-                out = format!("{out}{x}");
+                out.push(x);
             }
             if place_holder.len() >= 6 {
-                out = format!(
-                    "{out}{}",
-                    Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                out.push_str(
+                    &Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
+                        .to_string(),
                 );
                 place_holder = String::new();
                 possible_match = false;
             }
         }
         if !place_holder.is_empty() {
-            out = format!("{out}{place_holder}");
+            out.push_str(&place_holder);
         }
         return out;
     }

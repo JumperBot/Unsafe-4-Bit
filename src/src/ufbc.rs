@@ -17,6 +17,7 @@
  *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
 **/
+use std::env::consts::OS;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -25,8 +26,6 @@ use std::str::Chars;
 use crate::command::Command;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
-
-use regex::Regex;
 
 pub struct UFBC {
     pub file_name: String,
@@ -63,12 +62,12 @@ impl UFBC {
         let binary_map: MemoryMap = MemoryMap {
             keys: vec![
                 "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm",
-                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "dfunc",
+                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile",
             ]
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>(),
-            mems: (0..21).collect::<Vec<u64>>(),
+            mems: (0..19).collect::<Vec<u64>>(),
         };
         for x in lines.clone() {
             let real_line: Vec<String> = Self::split_line(&x);
@@ -106,17 +105,22 @@ impl UFBC {
             }
         }
         if !warnings.is_empty() {
-            print!("\u{001B}[93m");
+            if !OS.contains("windows") {
+                print!("\u{001B}[93m");
+            }
             for x in warnings {
                 println!("{x}");
             }
-            print!("\n\u{001B}[0m");
+            if !OS.contains("windows") {
+                print!("\n\u{001B}[0m");
+            }
         }
         if !errors.is_empty() {
             Universal::err_exit({
                 let mut temp: String = String::new();
                 for x in errors {
-                    temp = format!("{temp}{x}\n");
+                    temp.push_str(&x);
+                    temp.push('\n');
                 }
                 temp
             });
@@ -232,7 +236,7 @@ impl UFBC {
                     buf = String::new();
                 }
             } else {
-                buf = format!("{buf}{x}");
+                buf.push(x);
             }
         }
         if !buf.is_empty() {
@@ -251,7 +255,7 @@ impl UFBC {
                     buf = String::new();
                 }
             } else {
-                buf = format!("{buf}{x}");
+                buf.push(x);
             }
         }
         if !buf.is_empty() {
@@ -269,12 +273,46 @@ impl UFBC {
     }
 
     fn remove_useless(code: &str) -> String {
-        let comments: Regex = Regex::new("//[^\n]+").unwrap();
-        let multi_liners: Regex = Regex::new("/\\*(?:.|\n)*?+\\*/").unwrap();
-        let empty: String = String::new();
-        return comments
-            .replace_all(&multi_liners.replace_all(code, &empty).to_string(), &empty)
-            .to_string();
+        return Self::remove_line_comments(&Self::remove_multiline_comments(code));
+    }
+    fn remove_line_comments(code: &str) -> String {
+        let mut out: String = String::new();
+        for x in Self::get_lines(code) {
+            if let Some(y) = x.find("//") {
+                out.push('\n');
+                out.push_str(&x[..y]);
+            } else {
+                out.push('\n');
+                out.push_str(&x);
+            }
+        }
+        return out;
+    }
+    fn remove_multiline_comments(code: &str) -> String {
+        let mut out: String = String::new();
+        let mut x: usize = 0;
+        while x < code.len() {
+            if x + 1 >= code.len() {
+                return format!("{out}{}", &code[x..x + 1]);
+            }
+            if code[x..x + 2].eq("/*") {
+                let mut ind: usize = 2;
+                loop {
+                    if x + ind + 1 >= code.len() {
+                        return out;
+                    }
+                    if code[x + ind..x + ind + 2].eq("*/") {
+                        x += ind + 1;
+                        break;
+                    }
+                    ind += 1;
+                }
+            } else {
+                out.push_str(&code[x..x + 1]);
+            }
+            x += 1;
+        }
+        return out;
     }
 
     fn convert_dividers_in_string(lines: &Vec<String>) -> Vec<String> {
@@ -286,15 +324,11 @@ impl UFBC {
             if let Some(x) = chars.rev().position(|c| c == '\"') {
                 let first_index: usize = line.find("\"").unwrap();
                 let last_index: usize = char_count - x - 1;
-                let mut captures: [String; 3] = [String::new(), String::new(), String::new()];
-                captures[0] = line[..first_index].to_string();
-                captures[1] = line[first_index..last_index].to_string();
-                captures[2] = line[last_index..].to_string();
                 out.push(format!(
                     "{}{}{}",
-                    captures[0].clone(),
-                    Self::escape_dividers_in_string(captures[1].clone()),
-                    captures[2].clone()
+                    &line[..first_index],
+                    Self::escape_dividers_in_string(line[first_index..last_index].to_string()),
+                    &line[last_index..]
                 ));
             } else {
                 out.push(line.to_string());
@@ -305,11 +339,11 @@ impl UFBC {
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
         for x in input.chars() {
-            res = if "-|, \t".contains(x.clone()) {
-                format!("{}{}", res, Self::escape_divider(x))
+            if "-|, \t".contains(x.clone()) {
+                res.push_str(&Self::escape_divider(x));
             } else {
-                format!("{}{}", res, x)
-            };
+                res.push(x);
+            }
         }
         return res;
     }
