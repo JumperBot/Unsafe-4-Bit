@@ -357,22 +357,19 @@ impl Runner {
         while com != &(self.byte_ind.len() as u16) && self.ptr < self.file_size {
             self.byte_ind.push(self.ptr.clone());
             let cur: u8 = self.next();
-            match cur{
-                0 => self.ptr+=self.next() as u64,
-                1 => self.ptr+=1,
-                2..=8 => self.ptr+=2,
+            match cur {
+                0 => self.ptr += self.next() as u64,
+                1 => self.ptr += 1,
+                2..=8 => self.ptr += 2,
                 9 => (),
-                10..=13 => self.ptr+=4,
-                14 => self.ptr+=self.next() as u64,
-                15 => self.ptr+=1,
-                16 => self.ptr+=self.next() as u64,
-                17 => self.ptr+=self.next() as u64,
-                18 => self.ptr+=self.next() as u64,
+                10..=13 => self.ptr += 4,
+                14 => self.ptr += self.next() as u64,
+                15 => self.ptr += 1,
+                16 => self.ptr += self.next() as u64,
+                17 => self.ptr += self.next() as u64,
+                18 => self.ptr += self.next() as u64,
                 // TODO: Add Other Commands
-                _ => panic!(
-                        "You Forgot To Add Command Number {cur} To The Skip Index... As Always...\n{}, {}, {}, {}, {}, {}",
-                        self.next(), self.next(), self.next(), self.next(), self.next(), self.next()
-                    ),
+                _ => panic!("You Forgot To Add Command Number {cur} To The Skip Index..."),
             }
         }
     }

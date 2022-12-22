@@ -20,11 +20,7 @@
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
-pub struct Command {
-    pub compiled: Vec<u8>,
-    pub errors: String,
-    pub cancel_optimization: bool,
-}
+pub struct Command {}
 
 impl Command {
     /*
@@ -44,18 +40,16 @@ impl Command {
      * 19   -   00010011    -   wfunc
      * 20   -   00010100    -   dfunc
      **/
-    pub fn new(line: &Vec<String>, real_line: &Vec<String>, binary_map: &MemoryMap) -> Command {
-        if !binary_map.contains_key(&line[0].to_lowercase()) {
-            let unrecognized: Box<UnrecognizedCommand> =
-                UnrecognizedCommand::create(&real_line, &line);
-            return Command {
-                compiled: Vec::<u8>::new(),
-                errors: unrecognized.analyze(),
-                cancel_optimization: true,
-            };
+    pub fn new(
+        line: &Vec<String>,
+        real_line: &Vec<String>,
+        binary_map: &MemoryMap,
+    ) -> Result<Vec<u8>, String> {
+        let com_str: String = line[0].to_lowercase();
+        if !binary_map.contains_key(&com_str) {
+            return Err(UnrecognizedCommand::create(&real_line, &line).analyze());
         }
-        let mut cancel_optimization: bool = false;
-        let ind: u64 = binary_map.get(&line[0].to_lowercase());
+        let ind: u64 = binary_map.get(&com_str);
         let command: Box<dyn GenericCommand> = match ind {
             0 => WvarCommand::create(&real_line, &line),
             1 => NvarCommand::create(&real_line, &line),
@@ -65,7 +59,6 @@ impl Command {
             (10..=13) => JumpCommand::create(&real_line, &line),
             14 => PrintCommand::create(&real_line, &line),
             (15..=20) => {
-                cancel_optimization = true;
                 match ind {
                     15 => ReadCommand::create(&real_line, &line),
                     16 => WfileCommand::create(&real_line, &line),
@@ -80,17 +73,9 @@ impl Command {
         };
         let err: String = command.analyze();
         if !err.is_empty() {
-            return Command {
-                compiled: Vec::<u8>::new(),
-                errors: err,
-                cancel_optimization: true,
-            };
+            return Err(err);
         }
-        return Command {
-            compiled: command.compile(),
-            errors: String::new(),
-            cancel_optimization: cancel_optimization,
-        };
+        return Ok(command.compile());
     }
 
     pub fn check_arg_length_using_limit(
