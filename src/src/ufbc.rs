@@ -17,6 +17,7 @@
  *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
 **/
+use std::env::consts::OS;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -106,11 +107,15 @@ impl UFBC {
             }
         }
         if !warnings.is_empty() {
-            print!("\u{001B}[93m");
+            if !OS.contains("windows") {
+                print!("\u{001B}[93m");
+            }
             for x in warnings {
                 println!("{x}");
             }
-            print!("\n\u{001B}[0m");
+            if !OS.contains("windows") {
+                print!("\n\u{001B}[0m");
+            }
         }
         if !errors.is_empty() {
             Universal::err_exit({

@@ -19,6 +19,8 @@
 **/
 use crate::memory_map::MemoryMap;
 
+use std::env::consts::OS;
+
 pub struct Universal {}
 
 impl Universal {
@@ -38,7 +40,11 @@ impl Universal {
     }
 
     pub fn err_exit(err_msg: String) {
-        println!("\u{001B}[91m{err_msg}\u{001B}[0m");
+        if !OS.contains("windows") {
+            println!("\u{001B}[91m{err_msg}\u{001B}[0m");
+        } else {
+            println!("{err_msg}");
+        }
         std::process::exit(1);
     }
 

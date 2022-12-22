@@ -20,8 +20,6 @@
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
-use itertools::Itertools;
-
 pub struct Command {
     pub compiled: Vec<u8>,
     pub errors: String,
@@ -186,7 +184,9 @@ impl Command {
 
     pub fn errors_to_string(vec: Vec<String>) -> String {
         let mut out: String = String::new();
-        for x in vec.iter().unique() {
+        let mut vec2 = vec.clone();
+        vec2.dedup();
+        for x in vec2 {
             out = format!("{out}\n{x}");
         }
         return out.trim().to_string();
