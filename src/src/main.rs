@@ -31,39 +31,40 @@ use universal::Universal;
 
 use std::env;
 
-use reqwest::Client;
+use reqwest::blocking::Client;
 use reqwest::Method;
 
-// "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest"
-
-#[tokio::main]
-async fn main() {
-    let version: &str="v1.6.3";
+fn main() {
+    // TODO: Always Change Version Tag Here And At Cargo.toml
+    let version: &str = "v1.6.4";
     let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
     if flags.version_flag {
         println!("Checking For The Latest Released Version...");
-        match Client::new().request(
-            Method::GET, "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest"
-        ).header("User-Agent", "Unsafe-4-Bit").send().await{
-            Ok(x)  => {
-                let body: String=x.text().await.unwrap();
-                if body.contains("tag_name"){
-                    let s1: &str=&body[body.find("tag_name").unwrap()+11..];
-                    let s2: &str=&s1[..s1.find("\"").unwrap()];
-                    if !s2.eq(version){
-                        println!("UFB Is Not Up-To-Date...");
-                        println!("{s2} > {version} ...");
-                        println!("Visit The Repository And Update UFB...");
-                    }else{
-                        println!("UFB Is Up-To-Date...");
-                    }
+        if let Ok(x) = Client::new()
+            .request(
+                Method::GET,
+                "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest",
+            )
+            .header("User-Agent", "Unsafe-4-Bit")
+            .send()
+        {
+            let body: String = x.text().unwrap();
+            if body.contains("tag_name") {
+                let s1: &str = &body[body.find("tag_name").unwrap() + 11..];
+                let s2: &str = &s1[..s1.find("\"").unwrap()];
+                if !s2.eq(version) {
+                    println!(
+                        "UFB Is Not Up-To-Date...\n{s2} > {version} ...\nVisit The Repository And Update UFB..."
+                    );
+                } else {
+                    println!("UFB Is Up-To-Date...");
                 }
-            },
-            Err(_) => {
+            } else {
                 println!("Could Not Connect To Github...");
             }
+        } else {
+            println!("Could Not Connect To Github...");
         }
-        // TODO: Always Change Version Tag Here And At Cargo.toml
         println!("UFB Version: {version}\nFlag Triggered, Continuing Anyway...\n\n");
     }
     if flags.license_flag {
@@ -126,4 +127,3 @@ Flag Triggered, Continuing Anyway...\n\n"
         runner.run();
     }
 }
-
