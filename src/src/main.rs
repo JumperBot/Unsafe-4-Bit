@@ -30,10 +30,36 @@ use ufbc::UFBC;
 use universal::Universal;
 
 use std::env;
+use std::io::stdout;
+use std::io::Write;
+use std::time::Duration;
 
-fn main() {
+/*
+https://stackoverflow.com/questions/23346757/make-http-request-in-rust-using-std
+use std::net::TcpStream;
+use std::net::ToSocketAddrs;
+use std::time::Duration;
+use std::io::Read;
+use std::io::Write;
+let mut socket = TcpStream::connect(
+    &"20.205.243.168:300".to_socket_addrs().unwrap().next().unwrap()
+).unwrap();
+let header = format!("GET /repos/JumperBot/Unsafe-4-Bit/releases/latest HTTP/1.0\r\nHost: api.github.com\r\n");
+socket.write(header.as_bytes()).unwrap();
+let resp = socket.read(&mut [0; 256]).unwrap();
+println!("{resp}");
+*/
+
+// "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest"
+#[tokio::main]
+async fn main() {
     let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
     if flags.version_flag {
+        let body=reqwest::get("https://www.rust-lang.org")
+            .await?
+            .text()
+            .await?;
+        println!("body = {:?}", body);
         // TODO: Always Change Version Tag Here And At Cargo.toml
         println!("UFB Version: v1.6.3\nFlag Triggered, Continuing Anyway...\n\n");
     }
@@ -97,3 +123,4 @@ Flag Triggered, Continuing Anyway...\n\n"
         runner.run();
     }
 }
+

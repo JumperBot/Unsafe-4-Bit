@@ -8,6 +8,10 @@ license = "GPL-3.0-or-later"
 name = "ufb"
 path = "src/main.rs"
 
+[dependencies]
+reqwest = "0.11.13"
+tokio = { version = "1", features = ["full"] }
+
 [profile.release]
 codegen-units = 1
 debug = false
