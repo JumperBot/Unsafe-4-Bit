@@ -9,8 +9,9 @@ name = "ufb"
 path = "src/main.rs"
 
 [dependencies]
-reqwest = "0.11.13"
-tokio = { version = "1", features = ["full"] }
+openssl = { version = "0.10", features = ["vendored"] }
+reqwest = { version = "0.11.13", features = ["json"] }
+tokio = { version = "1.23.0", features = ["full"] }
 
 [profile.release]
 codegen-units = 1
