@@ -7,9 +7,9 @@
 
 ---
 
-[![Banner.png](./.github/ShortenedBanner.png)](./.github/ShortenedBanner.png)
+[![Banner.png](./res/ShortenedBanner.png)](./res/ShortenedBanner.png)
 
-[![UFBDesc.apng](./.github/UFBDesc.apng)](./.github/UFBDesc.apng)
+[![UFBDesc.apng](./res/UFBDesc.apng)](./res/UFBDesc.apng)
 ---
 
 > Unsafe Four Bit / UFB / Unsafe-4-Bit is a fast-paced, compiled-interpreted, dynamically-typed, imperative-procedural programming language built with Rust.

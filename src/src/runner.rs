@@ -21,7 +21,6 @@ use crate::universal::Universal;
 
 use std::fs;
 use std::fs::File;
-use std::fs::Metadata;
 use std::io;
 use std::io::ErrorKind;
 use std::io::Read;
@@ -51,36 +50,35 @@ pub struct Runner {
 
 impl Runner {
     pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
-        let res: Result<File, _> = File::open(&file_name);
-        if let Err(ref x) = res {
-            Universal::err_exit(format!(
+        match File::open(&file_name) {
+            Err(x) => Universal::err_exit(format!(
                 "File Provided Does Not Exist...\n{}\nTerminating...",
                 x.to_string(),
-            ));
+            )),
+            Ok(x) => match x.metadata() {
+                Err(y) => Universal::err_exit(y.to_string()),
+                Ok(y) => {
+                    return Runner {
+                        file: x,
+                        file_name: file_name,
+                        file_size: y.len(),
+                        ptr: 0,
+                        mem_ind: [0; 256],
+                        mem: Self::init_mem(),
+                        byte_ind: Vec::<u64>::new(),
+                        perfmes: perfmes,
+                        nanosec: nanosec,
+                        commmes: commmes,
+                    }
+                }
+            },
         }
-        let file: File = res.unwrap();
-        let res2: Result<Metadata, _> = file.metadata();
-        if let Err(ref y) = res2 {
-            Universal::err_exit(y.to_string());
-        }
-        return Runner {
-            file: file,
-            file_name: file_name,
-            file_size: res2.unwrap().len(),
-            ptr: 0,
-            mem_ind: [0; 256],
-            mem: Self::init_mem(),
-            byte_ind: Vec::<u64>::new(),
-            perfmes: perfmes,
-            nanosec: nanosec,
-            commmes: commmes,
-        };
+        return Self::new(file_name, perfmes, nanosec, commmes);
     }
 
     pub fn run(&mut self) {
-        let ten_millis: Duration = Duration::from_millis(10);
-        let start: u128;
         if self.perfmes {
+            let start: u128;
             match SystemTime::now().duration_since(UNIX_EPOCH) {
                 Ok(x) => {
                     if self.nanosec {
@@ -90,61 +88,36 @@ impl Runner {
                     }
                 }
                 Err(_) => start = 0,
-            };
-        } else {
-            start = 0;
-        }
-        while self.ptr != self.file_size {
-            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
-                self.byte_ind.push(self.ptr.clone());
             }
-            let com: u8 = self.next();
-            let start: u128;
             if self.commmes {
-                match SystemTime::now().duration_since(UNIX_EPOCH) {
-                    Ok(x) => {
-                        if self.nanosec {
-                            start = x.as_nanos();
-                        } else {
-                            start = x.as_millis();
-                        }
-                    }
-                    Err(_) => start = 0,
-                };
+                self.run_commands_with_time();
             } else {
-                start = 0;
+                self.run_commands();
             }
-            match com {
-                0 => self.wvar(),
-                1 => {
-                    let ind: u8 = self.next();
-                    self.nvar(&ind);
-                },
-                2 => self.trim(),
-                3..=8 => self.math(&com),
-                9 => thread::sleep(ten_millis.clone()),
-                10..=13 => self.jump(&com),
-                14 => self.print(),
-                15 => self.read(),
-                16 => self.wfile(),
-                17 => self.rfile(),
-                18 => self.dfile(),
-                _ => Universal::err_exit(format!(
-                        "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
-                    )),
-            }
-            if self.commmes {
-                if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
-                    if self.nanosec {
-                        println!("\nCommand Index {com} Took {}ns", x.as_nanos() - start);
-                    } else {
-                        println!("\nCommand Index {com} Took {}ms", x.as_millis() - start);
+            let mut mem_leaks: String = String::new();
+            for i in 0..32 {
+                for ratio in 0..8 {
+                    let ind: usize = i + (ratio * 32);
+                    if self.mem_ind[ind] != 0 {
+                        mem_leaks = format!("{mem_leaks}\nMemory Leak At Index: {ind}");
                     }
-                } else {
-                    println!("\nCommand Index {com} Took ?~");
                 }
             }
+            if !mem_leaks.is_empty() {
+                Universal::err_exit(mem_leaks);
+            }
+            if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                if self.nanosec {
+                    println!("Program Took {}ns", x.as_nanos() - start);
+                } else {
+                    println!("Program Took {}ms", x.as_millis() - start);
+                }
+            } else {
+                println!("Program Took ?~");
+            }
+            return;
         }
+        self.run_commands();
         let mut mem_leaks: String = String::new();
         for i in 0..32 {
             for ratio in 0..8 {
@@ -157,16 +130,66 @@ impl Runner {
         if !mem_leaks.is_empty() {
             Universal::err_exit(mem_leaks);
         }
-        if self.perfmes {
+    }
+    fn run_commands(&mut self) {
+        let ten_millis: Duration = Duration::from_millis(10);
+        while self.ptr != self.file_size {
+            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
+                self.byte_ind.push(self.ptr.clone());
+            }
+            let com: u8 = self.next();
+            self.run_command(com, ten_millis.clone());
+        }
+    }
+    fn run_commands_with_time(&mut self) {
+        let ten_millis: Duration = Duration::from_millis(10);
+        while self.ptr != self.file_size {
+            let start: u128;
+            match SystemTime::now().duration_since(UNIX_EPOCH) {
+                Ok(x) => {
+                    if self.nanosec {
+                        start = x.as_nanos();
+                    } else {
+                        start = x.as_millis();
+                    }
+                }
+                Err(_) => start = 0,
+            }
+            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
+                self.byte_ind.push(self.ptr.clone());
+            }
+            let com: u8 = self.next();
+            self.run_command(com.clone(), ten_millis.clone());
             if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
                 if self.nanosec {
-                    println!("Program Took {}ns", x.as_nanos() - start);
+                    println!("\nCommand Index {com} Took {}ns", x.as_nanos() - start);
                 } else {
-                    println!("Program Took {}ms", x.as_millis() - start);
+                    println!("\nCommand Index {com} Took {}ms", x.as_millis() - start);
                 }
             } else {
-                println!("Program Took ?~");
+                println!("\nCommand Index {com} Took ?~");
             }
+        }
+    }
+    fn run_command(&mut self, com: u8, ten_millis: Duration) {
+        match com {
+            0 => self.wvar(),
+            1 => {
+                let ind: u8 = self.next();
+                self.nvar(&ind);
+            }
+            2 => self.trim(),
+            3..=8 => self.math(&com),
+            9 => thread::sleep(ten_millis),
+            10..=13 => self.jump(&com),
+            14 => self.print(),
+            15 => self.read(),
+            16 => self.wfile(),
+            17 => self.rfile(),
+            18 => self.dfile(),
+            _ => Universal::err_exit(format!(
+                "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
+            )),
         }
     }
 

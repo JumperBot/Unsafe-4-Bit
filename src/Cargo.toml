@@ -1,8 +1,12 @@
 [package]
-name = "ufb"
-version = "1.6.2"
+name = "unsafe-4-bit"
+version = "1.6.3"
 edition = "2021"
 license = "GPL-3.0-or-later"
+
+[[bin]]
+name = "ufb"
+path = "src/main.rs"
 
 [profile.release]
 codegen-units = 1
