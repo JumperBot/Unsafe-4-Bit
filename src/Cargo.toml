@@ -1,12 +1,16 @@
 [package]
 name = "unsafe-4-bit"
-version = "1.6.3"
+version = "1.6.4"
 edition = "2021"
 license = "GPL-3.0-or-later"
 
 [[bin]]
 name = "ufb"
 path = "src/main.rs"
+
+[dependencies]
+openssl = { version = "0.10.35", features = ["vendored"] }
+curl = "0.4.44"
 
 [profile.release]
 codegen-units = 1
