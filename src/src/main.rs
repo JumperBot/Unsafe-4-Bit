@@ -31,41 +31,15 @@ use universal::Universal;
 
 use std::env;
 
-use reqwest::blocking::Client;
-use reqwest::Method;
+use curl::easy::{Easy, List};
 
 fn main() {
     // TODO: Always Change Version Tag Here And At Cargo.toml
     let version: &str = "v1.6.4";
     let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
     if flags.version_flag {
-        println!("Checking For The Latest Released Version...");
-        if let Ok(x) = Client::new()
-            .request(
-                Method::GET,
-                "https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest",
-            )
-            .header("User-Agent", "Unsafe-4-Bit")
-            .send()
-        {
-            let body: String = x.text().unwrap();
-            if body.contains("tag_name") {
-                let s1: &str = &body[body.find("tag_name").unwrap() + 11..];
-                let s2: &str = &s1[..s1.find("\"").unwrap()];
-                if !s2.eq(version) {
-                    println!(
-                        "UFB Is Not Up-To-Date...\n{s2} > {version} ...\nVisit The Repository And Update UFB..."
-                    );
-                } else {
-                    println!("UFB Is Up-To-Date...");
-                }
-            } else {
-                println!("Could Not Connect To Github...");
-            }
-        } else {
-            println!("Could Not Connect To Github...");
-        }
-        println!("UFB Version: {version}\nFlag Triggered, Continuing Anyway...\n\n");
+        version_checker(&version);
+        println!("UFB Version: {version} ...\nFlag Triggered, Continuing Anyway...\n\n");
     }
     if flags.license_flag {
         println!(
@@ -95,12 +69,10 @@ Flag Triggered, Continuing Anyway...\n\n"
     if flags.compile_flag {
         if flags.file_name.ends_with(".ufbb") {
             Universal::err_exit(
-                concat!(
-                    "Could Not Compile Source Code That Had Already Been Compiled.\n",
-                    "Remove The Compilation Flag To Run The Compiled Program.\n",
-                    "Terminating..."
-                )
-                .to_string(),
+                "Could Not Compile Source Code That Had Already Been Compiled.
+Remove The Compilation Flag To Run The Compiled Program.
+Terminating..."
+                    .to_string(),
             );
         }
         let compiler: UFBC = UFBC {
@@ -110,12 +82,10 @@ Flag Triggered, Continuing Anyway...\n\n"
     } else {
         if flags.file_name.ends_with(".ufb") {
             Universal::err_exit(
-                concat!(
-                    "Could Not Run Uncompiled Source Code.\n",
-                    "Add The Compilation Flag To Compiled The Program.\n",
-                    "Terminating..."
-                )
-                .to_string(),
+                "Could Not Run Uncompiled Source Code.
+Add The Compilation Flag To Compiled The Program.
+Terminating..."
+                    .to_string(),
             );
         }
         let mut runner: Runner = Runner::new(
@@ -126,4 +96,45 @@ Flag Triggered, Continuing Anyway...\n\n"
         );
         runner.run();
     }
+}
+
+fn version_checker(version: &str) {
+    println!("Checking For The Latest Released Version...");
+    let mut handle: Easy = Easy::new();
+    let mut list: List = List::new();
+    let mut res: Vec<Result<_, _>> = vec![
+        handle.get(true),
+        handle.url("https://api.github.com/repos/JumperBot/Unsafe-4-Bit/releases/latest"),
+        list.append("User-Agent: Unsafe-4-Bit"),
+        handle.http_headers(list),
+    ];
+    let mut contents = Vec::<u8>::new();
+    {
+        let mut transfer = handle.transfer();
+        res.push(transfer.write_function(|new_data| {
+            contents.extend_from_slice(new_data);
+            Ok(new_data.len())
+        }));
+        res.push(transfer.perform());
+    }
+    for x in res {
+        if x.is_err() {
+            println!("Could Not Connect To Github...");
+            return;
+        }
+    }
+    let body: String = String::from_utf8(contents).unwrap();
+    if let Some(x) = body.find("tag_name") {
+        let s1: &str = &body[x + 11..];
+        let s2: &str = &s1[..s1.find("\"").unwrap()];
+        if !s2.eq(version) {
+            println!(
+                "UFB Is Not Up-To-Date...\n{s2} != {version} ...\nVisit The Repository And Update UFB..."
+            );
+            return;
+        }
+        println!("UFB Is Up-To-Date...");
+        return;
+    }
+    println!("Could Not Connect To Github...");
 }
