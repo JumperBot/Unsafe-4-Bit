@@ -18,14 +18,19 @@
  *
 **/
 use std::env::consts::OS;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader, Write};
 use std::str::Chars;
 
 use crate::command::Command;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
+
+#[derive(Clone, Debug)]
+pub struct Line {
+    pub number: usize,
+    pub content: String,
+}
 
 pub struct UFBC {
     pub file_name: String,
@@ -33,17 +38,72 @@ pub struct UFBC {
 
 impl UFBC {
     pub fn compile(&self) {
+        let mut lines: Vec<Line> = Vec::<Line>::new();
+        {
+            let mut reader: BufReader<File> = match File::open(&self.file_name) {
+                Ok(x) => BufReader::<File>::new(x),
+                Err(x) => {
+                    Universal::err_exit(format!(
+                        "File Provided Does Not Exist...\n{}\nTerminating...",
+                        x.to_string(),
+                    ));
+                    return;
+                }
+            };
+            let mut buffer: String = String::new();
+            let mut multiline_comment: bool = false;
+            let mut line_number: usize = 1;
+            while reader.read_line(&mut buffer).unwrap() != 0 {
+                buffer = buffer.trim().to_string();
+                if !multiline_comment {
+                    if let Some(x) = buffer.find("/*") {
+                        let s1: String = buffer[..x].to_string();
+                        let s2: String = buffer[x + 2..].to_string();
+                        if let Some(y) = s2.find("*/") {
+                            buffer.clear();
+                            buffer.push_str(&s1);
+                            buffer.push_str(&s2[y + 2..]);
+                            buffer = Self::remove_line_comments(&buffer);
+                        } else {
+                            buffer = s1.to_string();
+                            multiline_comment = true;
+                        }
+                    } else {
+                        buffer = Self::remove_line_comments(&buffer);
+                    }
+                } else {
+                    if let Some(x) = buffer.find("*/") {
+                        buffer = buffer[x + 2..].to_string();
+                        buffer = Self::remove_line_comments(&buffer);
+                    } else {
+                        buffer.clear();
+                    }
+                }
+                lines.push(Line {
+                    number: line_number.clone(),
+                    content: buffer.trim().to_string(),
+                });
+                buffer.clear();
+                line_number += 1;
+            }
+        }
+        lines.retain(|x| !x.content.is_empty());
+        for x in lines.clone() {
+            println!("{:?}", x);
+        }
+        /*
         let code: String = match fs::read_to_string(&self.file_name) {
-            Ok(x) => Self::remove_useless(&x),
+            Ok(x)  => Self::remove_useless(&x),
             Err(x) => {
                 Universal::err_exit(format!(
                     "File Provided Does Not Exist...\n{}\nTerminating...",
                     x.to_string(),
                 ));
-                return ();
+                return;
             }
         };
         let lines: Vec<String> = Self::get_lines(&code);
+        */
         let mut warnings: Vec<String> = Vec::<String>::new();
         let mut errors: Vec<String> = Vec::<String>::new();
         let mut compiled: Vec<u8> = Vec::<u8>::new();
@@ -69,7 +129,8 @@ impl UFBC {
             .collect::<Vec<String>>(),
             mems: (0..19).collect::<Vec<u64>>(),
         };
-        for x in lines.clone() {
+        for w in lines.clone() {
+            let x: String = w.content;
             let real_line: Vec<String> = Self::split_line(&x);
             let line: Vec<String> = Self::substitute_strings_and_labels(
                 &real_line,
