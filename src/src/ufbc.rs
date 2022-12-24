@@ -18,8 +18,8 @@
  *
 **/
 use std::env::consts::OS;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::str::Chars;
 
 use crate::command::Command;
@@ -63,9 +63,15 @@ impl UFBC {
                 return;
             }
         };
+        let mut writer: BufWriter<File> = match File::create(format!("{}b", &self.file_name)) {
+            Ok(x) => BufWriter::<File>::with_capacity(300, x),
+            Err(x) => {
+                Universal::err_exit(x.to_string());
+                return;
+            }
+        };
         let mut warnings: Vec<String> = Vec::<String>::new();
         let mut errors: Vec<String> = Vec::<String>::new();
-        let mut compiled: Vec<u8> = Vec::<u8>::new();
         let mut memory_map: MemoryMap = MemoryMap::new();
         let mut buffer: String = String::new();
         let mut multiline_comment: bool = false;
@@ -125,10 +131,16 @@ impl UFBC {
                             Err(x) => {
                                 errors.push(format!("Error(s) Found On Line {line_number} / Command Number {command_number}:"));
                                 errors.push(x);
+                                if let Ok(_) = writer.flush() {};
+                                if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {};
                             }
                             Ok(x) => {
-                                for y in x {
-                                    compiled.push(y);
+                                if let Err(x) = writer.write_all(&x) {
+                                    if let Ok(_) = writer.flush() {};
+                                    if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {
+                                    };
+                                    Universal::err_exit(x.to_string());
+                                    return;
                                 }
                             }
                         }
@@ -165,14 +177,9 @@ impl UFBC {
                 temp
             });
         }
-        match File::create(format!("{}b", &self.file_name)) {
-            Ok(mut x) => {
-                if let Err(y) = x.write_all(&compiled) {
-                    Universal::err_exit(y.to_string());
-                }
-            }
-            Err(x) => Universal::err_exit(x.to_string()),
-        };
+        if let Err(x) = writer.flush() {
+            Universal::err_exit(x.to_string());
+        }
     }
 
     fn substitute_strings_and_labels(
