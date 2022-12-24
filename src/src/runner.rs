@@ -19,21 +19,12 @@
 **/
 use crate::universal::Universal;
 
-use std::fs;
-use std::fs::File;
-use std::io;
-use std::io::ErrorKind;
-use std::io::Read;
-use std::io::Seek;
-use std::io::SeekFrom::Start;
-use std::io::Stdin;
-use std::io::Write;
+use std::fs::{self, File};
+use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Stdin, Write};
 use std::path::Path;
 use std::str::Chars;
 use std::thread;
-use std::time::Duration;
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub struct Runner {
     file: File,

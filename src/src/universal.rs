@@ -35,6 +35,7 @@ impl Universal {
         let mut out: String = String::new();
         for x in arr {
             out.push_str(&x.to_string());
+            out.push_str(", ");
         }
         return out[..out.len() - 2].to_string();
     }
@@ -53,8 +54,7 @@ impl Universal {
     }
 
     pub fn format_error(line: &Vec<String>, input: &[&str]) -> String {
-        let mut arr: String = Self::arr_to_string(line)[1..].to_string();
-        arr = arr[..arr.len() - 1].to_string().replace("\", \"", " ");
+        let arr: String = Self::arr_to_string(line).replace(", ", " ");
         return format!(
             "Error: |\n    {}: |\n        \"{}\" {}: |\n            {arr}",
             input[0], input[1], input[2]

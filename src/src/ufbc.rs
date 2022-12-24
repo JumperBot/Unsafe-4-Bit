@@ -18,9 +18,8 @@
  *
 **/
 use std::env::consts::OS;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::str::Chars;
 
 use crate::command::Command;
@@ -33,21 +32,6 @@ pub struct UFBC {
 
 impl UFBC {
     pub fn compile(&self) {
-        let code: String = match fs::read_to_string(&self.file_name) {
-            Ok(x) => Self::remove_useless(&x),
-            Err(x) => {
-                Universal::err_exit(format!(
-                    "File Provided Does Not Exist...\n{}\nTerminating...",
-                    x.to_string(),
-                ));
-                return ();
-            }
-        };
-        let lines: Vec<String> = Self::get_lines(&code);
-        let mut warnings: Vec<String> = Vec::<String>::new();
-        let mut errors: Vec<String> = Vec::<String>::new();
-        let mut compiled: Vec<u8> = Vec::<u8>::new();
-        let mut memory_map: MemoryMap = MemoryMap::new();
         let default_memory_map: MemoryMap = MemoryMap {
             keys: vec![
                 " ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
@@ -69,46 +53,116 @@ impl UFBC {
             .collect::<Vec<String>>(),
             mems: (0..19).collect::<Vec<u64>>(),
         };
-        for x in lines.clone() {
-            let real_line: Vec<String> = Self::split_line(&x);
-            let line: Vec<String> = Self::substitute_strings_and_labels(
-                &real_line,
-                &mut memory_map,
-                &default_memory_map,
-            );
-            let command: String = real_line[0].clone().to_lowercase();
-            if !command.eq("label") {
-                if line.len() < 2 && !(command.eq("nop") || line[0].trim().is_empty()) {
-                    warnings.push(format!(
-                        "Warning{}",
-                        &Universal::format_error(
-                            &line,
-                            &[
-                                "Command",
-                                &real_line[0],
-                                "Will Be Ignored For It Has No Arguments",
-                            ],
-                        )[5..]
-                    ));
+        let mut reader: BufReader<File> = match File::open(&self.file_name) {
+            Ok(x) => BufReader::<File>::new(x),
+            Err(x) => {
+                Universal::err_exit(format!(
+                    "File Provided Does Not Exist...\n{}\nTerminating...",
+                    x.to_string(),
+                ));
+                return;
+            }
+        };
+        let mut writer: BufWriter<File> = match File::create(format!("{}b", &self.file_name)) {
+            Ok(x) => BufWriter::<File>::with_capacity(300, x),
+            Err(x) => {
+                Universal::err_exit(x.to_string());
+                return;
+            }
+        };
+        let mut warnings: Vec<String> = Vec::<String>::new();
+        let mut errors: Vec<String> = Vec::<String>::new();
+        let mut memory_map: MemoryMap = MemoryMap::new();
+        let mut buffer: String = String::new();
+        let mut multiline_comment: bool = false;
+        let mut line_number: usize = 1;
+        let mut command_number: usize = 0;
+        while reader.read_line(&mut buffer).unwrap() != 0 {
+            buffer = buffer.trim().to_string();
+            if !multiline_comment {
+                if let Some(x) = buffer.find("/*") {
+                    let s1: String = buffer[..x].to_string();
+                    let s2: String = buffer[x + 2..].to_string();
+                    if let Some(y) = s2.find("*/") {
+                        buffer.clear();
+                        buffer.push_str(&s1);
+                        buffer.push_str(&s2[y + 2..]);
+                        buffer = Self::extract_useful_from_line(&buffer);
+                    } else {
+                        buffer = s1.to_string();
+                        multiline_comment = true;
+                    }
                 } else {
-                    match Command::new(&line, &real_line, &binary_map) {
-                        Err(x) => errors.push(x),
-                        Ok(x) => {
-                            for y in x {
-                                compiled.push(y);
+                    buffer = Self::extract_useful_from_line(&buffer);
+                }
+            } else {
+                if let Some(x) = buffer.find("*/") {
+                    buffer = buffer[x + 2..].to_string();
+                    buffer = Self::extract_useful_from_line(&buffer);
+                } else {
+                    buffer.clear();
+                }
+            }
+            buffer = buffer.trim().to_string();
+            if !buffer.is_empty() {
+                let real_line: Vec<String> = Self::split_line(&buffer);
+                let line: Vec<String> = Self::substitute_strings_and_labels(
+                    &real_line,
+                    &mut memory_map,
+                    &default_memory_map,
+                );
+                let command: String = real_line[0].clone().to_lowercase();
+                if !command.eq("label") {
+                    if line.len() < 2 && !command.eq("nop") {
+                        warnings.push(format!("Warning(s) Found On Line {line_number}:"));
+                        warnings.push(format!(
+                            "Warning{}",
+                            &Universal::format_error(
+                                &line,
+                                &[
+                                    "Command",
+                                    &real_line[0],
+                                    "Will Be Ignored For It Has No Arguments",
+                                ],
+                            )[5..]
+                        ));
+                    } else {
+                        match Command::new(&line, &real_line, &binary_map) {
+                            Err(x) => {
+                                errors.push(format!("Error(s) Found On Line {line_number} / Command Number {command_number}:"));
+                                errors.push(x);
+                                if let Ok(_) = writer.flush() {};
+                                if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {};
+                            }
+                            Ok(x) => {
+                                if let Err(x) = writer.write_all(&x) {
+                                    if let Ok(_) = writer.flush() {};
+                                    if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {
+                                    };
+                                    Universal::err_exit(x.to_string());
+                                    return;
+                                }
                             }
                         }
+                        command_number += 1;
                     }
                 }
             }
+            buffer.clear();
+            line_number += 1;
         }
         if !warnings.is_empty() {
             if !OS.contains("windows") {
                 print!("\u{001B}[93m");
             }
-            for x in warnings {
-                println!("{x}");
-            }
+            println!("{}", {
+                let mut temp: String = String::new();
+                for x in warnings {
+                    temp.push_str(&x);
+                    temp.push('\n');
+                }
+                temp
+            });
             if !OS.contains("windows") {
                 print!("\n\u{001B}[0m");
             }
@@ -123,14 +177,9 @@ impl UFBC {
                 temp
             });
         }
-        match File::create(format!("{}b", &self.file_name)) {
-            Ok(mut x) => {
-                if let Err(y) = x.write_all(&compiled) {
-                    Universal::err_exit(y.to_string());
-                }
-            }
-            Err(x) => Universal::err_exit(x.to_string()),
-        };
+        if let Err(x) = writer.flush() {
+            Universal::err_exit(x.to_string());
+        }
     }
 
     fn substitute_strings_and_labels(
@@ -235,96 +284,35 @@ impl UFBC {
         return out;
     }
 
-    fn get_lines(code: &str) -> Vec<String> {
-        let mut lines: Vec<String> = Vec::<String>::new();
-        let mut buf: String = String::new();
-        for x in code.to_string().chars() {
-            if x == '\n' {
-                if !buf.is_empty() {
-                    lines.push(buf);
-                    buf = String::new();
-                }
-            } else {
-                buf.push(x);
-            }
-        }
-        if !buf.is_empty() {
-            lines.push(buf);
-        }
-        return Self::replace_dividers(&Self::convert_dividers_in_string(&lines));
-    }
-
-    fn replace_dividers(lines: &Vec<String>) -> Vec<String> {
-        let mut out: Vec<String> = Vec::<String>::new();
-        for line in lines {
-            out.push(line.replace("[-|, \t]", " "));
-        }
-        return out;
-    }
-
-    fn remove_useless(code: &str) -> String {
-        return Self::remove_line_comments(&Self::remove_multiline_comments(code));
-    }
-    fn remove_line_comments(code: &str) -> String {
+    fn extract_useful_from_line(code: &str) -> String {
         let mut out: String = String::new();
-        for x in Self::get_lines(code) {
-            if let Some(y) = x.find("//") {
-                out.push('\n');
-                out.push_str(&x[..y]);
-            } else {
-                out.push('\n');
-                out.push_str(&x);
-            }
-        }
-        return out;
-    }
-    fn remove_multiline_comments(code: &str) -> String {
-        let mut out: String = String::new();
-        let mut x: usize = 0;
-        while x < code.len() {
-            if x + 1 >= code.len() {
-                return format!("{out}{}", &code[x..x + 1]);
-            }
-            if code[x..x + 2].eq("/*") {
-                let mut ind: usize = 2;
-                loop {
-                    if x + ind + 1 >= code.len() {
-                        return out;
-                    }
-                    if code[x + ind..x + ind + 2].eq("*/") {
-                        x += ind + 1;
-                        break;
-                    }
-                    ind += 1;
-                }
-            } else {
-                out.push_str(&code[x..x + 1]);
-            }
-            x += 1;
+        let x: String = Self::convert_dividers_in_string(&code).replace("[-|,\t]", " ");
+        if let Some(y) = x.find("//") {
+            out.push('\n');
+            out.push_str(&x[..y]);
+        } else {
+            out.push('\n');
+            out.push_str(&x);
         }
         return out;
     }
 
-    fn convert_dividers_in_string(lines: &Vec<String>) -> Vec<String> {
-        let mut out: Vec<String> = Vec::<String>::new();
-        for line in lines {
-            // https://stackoverflow.com/a/70877609/16915219
-            let chars: Chars = line.chars();
-            let char_count: usize = chars.clone().count();
-            if let Some(x) = chars.rev().position(|c| c == '\"') {
-                let first_index: usize = line.find("\"").unwrap();
-                let last_index: usize = char_count - x - 1;
-                out.push(format!(
-                    "{}{}{}",
-                    &line[..first_index],
-                    Self::escape_dividers_in_string(line[first_index..last_index].to_string()),
-                    &line[last_index..]
-                ));
-            } else {
-                out.push(line.to_string());
-            }
+    fn convert_dividers_in_string(line: &str) -> String {
+        // https://stackoverflow.com/a/70877609/16915219
+        let chars: Chars = line.chars();
+        let char_count: usize = chars.clone().count();
+        if let Some(x) = chars.rev().position(|c| c == '\"') {
+            let first_index: usize = line.find("\"").unwrap();
+            let last_index: usize = char_count - x - 1;
+            return format!(
+                "{}{}{}",
+                &line[..first_index],
+                Self::escape_dividers_in_string(line[first_index..last_index].to_string()),
+                &line[last_index..]
+            )
+            .to_string();
         }
-        return out;
+        return line.to_string();
     }
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
