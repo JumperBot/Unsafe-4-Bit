@@ -17,6 +17,7 @@
  *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
 **/
+use std::collections::HashMap;
 use std::env::consts::OS;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, BufWriter, Write};
@@ -26,33 +27,20 @@ use crate::command::Command;
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
+pub struct LineExtractionResult {
+    pub multiline_comment: bool,
+    pub res: String,
+}
+
 pub struct UFBC {
     pub file_name: String,
 }
 
 impl UFBC {
     pub fn compile(&self) {
-        let default_memory_map: MemoryMap = MemoryMap {
-            keys: vec![
-                " ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
-                "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4",
-                "5", "6", "7", "8", "9", "\n",
-            ]
-            .into_iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>(),
-            mems: (0..38).collect::<Vec<u64>>(),
-        };
-        let binary_map: MemoryMap = MemoryMap {
-            keys: vec![
-                "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm",
-                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile",
-            ]
-            .into_iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>(),
-            mems: (0..19).collect::<Vec<u64>>(),
-        };
+        let default_memory_map: MemoryMap = MemoryMap::new_limited();
+        let binary_map: MemoryMap = MemoryMap::new_binary_map();
+        let mut buffer: String = String::new();
         let mut reader: BufReader<File> = match File::open(&self.file_name) {
             Ok(x) => BufReader::<File>::new(x),
             Err(x) => {
@@ -72,43 +60,20 @@ impl UFBC {
         };
         let mut warnings: Vec<String> = Vec::<String>::new();
         let mut errors: Vec<String> = Vec::<String>::new();
-        let mut memory_map: MemoryMap = MemoryMap::new();
-        let mut buffer: String = String::new();
+        let mut labels: HashMap<String, u8> = HashMap::<String, u8>::new();
         let mut multiline_comment: bool = false;
         let mut line_number: usize = 1;
         let mut command_number: usize = 0;
         while reader.read_line(&mut buffer).unwrap() != 0 {
-            buffer = buffer.trim().to_string();
-            if !multiline_comment {
-                if let Some(x) = buffer.find("/*") {
-                    let s1: String = buffer[..x].to_string();
-                    let s2: String = buffer[x + 2..].to_string();
-                    if let Some(y) = s2.find("*/") {
-                        buffer.clear();
-                        buffer.push_str(&s1);
-                        buffer.push_str(&s2[y + 2..]);
-                        buffer = Self::extract_useful_from_line(&buffer);
-                    } else {
-                        buffer = s1.to_string();
-                        multiline_comment = true;
-                    }
-                } else {
-                    buffer = Self::extract_useful_from_line(&buffer);
-                }
-            } else {
-                if let Some(x) = buffer.find("*/") {
-                    buffer = buffer[x + 2..].to_string();
-                    buffer = Self::extract_useful_from_line(&buffer);
-                } else {
-                    buffer.clear();
-                }
-            }
-            buffer = buffer.trim().to_string();
+            let extracted: LineExtractionResult =
+                Self::extract_useful_from_line(multiline_comment, &buffer.trim().to_string());
+            buffer = extracted.res.trim().to_string();
+            multiline_comment = extracted.multiline_comment;
             if !buffer.is_empty() {
                 let real_line: Vec<String> = Self::split_line(&buffer);
                 let line: Vec<String> = Self::substitute_strings_and_labels(
                     &real_line,
-                    &mut memory_map,
+                    &mut labels,
                     &default_memory_map,
                 );
                 let command: String = real_line[0].clone().to_lowercase();
@@ -184,7 +149,7 @@ impl UFBC {
 
     fn substitute_strings_and_labels(
         real_line: &Vec<String>,
-        labels: &mut MemoryMap,
+        labels: &mut HashMap<String, u8>,
         default_memory_map: &MemoryMap,
     ) -> Vec<String> {
         if real_line[0].to_lowercase().eq("label") {
@@ -195,7 +160,7 @@ impl UFBC {
     }
     fn substitute_strings(
         real_line: &Vec<String>,
-        labels: &MemoryMap,
+        labels: &HashMap<String, u8>,
         default_memory_map: &MemoryMap,
     ) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
@@ -207,15 +172,15 @@ impl UFBC {
                 }
             } else if x.starts_with("${") && x.ends_with("}") {
                 let key: String = x[2..x.len() - 1].to_string();
-                if labels.contains_key(&key) {
-                    out.push(labels.get(&key).to_string());
+                if let Some(x) = labels.get(&key) {
+                    out.push(x.to_string());
                 } else {
                     Universal::err_exit(Universal::format_error(
                         &real_line,
                         &[
-                            "Memory Index Label Already Replaced By Another",
+                            "Memory Index Label Does Not Exist Or Has Been Replaced",
                             &real_line[1],
-                            "Should Be Replaced With The Appropriate Label",
+                            "Should Be Replaced With The Appropriate Label Or A Memory Index",
                         ],
                     ));
                 }
@@ -225,7 +190,7 @@ impl UFBC {
         }
         return out;
     }
-    fn assign_labels(real_line: &Vec<String>, labels: &mut MemoryMap) {
+    fn assign_labels(real_line: &Vec<String>, labels: &mut HashMap<String, u8>) {
         if real_line.len() != 3 {
             Universal::err_exit(Universal::format_error(
                 &real_line,
@@ -261,8 +226,9 @@ impl UFBC {
             ));
         }
         let label: String = real_line[2].replace("[${}]", "");
-        labels.remove_mem_if_exists(&label_mem_ind);
-        labels.put(&label, &label_mem_ind);
+        let label_val: u8 = label_mem_ind.try_into().unwrap();
+        labels.retain(|_, &mut x| x != label_val);
+        labels.insert(label, label_val);
     }
 
     fn split_line(line: &str) -> Vec<String> {
@@ -284,17 +250,46 @@ impl UFBC {
         return out;
     }
 
-    fn extract_useful_from_line(code: &str) -> String {
-        let mut out: String = String::new();
-        let x: String = Self::convert_dividers_in_string(&code).replace("[-|,\t]", " ");
-        if let Some(y) = x.find("//") {
-            out.push('\n');
-            out.push_str(&x[..y]);
+    fn extract_useful_from_line(
+        inside_multiline_comment: bool,
+        code: &str,
+    ) -> LineExtractionResult {
+        let mut multiline_comment = inside_multiline_comment;
+        let mut out: String = code.to_string();
+        if !inside_multiline_comment {
+            while let Some(x) = out.find("/*") {
+                let s1: String = out[..x].to_string();
+                let s2: String = out[x + 2..].to_string();
+                if let Some(y) = s2.find("*/") {
+                    out.clear();
+                    out.push_str(&s1);
+                    out.push_str(&s2[y + 2..]);
+                } else {
+                    out = s1.to_string();
+                    multiline_comment = true;
+                }
+            }
         } else {
-            out.push('\n');
-            out.push_str(&x);
+            if let Some(x) = out.find("*/") {
+                out = out[x + 2..].to_string();
+                multiline_comment = false;
+            } else {
+                out.clear();
+            }
         }
-        return out;
+        return LineExtractionResult {
+            res: Self::remove_line_comment(
+                &Self::convert_dividers_in_string(&out).replace("[-|,\t]", " "),
+            ),
+            multiline_comment: multiline_comment,
+        };
+    }
+
+    fn remove_line_comment(code: &str) -> String {
+        if let Some(y) = code.find("//") {
+            return code[..y].to_string();
+        }
+        return code.to_string();
     }
 
     fn convert_dividers_in_string(line: &str) -> String {

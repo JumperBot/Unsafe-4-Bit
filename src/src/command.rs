@@ -96,21 +96,19 @@ impl Command {
         return String::new();
     }
     pub fn check_arg_length(real_line: &Vec<String>, line: &Vec<String>, len: usize) -> String {
+        let num: &str = match len {
+            0 => "Zero",
+            1 => "One",
+            2 => "Two",
+            _ => "Three",
+        };
         if line.len() != len + 1 {
             return Universal::format_error(
                 real_line,
                 &[
                     "Command",
                     &line[0],
-                    &format!(
-                        "Needs No Less And No More Than {} Arguments To Work",
-                        match len {
-                            0 => "Zero",
-                            1 => "One",
-                            2 => "Two",
-                            _ => "Three",
-                        }
-                    ),
+                    &format!("Needs No Less And No More Than {num} Arguments To Work"),
                 ],
             );
         }

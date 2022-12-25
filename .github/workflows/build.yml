@@ -5,8 +5,8 @@ on:
     types: [published]
 
 jobs:
-  release:
-    name: release ${{ matrix.target }}
+  compile:
+    name: compile for ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -20,7 +20,7 @@ jobs:
             archive: zip
     steps:
       - uses: actions/checkout@master
-      - name: Compile and release
+      - name: Compile and upload binary
         uses: rust-build/rust-build.action@v1.4.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

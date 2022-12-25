@@ -19,6 +19,7 @@
 **/
 use crate::memory_map::MemoryMap;
 
+use std::collections::HashMap;
 use std::env::consts::OS;
 
 pub struct Universal {}
@@ -64,7 +65,7 @@ impl Universal {
     pub fn convert_to_mem(
         input: &str,
         contains_labels: bool,
-        labels: &MemoryMap,
+        labels: &HashMap<String, u8>,
         mem_map: &MemoryMap,
     ) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
@@ -143,12 +144,10 @@ impl Universal {
                     is_label = true;
                 } else if is_label {
                     if x == '}' {
-                        let key: String = {
-                            let temp: String = place_holder.clone()[2..].to_string();
-                            temp[..temp.len() - 1].to_string()
-                        };
-                        if labels.contains_key(&key) {
-                            out.push(labels.get(&key).to_string());
+                        let key: String =
+                            place_holder.clone()[2..place_holder.len() - 1].to_string();
+                        if let Some(x) = labels.get(&key) {
+                            out.push(x.to_string());
                         } else {
                             Self::err_exit(Self::format_error(
                                 &vec![Self::convert_unicode(&input)],
