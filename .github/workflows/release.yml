@@ -6,7 +6,7 @@ on:
 
 jobs:
   release:
-    if: ${{ startsWith( $GITHUB_EVENT_PULL_REQUEST_TITLE , 'v') }}
+    if: ${{ startsWith( github.event.pull_request.title , 'v') }}
     name: release ${{ github.event.pull_request.title }}
     runs-on: ubuntu-latest
     steps:
