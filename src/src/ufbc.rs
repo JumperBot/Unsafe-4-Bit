@@ -1,22 +1,3 @@
-/**
- *
- *	Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.
- *	Copyright (C) 2022  JumperBot_
- *
- *	This program is free software: you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
- *	the Free Software Foundation, either version 3 of the License, or
- *	(at your option) any later version.
- *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
- *
- *	You should have received a copy of the GNU General Public License
- *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
-**/
 use std::collections::HashMap;
 use std::env::consts::OS;
 use std::fs::{self, File};
@@ -45,8 +26,7 @@ impl UFBC {
             Ok(x) => BufReader::<File>::new(x),
             Err(x) => {
                 Universal::err_exit(format!(
-                    "File Provided Does Not Exist...\n{}\nTerminating...",
-                    x.to_string(),
+                    "File Provided Does Not Exist...\n{x}\nTerminating..."
                 ));
                 return;
             }
@@ -66,7 +46,7 @@ impl UFBC {
         let mut command_number: usize = 0;
         while reader.read_line(&mut buffer).unwrap() != 0 {
             let extracted: LineExtractionResult =
-                Self::extract_useful_from_line(multiline_comment, &buffer.trim().to_string());
+                Self::extract_useful_from_line(multiline_comment, buffer.trim());
             buffer = extracted.res.trim().to_string();
             multiline_comment = extracted.multiline_comment;
             if !buffer.is_empty() {
@@ -96,14 +76,13 @@ impl UFBC {
                             Err(x) => {
                                 errors.push(format!("Error(s) Found On Line {line_number} / Command Number {command_number}:"));
                                 errors.push(x);
-                                if let Ok(_) = writer.flush() {};
-                                if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {};
+                                if writer.flush().is_ok() {};
+                                if fs::remove_file(format!("{}b", self.file_name)).is_ok() {};
                             }
                             Ok(x) => {
                                 if let Err(x) = writer.write_all(&x) {
-                                    if let Ok(_) = writer.flush() {};
-                                    if let Ok(_) = fs::remove_file(format!("{}b", self.file_name)) {
-                                    };
+                                    if writer.flush().is_ok() {};
+                                    if fs::remove_file(format!("{}b", self.file_name)).is_ok() {};
                                     Universal::err_exit(x.to_string());
                                     return;
                                 }
@@ -153,30 +132,30 @@ impl UFBC {
         default_memory_map: &MemoryMap,
     ) -> Vec<String> {
         if real_line[0].to_lowercase().eq("label") {
-            Self::assign_labels(&real_line, labels);
+            Self::assign_labels(real_line, labels);
             return Vec::<String>::new();
         }
-        return Self::substitute_strings(&real_line, &labels, &default_memory_map);
+        Self::substitute_strings(real_line, labels, default_memory_map)
     }
     fn substitute_strings(
-        real_line: &Vec<String>,
+        real_line: &[String],
         labels: &HashMap<String, u8>,
         default_memory_map: &MemoryMap,
     ) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
-        for x in real_line.clone() {
-            if x.starts_with("\"") && x.ends_with("\"") {
+        for x in real_line {
+            if x.starts_with('\"') && x.ends_with('\"') {
                 let temp: String = x[1..x.len() - 1].to_string();
-                for x2 in Universal::convert_to_mem(&temp, true, &labels, &default_memory_map) {
+                for x2 in Universal::convert_to_mem(&temp, true, labels, default_memory_map) {
                     out.push(x2);
                 }
-            } else if x.starts_with("${") && x.ends_with("}") {
+            } else if x.starts_with("${") && x.ends_with('}') {
                 let key: String = x[2..x.len() - 1].to_string();
                 if let Some(x) = labels.get(&key) {
                     out.push(x.to_string());
                 } else {
                     Universal::err_exit(Universal::format_error(
-                        &real_line,
+                        real_line,
                         &[
                             "Memory Index Label Does Not Exist Or Has Been Replaced",
                             &real_line[1],
@@ -185,15 +164,15 @@ impl UFBC {
                     ));
                 }
             } else {
-                out.push(x);
+                out.push(x.to_string());
             }
         }
-        return out;
+        out
     }
     fn assign_labels(real_line: &Vec<String>, labels: &mut HashMap<String, u8>) {
         if real_line.len() != 3 {
             Universal::err_exit(Universal::format_error(
-                &real_line,
+                real_line,
                 &[
                     "Command",
                     "label",
@@ -205,7 +184,7 @@ impl UFBC {
             Ok(x) => x,
             Err(_x) => {
                 Universal::err_exit(Universal::format_error(
-                    &real_line,
+                    real_line,
                     &[
                         "Memory Index Expected Instead Of",
                         &real_line[1],
@@ -217,7 +196,7 @@ impl UFBC {
         };
         if label_mem_ind > 255 {
             Universal::err_exit(Universal::format_error(
-                &real_line,
+                real_line,
                 &[
                     "Memory Index",
                     &real_line[1],
@@ -235,7 +214,7 @@ impl UFBC {
         let mut out: Vec<String> = Vec::<String>::new();
         let mut buf: String = String::new();
         for x in line.to_string().chars() {
-            if "[-|, \t]".contains(x.clone()) {
+            if "[-|, \t]".contains(x) {
                 if !buf.is_empty() {
                     out.push(buf);
                     buf = String::new();
@@ -247,7 +226,7 @@ impl UFBC {
         if !buf.is_empty() {
             out.push(buf);
         }
-        return out;
+        out
     }
 
     fn extract_useful_from_line(
@@ -269,27 +248,25 @@ impl UFBC {
                     multiline_comment = true;
                 }
             }
+        } else if let Some(x) = out.find("*/") {
+            out = out[x + 2..].to_string();
+            multiline_comment = false;
         } else {
-            if let Some(x) = out.find("*/") {
-                out = out[x + 2..].to_string();
-                multiline_comment = false;
-            } else {
-                out.clear();
-            }
+            out.clear();
         }
-        return LineExtractionResult {
+        LineExtractionResult {
             res: Self::remove_line_comment(
                 &Self::convert_dividers_in_string(&out).replace("[-|,\t]", " "),
             ),
-            multiline_comment: multiline_comment,
-        };
+            multiline_comment,
+        }
     }
 
     fn remove_line_comment(code: &str) -> String {
         if let Some(y) = code.find("//") {
             return code[..y].to_string();
         }
-        return code.to_string();
+        code.to_string()
     }
 
     fn convert_dividers_in_string(line: &str) -> String {
@@ -297,31 +274,30 @@ impl UFBC {
         let chars: Chars = line.chars();
         let char_count: usize = chars.clone().count();
         if let Some(x) = chars.rev().position(|c| c == '\"') {
-            let first_index: usize = line.find("\"").unwrap();
+            let first_index: usize = line.find('\"').unwrap();
             let last_index: usize = char_count - x - 1;
             return format!(
                 "{}{}{}",
                 &line[..first_index],
                 Self::escape_dividers_in_string(line[first_index..last_index].to_string()),
                 &line[last_index..]
-            )
-            .to_string();
+            );
         }
-        return line.to_string();
+        line.to_string()
     }
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
         for x in input.chars() {
-            if "-|, \t".contains(x.clone()) {
+            if "-|, \t".contains(x) {
                 res.push_str(&Self::escape_divider(x));
             } else {
                 res.push(x);
             }
         }
-        return res;
+        res
     }
     fn escape_divider(divider: char) -> String {
-        return (match divider {
+        (match divider {
             '-' => "UU0045",
             '|' => "UU0124",
             ',' => "UU0044",
@@ -329,6 +305,6 @@ impl UFBC {
             '\t' => "UU0009",
             _ => "UU0000",
         })
-        .to_string();
+        .to_string()
     }
 }

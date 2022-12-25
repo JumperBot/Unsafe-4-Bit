@@ -10,6 +10,7 @@ UFB_RELEASE_BIN_MUSL="$UFB_RELEASE_BIN_DIR_MUSL/ufb"
 RUSTFLAGS="--remap-path-prefix $HOME=~"
 
 rustfmt src/*
+cargo clippy --fix --allow-dirty -- -A clippy::upper_case_acronyms -A clippy::new_ret_no_self
 rm $UFB_RELEASE_BIN_DIR/*
 rm $UFB_RELEASE_BIN_DIR_MUSL/*
 rm ../build/*.tar
@@ -26,3 +27,5 @@ tar -cf "../build/Unsafe-4-Bit_v"$UFB_RELEASE_VERSION"_aarch64-unknown-linux-mus
 sudo rm target -r
 
 rm Cargo.lock
+
+# sudo rm ../examples/*.ufbb && for x in $(find ../examples/ -type f -name "*.ufb"); do ufb -c "$x"; done

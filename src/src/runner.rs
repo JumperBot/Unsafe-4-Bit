@@ -1,22 +1,3 @@
-/**
- *
- *	Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.
- *	Copyright (C) 2022  JumperBot_
- *
- *	This program is free software: you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
- *	the Free Software Foundation, either version 3 of the License, or
- *	(at your option) any later version.
- *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
- *
- *	You should have received a copy of the GNU General Public License
- *	along with this program.  If not, see <https://www.gnu.org/licenses/>.
- *
-**/
 use crate::universal::Universal;
 
 use std::fs::{self, File};
@@ -44,27 +25,27 @@ impl Runner {
         match File::open(&file_name) {
             Err(x) => Universal::err_exit(format!(
                 "File Provided Does Not Exist...\n{}\nTerminating...",
-                x.to_string(),
+                x,
             )),
             Ok(x) => match x.metadata() {
                 Err(y) => Universal::err_exit(y.to_string()),
                 Ok(y) => {
                     return Runner {
                         file: x,
-                        file_name: file_name,
+                        file_name,
                         file_size: y.len(),
                         ptr: 0,
                         mem_ind: [0; 256],
                         mem: Self::init_mem(),
                         byte_ind: Vec::<u64>::new(),
-                        perfmes: perfmes,
-                        nanosec: nanosec,
-                        commmes: commmes,
+                        perfmes,
+                        nanosec,
+                        commmes,
                     }
                 }
             },
         }
-        return Self::new(file_name, perfmes, nanosec, commmes);
+        Self::new(file_name, perfmes, nanosec, commmes)
     }
 
     pub fn run(&mut self) {
@@ -125,11 +106,11 @@ impl Runner {
     fn run_commands(&mut self) {
         let ten_millis: Duration = Duration::from_millis(10);
         while self.ptr != self.file_size {
-            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
-                self.byte_ind.push(self.ptr.clone());
+            if self.byte_ind.binary_search(&self.ptr).is_err() {
+                self.byte_ind.push(self.ptr);
             }
             let com: u8 = self.next();
-            self.run_command(com, ten_millis.clone());
+            self.run_command(com, ten_millis);
         }
     }
     fn run_commands_with_time(&mut self) {
@@ -146,11 +127,11 @@ impl Runner {
                 }
                 Err(_) => start = 0,
             }
-            if let Err(_) = self.byte_ind.binary_search(&self.ptr) {
-                self.byte_ind.push(self.ptr.clone());
+            if self.byte_ind.binary_search(&self.ptr).is_err() {
+                self.byte_ind.push(self.ptr);
             }
             let com: u8 = self.next();
-            self.run_command(com.clone(), ten_millis.clone());
+            self.run_command(com, ten_millis);
             if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
                 if self.nanosec {
                     println!("\nCommand Index {com} Took {}ns", x.as_nanos() - start);
@@ -193,7 +174,7 @@ impl Runner {
             let ptr: u8 = self.next();
             if ptr == ind {
                 for x in &resident {
-                    out.push(x.clone());
+                    out.push(*x);
                 }
             } else {
                 for x in self.rvar(&ptr) {
@@ -206,8 +187,8 @@ impl Runner {
         self.write_chars(&ind, &mut chars);
     }
     fn write_chars(&mut self, ind: &u8, chars: &mut Chars) {
-        self.nvar(&ind);
-        let ind_usize: usize = ind.clone() as usize;
+        self.nvar(ind);
+        let ind_usize: usize = *ind as usize;
         let len: usize = chars.as_str().len();
         for x in 0..len {
             if x + ind_usize == 256 {
@@ -223,8 +204,8 @@ impl Runner {
         self.mem_ind[ind_usize] = ind + (len as u8) - 1;
     }
     fn write_arr(&mut self, ind: &u8, arr: &[char]) {
-        self.nvar(&ind);
-        let ind_usize: usize = ind.clone() as usize;
+        self.nvar(ind);
+        let ind_usize: usize = *ind as usize;
         let len: usize = arr.len();
         for (x, c) in arr.iter().enumerate() {
             let ptr: usize = x + ind_usize;
@@ -232,7 +213,7 @@ impl Runner {
                 self.mem_ind[ind_usize] = 255;
                 return;
             }
-            self.mem[ptr] = c.clone();
+            self.mem[ptr] = *c;
             if x + ind_usize == 255 {
                 self.mem_ind[ind_usize] = 255;
                 return;
@@ -242,19 +223,19 @@ impl Runner {
     }
 
     fn rvar(&mut self, ind: &u8) -> Vec<char> {
-        let ind_usize: usize = ind.clone() as usize;
-        if self.mem_ind[ind_usize] == 0 || self.mem_ind[ind_usize] == ind.clone() {
-            return vec![self.mem[ind_usize].clone()];
+        let ind_usize: usize = *ind as usize;
+        if self.mem_ind[ind_usize] == 0 || self.mem_ind[ind_usize] == *ind {
+            return vec![self.mem[ind_usize]];
         }
         let mut out: Vec<char> = Vec::<char>::new();
         for x in &self.mem[ind_usize..=self.mem_ind[ind_usize] as usize] {
-            out.push(x.clone());
+            out.push(*x);
         }
-        return out;
+        out
     }
 
     fn nvar(&mut self, ind: &u8) {
-        let ind_usize: usize = ind.clone() as usize;
+        let ind_usize: usize = *ind as usize;
         if self.mem_ind[ind_usize] == 0 {
             return;
         }
@@ -289,16 +270,15 @@ impl Runner {
             self.write_arr(&ind1, &['i'; 1]);
             return;
         }
-        let out: f64;
-        match op {
-            3 => out = num1 + num2,
-            4 => out = num1 - num2,
-            5 => out = num1 * num2,
-            6 => out = num1 / num2,
-            7 => out = num1 % num2,
-            8 => out = ((num1 / num2) as i64) as f64,
+        let out: f64 = match op {
+            3 => num1 + num2,
+            4 => num1 - num2,
+            5 => num1 * num2,
+            6 => num1 / num2,
+            7 => num1 % num2,
+            8 => ((num1 / num2) as i64) as f64,
             _ => return,
-        }
+        };
         if out % 1.0 == 0.0 {
             self.write_chars(&ind1, &mut (out as i64).to_string().chars());
         } else {
@@ -314,15 +294,15 @@ impl Runner {
                 return Some(arr.len() - x);
             }
         }
-        return None;
+        None
     }
     fn to_num(arr: &[char]) -> f64 {
-        if let Some(x) = Self::find_period(&arr) {
+        if let Some(x) = Self::find_period(arr) {
             let mut out: [f64; 2] = [0.0; 2];
             for y in 0..x {
                 let y2 = x + 1 + y;
-                if !(Universal::is_digit(arr[y].clone()) || Universal::is_digit(arr[y2].clone())) {
-                    return Self::hash(&arr).into();
+                if !(Universal::is_digit(arr[y]) || Universal::is_digit(arr[y2])) {
+                    return Self::hash(arr).into();
                 }
                 out[0] += <u32 as Into<f64>>::into(arr[y] as u32) - 48.0;
                 out[0] *= 10.0;
@@ -333,20 +313,20 @@ impl Runner {
         }
         let mut out: f64 = 0.0;
         for x in arr {
-            if !Universal::is_digit(x.clone()) {
-                return Self::hash(&arr).into();
+            if !Universal::is_digit(*x) {
+                return Self::hash(arr).into();
             }
-            out += <u32 as Into<f64>>::into(x.clone() as u32) - 48.0;
+            out += <u32 as Into<f64>>::into(*x as u32) - 48.0;
             out *= 10.0;
         }
-        return out / 10.0;
+        out / 10.0
     }
     fn hash(arr: &[char]) -> u32 {
         let mut hash: u32 = 0;
         for x in arr {
-            hash = 31 * hash + (x.clone() as u32);
+            hash = 31 * hash + (*x as u32);
         }
-        return hash;
+        hash
     }
 
     fn jump(&mut self, op: &u8) {
@@ -361,7 +341,7 @@ impl Runner {
             || (op == &13 && !val1.eq(&val2))
         {
             if com < self.byte_ind.len() as u16 {
-                self.ptr = self.byte_ind[com.clone() as usize].clone();
+                self.ptr = self.byte_ind[com as usize];
                 return;
             }
             self.skip(&com);
@@ -369,7 +349,7 @@ impl Runner {
     }
     fn skip(&mut self, com: &u16) {
         while com != &(self.byte_ind.len() as u16) && self.ptr < self.file_size {
-            self.byte_ind.push(self.ptr.clone());
+            self.byte_ind.push(self.ptr);
             let cur: u8 = self.next();
             match cur {
                 0 => self.ptr += self.next() as u64,
@@ -419,7 +399,7 @@ impl Runner {
 
     fn get_file_name(&mut self, arg_count: usize) -> String {
         let mut out: String = String::new();
-        for _ in 0..arg_count as usize {
+        for _ in 0..arg_count {
             let ind: u8 = self.next();
             for x in self.rvar(&ind) {
                 out.push(x);
@@ -436,7 +416,7 @@ impl Runner {
                 out = format!("{}/{out}", x.display());
             }
         }
-        return out;
+        out
     }
     fn wfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
@@ -489,12 +469,11 @@ impl Runner {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
         let file_name: String = self.get_file_name(arg_count as usize);
-        let out: String = match fs::read_to_string(&file_name) {
+        let out: String = match fs::read_to_string(file_name) {
             Ok(x) => x,
             Err(x) => {
                 Universal::err_exit(format!(
-                    "File Provided Does Not Exist...\n{}\nTerminating...",
-                    x.to_string()
+                    "File Provided Does Not Exist...\n{x}\nTerminating..."
                 ));
                 String::new()
             }
@@ -505,10 +484,9 @@ impl Runner {
     fn dfile(&mut self) {
         let arg_count: u8 = self.next();
         let file_name: String = self.get_file_name(arg_count as usize);
-        if let Err(x) = fs::remove_dir_all(&file_name) {
+        if let Err(x) = fs::remove_dir_all(file_name) {
             Universal::err_exit(format!(
-                "File Provided Does Not Exist...\n{}\nTerminating...",
-                x.to_string()
+                "File Provided Does Not Exist...\n{x}\nTerminating..."
             ));
         }
     }
@@ -522,7 +500,7 @@ impl Runner {
             Universal::err_exit(x.to_string())
         }
         self.ptr += 1;
-        return buf[0];
+        buf[0]
     }
     fn next_u16(&mut self) -> u16 {
         let mut buf: [u8; 2] = [0; 2];
@@ -533,7 +511,7 @@ impl Runner {
             Universal::err_exit(x.to_string())
         }
         self.ptr += 2;
-        return ((buf[0] as u16) << 8) | (buf[1] as u16);
+        ((buf[0] as u16) << 8) | (buf[1] as u16)
     }
 
     fn init_mem() -> [char; 256] {
@@ -546,6 +524,6 @@ impl Runner {
             mem[x + 27] = Universal::convert_u32_to_char(('0' as u32) + x as u32);
         }
         mem[37] = '\n';
-        return mem;
+        mem
     }
 }
