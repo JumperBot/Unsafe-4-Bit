@@ -87,13 +87,35 @@ impl Universal {
                             back_slash = true;
                         }
                     } else if back_slash {
-                        if x == 'n' {
-                            out.push("37".to_string());
-                        } else {
-                            out.push(u.clone());
-                            out.push(u.clone());
-                            for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                                out.push(mem_map.get(&x2.to_string()).to_string());
+                        match x {
+                            'n' => out.push("37".to_string()),
+                            'r' => {
+                                out.push(u.clone());
+                                out.push(u.clone());
+                                for x2 in "0032".chars() {
+                                    out.push(mem_map.get(&x2.to_string()).to_string());
+                                }
+                            }
+                            'f' => {
+                                out.push(u.clone());
+                                out.push(u.clone());
+                                for x2 in "0012".chars() {
+                                    out.push(mem_map.get(&x2.to_string()).to_string());
+                                }
+                            }
+                            'b' => {
+                                out.push(u.clone());
+                                out.push(u.clone());
+                                for x2 in "0008".chars() {
+                                    out.push(mem_map.get(&x2.to_string()).to_string());
+                                }
+                            }
+                            _ => {
+                                out.push(u.clone());
+                                out.push(u.clone());
+                                for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
+                                    out.push(mem_map.get(&x2.to_string()).to_string());
+                                }
                             }
                         }
                         back_slash = false;
@@ -198,60 +220,45 @@ impl Universal {
         if input.len() < 6 {
             return input.to_string();
         }
-        let mut out: String = String::new();
-        let mut possible_match: bool = false;
-        let mut place_holder: String = String::new();
-        for x in input.chars() {
-            if place_holder.len() >= 6 {
-                out.push_str(
-                    &Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
-                        .to_string(),
-                );
-                place_holder = String::new();
-                possible_match = false;
+        let mut out: String = input.to_string();
+        let mut lowercase_out: String = input.clone().to_lowercase();
+        while let Some(x) = lowercase_out.find("uu") {
+            if x + 5 >= out.len() {
+                break;
             }
-            if possible_match {
-                if x.to_lowercase().to_string().eq("u") {
-                    if place_holder.len() != 1 {
-                        possible_match = false;
-                        out.push_str(&place_holder);
-                        out.push(x);
-                        place_holder = String::new();
-                    } else {
-                        place_holder.push(x);
-                    }
-                } else if Self::is_digit(x.clone()) {
-                    if place_holder.len() == 1 {
-                        possible_match = false;
-                        out.push_str(&place_holder);
-                        out.push(x);
-                        place_holder = String::new();
-                    } else {
-                        place_holder.push(x);
-                    }
-                } else {
-                    possible_match = false;
-                    out.push_str(&place_holder);
-                    out.push(x);
-                    place_holder = String::new();
+            let mut place_holder: String = String::new();
+            for x2 in out[x + 2..x + 6].chars() {
+                if Self::is_digit(x2.clone()) {
+                    place_holder.push(x2);
                 }
-            } else if x.to_lowercase().to_string().eq("u") {
-                possible_match = true;
-                place_holder = x.to_string();
+            }
+            if place_holder.len() == 4 {
+                {
+                    let s1: String = out[..x].to_string();
+                    let s2: String =
+                        Self::convert_u32_to_char(place_holder.parse::<u32>().unwrap()).to_string();
+                    let s3: String = out[x + 6..].to_string();
+                    out.clear();
+                    out.push_str(&s1);
+                    out.push_str(&s2);
+                    out.push_str(&s3);
+                }
+                let s1: String = lowercase_out[..x].to_string();
+                let s2: String = "_".to_string();
+                let s3: String = lowercase_out[x + 6..].to_string();
+                lowercase_out.clear();
+                lowercase_out.push_str(&s1);
+                lowercase_out.push_str(&s2);
+                lowercase_out.push_str(&s3);
             } else {
-                out.push(x);
+                let s1: String = lowercase_out[..x].to_string();
+                let s2: String = "______".to_string();
+                let s3: String = lowercase_out[x + 6..].to_string();
+                lowercase_out.clear();
+                lowercase_out.push_str(&s1);
+                lowercase_out.push_str(&s2);
+                lowercase_out.push_str(&s3);
             }
-            if place_holder.len() >= 6 {
-                out.push_str(
-                    &Self::convert_u32_to_char(place_holder[2..].parse::<u32>().unwrap())
-                        .to_string(),
-                );
-                place_holder = String::new();
-                possible_match = false;
-            }
-        }
-        if !place_holder.is_empty() {
-            out.push_str(&place_holder);
         }
         return out;
     }
