@@ -14,6 +14,32 @@ use std::env;
 
 fn main() {
     let flags: FlagManager = FlagManager::new(&env::args().collect::<Vec<String>>());
+    if flags.help_flag {
+        // Inspired by GNU's [...] --help output
+        println!(
+            "Usage: ufb [FLAG]... [FILE]...
+Unsafe Four Bit is a compiled-interpreted, dynamically-typed programming language.
+
+Examples:
+  ufb -c foo.ufb  # Compile foo.ufb into its corresponding foo.ufbb bytecode.
+  ufb foo.ufbb    # Run the commands parsed from foo.ufbb's bytecode.
+
+Flags:
+  -c              # Compile the given *.ufb source code file.
+  -v              # Display the semantic version tag.
+  -l              # Display the license notice.
+  -h              # Display this help log.
+  -p              # Check your code's speed.
+  -n              # Measure in nanoseconds (-p and -m).
+  -m              # Check how fast each command is.
+
+Note:
+  Flags can be combined together like so:
+    ufb -pnm foo.ufbb
+
+Flag Triggered, Continuing Anyway...\n\n"
+        );
+    }
     if flags.version_flag {
         // TODO: Always Change Version Tag Here And At Cargo.toml
         println!("UFB Version: v1.6.6\nFlag Triggered, Continuing Anyway...\n\n");
@@ -41,7 +67,12 @@ Flag Triggered, Continuing Anyway...\n\n"
         );
     }
     if flags.file_name.is_empty() {
-        Universal::err_exit("There Was No File Provided.\nTerminating...".to_string());
+        Universal::err_exit(
+            "There Was No File Provided.
+Try 'ufb -h' For More Information.
+Terminating..."
+                .to_string(),
+        );
     }
     if flags.compile_flag {
         if flags.file_name.ends_with(".ufbb") {
