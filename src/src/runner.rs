@@ -15,6 +15,7 @@ pub struct Runner {
     mem_ind: [u8; 256],
     mem: [char; 256],
     byte_ind: Vec<u64>,
+    ten_millis: Duration,
     perfmes: bool,
     nanosec: bool,
     commmes: bool,
@@ -24,8 +25,7 @@ impl Runner {
     pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
         match File::open(&file_name) {
             Err(x) => Universal::err_exit(format!(
-                "File Provided Does Not Exist...\n{}\nTerminating...",
-                x,
+                "File Provided Does Not Exist...\n{x}\nTerminating..."
             )),
             Ok(x) => match x.metadata() {
                 Err(y) => Universal::err_exit(y.to_string()),
@@ -38,6 +38,7 @@ impl Runner {
                         mem_ind: [0; 256],
                         mem: Self::init_mem(),
                         byte_ind: Vec::<u64>::new(),
+                        ten_millis: Duration::from_millis(10),
                         perfmes,
                         nanosec,
                         commmes,
@@ -104,17 +105,15 @@ impl Runner {
         }
     }
     fn run_commands(&mut self) {
-        let ten_millis: Duration = Duration::from_millis(10);
         while self.ptr != self.file_size {
             if self.byte_ind.binary_search(&self.ptr).is_err() {
                 self.byte_ind.push(self.ptr);
             }
             let com: u8 = self.next();
-            self.run_command(com, ten_millis);
+            self.run_command(com);
         }
     }
     fn run_commands_with_time(&mut self) {
-        let ten_millis: Duration = Duration::from_millis(10);
         while self.ptr != self.file_size {
             let start: u128;
             match SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -131,7 +130,7 @@ impl Runner {
                 self.byte_ind.push(self.ptr);
             }
             let com: u8 = self.next();
-            self.run_command(com, ten_millis);
+            self.run_command(com);
             if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
                 if self.nanosec {
                     println!("\nCommand Index {com} Took {}ns", x.as_nanos() - start);
@@ -143,7 +142,7 @@ impl Runner {
             }
         }
     }
-    fn run_command(&mut self, com: u8, ten_millis: Duration) {
+    fn run_command(&mut self, com: u8) {
         match com {
             0 => self.wvar(),
             1 => {
@@ -152,7 +151,7 @@ impl Runner {
             }
             2 => self.trim(),
             3..=8 => self.math(&com),
-            9 => thread::sleep(ten_millis),
+            9 => thread::sleep(self.ten_millis),
             10..=13 => self.jump(&com),
             14 => self.print(),
             15 => self.read(),
@@ -168,12 +167,12 @@ impl Runner {
     fn wvar(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
-        let resident: Vec<char> = self.rvar(&ind);
+        let resident: &[char] = &self.rvar(&ind);
         let mut out: String = String::new();
         for _ in 0..arg_count {
             let ptr: u8 = self.next();
             if ptr == ind {
-                for x in &resident {
+                for x in resident {
                     out.push(*x);
                 }
             } else {

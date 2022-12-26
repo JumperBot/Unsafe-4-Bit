@@ -44,6 +44,7 @@ impl UFBC {
         let mut multiline_comment: bool = false;
         let mut line_number: usize = 1;
         let mut command_number: usize = 0;
+        let mut stop_compilling_file = false;
         while reader.read_line(&mut buffer).unwrap() != 0 {
             let extracted: LineExtractionResult =
                 Self::extract_useful_from_line(multiline_comment, buffer.trim());
@@ -73,18 +74,24 @@ impl UFBC {
                         ));
                     } else {
                         match Command::new(&line, &real_line, &binary_map) {
+                            #![allow(unused_must_use)]
                             Err(x) => {
+                                if !stop_compilling_file {
+                                    writer.flush();
+                                    fs::remove_file(format!("{}b", self.file_name));
+                                    stop_compilling_file = true;
+                                }
                                 errors.push(format!("Error(s) Found On Line {line_number} / Command Number {command_number}:"));
                                 errors.push(x);
-                                if writer.flush().is_ok() {};
-                                if fs::remove_file(format!("{}b", self.file_name)).is_ok() {};
                             }
                             Ok(x) => {
-                                if let Err(x) = writer.write_all(&x) {
-                                    if writer.flush().is_ok() {};
-                                    if fs::remove_file(format!("{}b", self.file_name)).is_ok() {};
-                                    Universal::err_exit(x.to_string());
-                                    return;
+                                if !stop_compilling_file {
+                                    if let Err(x) = writer.write_all(&x) {
+                                        writer.flush();
+                                        fs::remove_file(format!("{}b", self.file_name));
+                                        Universal::err_exit(x.to_string());
+                                        return;
+                                    }
                                 }
                             }
                         }
