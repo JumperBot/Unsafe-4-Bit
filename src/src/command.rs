@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::memory_map::MemoryMap;
 use crate::universal::Universal;
 
@@ -39,17 +41,13 @@ impl Command {
             9 => NopCommand::create(real_line, line),
             (10..=13) => JumpCommand::create(real_line, line),
             14 => PrintCommand::create(real_line, line),
-            (15..=20) => {
-                match ind {
-                    15 => ReadCommand::create(real_line, line),
-                    16 => WfileCommand::create(real_line, line),
-                    17 => RfileCommand::create(real_line, line),
-                    18 => DfileCommand::create(real_line, line),
-                    //19 => WfuncCommand::create(&real_line, &line),
-                    //20 => DfuncCommand::create(&real_line, &line),
-                    _ => UnrecognizedCommand::create(real_line, line),
-                }
-            }
+            15 => ReadCommand::create(real_line, line),
+            16 => WfileCommand::create(real_line, line),
+            17 => RfileCommand::create(real_line, line),
+            18 => DfileCommand::create(real_line, line),
+            19 => WfuncCommand::create(real_line, line),
+            20 => DfuncCommand::create(real_line, line),
+            21 => UfuncCommand::create(real_line, line),
             _ => UnrecognizedCommand::create(real_line, line),
         };
         let err: String = command.analyze();
@@ -564,6 +562,138 @@ impl GenericCommand for DfileCommand {
         let mut out: Vec<u8> = vec![18, (self.line.len() - 1).try_into().unwrap()];
         for x in 1..self.line.len() {
             out.push(self.line[x].parse::<u8>().unwrap());
+        }
+        out
+    }
+}
+
+pub struct WfuncCommand {
+    real_line: Vec<String>,
+    line: Vec<String>,
+}
+
+impl GenericCommand for WfuncCommand {
+    fn create(real_line: &[String], line: &[String]) -> Box<Self> {
+        let out: WfuncCommand = WfuncCommand {
+            real_line: real_line.to_vec(),
+            line: line.to_vec(),
+        };
+        Box::new(out)
+    }
+    fn analyze(&self) -> String {
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        let func_args: &[String] = &self.line[2..];
+        Command::errors_to_string(vec![
+            Command::check_arg_length_using_limit(&self.real_line, func_name, 65535),
+            Command::check_arg_length_using_limit(&self.real_line, func_args, 255),
+            Command::check_all_if_mem_ind(&self.real_line, func_args),
+        ])
+    }
+    fn compile(&self) -> Vec<u8> {
+        let mut out: Vec<u8> = vec![19];
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        out.push(func_name.len().try_into().unwrap());
+        for x in func_name {
+            out.push(x.parse::<u8>().unwrap());
+        }
+        let func_args: &[String] = &self.line[2..];
+        out.push(func_args.len().try_into().unwrap());
+        for x in func_args {
+            out.push(x.parse::<u8>().unwrap());
+        }
+        out
+    }
+}
+
+pub struct DfuncCommand {
+    real_line: Vec<String>,
+    line: Vec<String>,
+}
+
+impl GenericCommand for DfuncCommand {
+    fn create(real_line: &[String], line: &[String]) -> Box<Self> {
+        let out: DfuncCommand = DfuncCommand {
+            real_line: real_line.to_vec(),
+            line: line.to_vec(),
+        };
+        Box::new(out)
+    }
+    fn analyze(&self) -> String {
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        Command::errors_to_string(vec![Command::check_arg_length_using_limit(
+            &self.real_line,
+            func_name,
+            65535,
+        )])
+    }
+    fn compile(&self) -> Vec<u8> {
+        let mut out: Vec<u8> = vec![20];
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        out.push(func_name.len().try_into().unwrap());
+        for x in func_name {
+            out.push(x.parse::<u8>().unwrap());
+        }
+        out
+    }
+}
+
+pub struct UfuncCommand {
+    real_line: Vec<String>,
+    line: Vec<String>,
+}
+
+impl GenericCommand for UfuncCommand {
+    fn create(real_line: &[String], line: &[String]) -> Box<Self> {
+        let out: UfuncCommand = UfuncCommand {
+            real_line: real_line.to_vec(),
+            line: line.to_vec(),
+        };
+        Box::new(out)
+    }
+    fn analyze(&self) -> String {
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        Command::errors_to_string(vec![Command::check_arg_length_using_limit(
+            &self.real_line,
+            func_name,
+            65535,
+        )])
+    }
+    fn compile(&self) -> Vec<u8> {
+        let mut out: Vec<u8> = vec![21];
+        let func_name: &[String] = &Universal::convert_to_mem(
+            &self.line[1],
+            false,
+            &HashMap::<String, u8>::new(),
+            &MemoryMap::new_limited(),
+        );
+        out.push(func_name.len().try_into().unwrap());
+        for x in func_name {
+            out.push(x.parse::<u8>().unwrap());
         }
         out
     }

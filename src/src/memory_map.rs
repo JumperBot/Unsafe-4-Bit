@@ -21,12 +21,13 @@ impl MemoryMap {
         MemoryMap {
             keys: vec![
                 "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm",
-                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile",
+                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "dfunc",
+                "ufunc",
             ]
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>(),
-            mems: (0..19).collect::<Vec<u64>>(),
+            mems: (0..22).collect::<Vec<u64>>(),
         }
     }
 
