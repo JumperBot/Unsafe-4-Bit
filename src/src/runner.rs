@@ -1,7 +1,7 @@
 use crate::universal::Universal;
 
 use std::fs::{self, File};
-use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Stdin, Write};
+use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
 use std::path::Path;
 use std::str::Chars;
 use std::thread;
@@ -158,6 +158,9 @@ impl Runner {
             16 => self.wfile(),
             17 => self.rfile(),
             18 => self.dfile(),
+            // 19 => self.wfunc(),
+            // 20 => self.dfunc(),
+            // 21 => self.ufunc(),
             _ => Universal::err_exit(format!(
                 "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
             )),
@@ -331,13 +334,13 @@ impl Runner {
     fn jump(&mut self, op: &u8) {
         let ind1: u8 = self.next();
         let ind2: u8 = self.next();
-        let val1: Vec<char> = self.rvar(&ind1);
-        let val2: Vec<char> = self.rvar(&ind2);
+        let val1: &[char] = &self.rvar(&ind1);
+        let val2: &[char] = &self.rvar(&ind2);
         let com: u16 = self.next_u16();
-        if (op == &10 && Self::to_num(&val1) > Self::to_num(&val2))
-            || (op == &11 && Self::to_num(&val1) < Self::to_num(&val2))
-            || (op == &12 && val1.eq(&val2))
-            || (op == &13 && !val1.eq(&val2))
+        if (op == &10 && Self::to_num(val1) > Self::to_num(val2))
+            || (op == &11 && Self::to_num(val1) < Self::to_num(val2))
+            || (op == &12 && val1.eq(val2))
+            || (op == &13 && !val1.eq(val2))
         {
             if com < self.byte_ind.len() as u16 {
                 self.ptr = self.byte_ind[com as usize];
@@ -358,9 +361,7 @@ impl Runner {
                 10..=13 => self.ptr += 4,
                 14 => self.ptr += self.next() as u64,
                 15 => self.ptr += 1,
-                16 => self.ptr += self.next() as u64,
-                17 => self.ptr += self.next() as u64,
-                18 => self.ptr += self.next() as u64,
+                16..=18 => self.ptr += self.next() as u64,
                 // TODO: Add Other Commands
                 _ => panic!("You Forgot To Add Command Number {cur} To The Skip Index..."),
             }
@@ -369,14 +370,7 @@ impl Runner {
 
     fn print(&mut self) {
         let arg_count: u8 = self.next();
-        let mut out: String = String::new();
-        for _ in 0..arg_count as usize {
-            let ind: u8 = self.next();
-            for x in self.rvar(&ind) {
-                out.push(x);
-            }
-        }
-        print!("{}", Universal::convert_unicode(&out));
+        print!("{}", self.get_args(arg_count, true));
         if let Err(x) = io::stdout().flush() {
             Universal::err_exit(x.to_string());
         }
@@ -387,24 +381,29 @@ impl Runner {
         if let Err(x) = io::stdout().flush() {
             Universal::err_exit(x.to_string());
         }
-        let stdin: Stdin = io::stdin();
         let mut buf: String = String::new();
-        if let Err(x) = stdin.read_line(&mut buf) {
+        if let Err(x) = io::stdin().read_line(&mut buf) {
             Universal::err_exit(x.to_string());
         }
         let ind: u8 = self.next();
         self.write_chars(&ind, &mut buf.chars());
     }
 
-    fn get_file_name(&mut self, arg_count: usize) -> String {
+    fn get_args(&mut self, arg_count: u8, convert_unicode: bool) -> String {
         let mut out: String = String::new();
-        for _ in 0..arg_count {
+        for _ in 0..arg_count as usize {
             let ind: u8 = self.next();
             for x in self.rvar(&ind) {
                 out.push(x);
             }
         }
-        out = Universal::convert_unicode(&out);
+        if convert_unicode {
+            return Universal::convert_unicode(&out);
+        }
+        out
+    }
+    fn get_file_name(&mut self, arg_count: u8) -> String {
+        let mut out: String = self.get_args(arg_count, true);
         if Path::new(&out).is_relative() {
             if let Some(x) = Path::new(&self.file_name)
                 .canonicalize()
@@ -420,7 +419,7 @@ impl Runner {
     fn wfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count as usize);
+        let file_name: String = self.get_file_name(arg_count);
         let mut out: String = String::new();
         for x in self.rvar(&ind) {
             out.push(x);
@@ -432,15 +431,17 @@ impl Runner {
                 }
                 match File::create(&file_name) {
                     Err(x) => match x.kind() {
-                        ErrorKind::PermissionDenied => Universal::err_exit(x.to_string()),
                         ErrorKind::NotFound => {
                             if let Some(x) = Path::new(&file_name).parent() {
                                 if let Err(x) = fs::create_dir_all(x) {
                                     Universal::err_exit(x.to_string());
                                 }
                             }
-                            if let Err(x) = File::create(&file_name).unwrap().write(out.as_bytes())
-                            {
+                            let res: Result<File, _> = File::create(&file_name);
+                            if let Err(ref x) = res {
+                                Universal::err_exit(x.to_string())
+                            }
+                            if let Err(x) = res.unwrap().write(out.as_bytes()) {
                                 Universal::err_exit(x.to_string());
                             }
                         }
@@ -467,22 +468,19 @@ impl Runner {
     fn rfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count as usize);
-        let out: String = match fs::read_to_string(file_name) {
-            Ok(x) => x,
-            Err(x) => {
-                Universal::err_exit(format!(
-                    "File Provided Does Not Exist...\n{x}\nTerminating..."
-                ));
-                String::new()
-            }
-        };
-        self.write_chars(&ind, &mut out.chars());
+        let file_name: String = self.get_file_name(arg_count);
+        let res: Result<String, _> = fs::read_to_string(file_name);
+        if let Err(ref x) = res {
+            Universal::err_exit(format!(
+                "File Provided Does Not Exist...\n{x}\nTerminating..."
+            ));
+        }
+        self.write_chars(&ind, &mut res.unwrap().chars());
     }
 
     fn dfile(&mut self) {
         let arg_count: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count as usize);
+        let file_name: String = self.get_file_name(arg_count);
         if let Err(x) = fs::remove_dir_all(file_name) {
             Universal::err_exit(format!(
                 "File Provided Does Not Exist...\n{x}\nTerminating..."
@@ -502,25 +500,19 @@ impl Runner {
         buf[0]
     }
     fn next_u16(&mut self) -> u16 {
-        let mut buf: [u8; 2] = [0; 2];
-        if let Err(x) = self.file.seek(Start(self.ptr)) {
-            Universal::err_exit(x.to_string());
-        }
-        if let Err(x) = self.file.read_exact(&mut buf) {
-            Universal::err_exit(x.to_string())
-        }
-        self.ptr += 2;
-        ((buf[0] as u16) << 8) | (buf[1] as u16)
+        ((self.next() as u16) << 8) | (self.next() as u16)
     }
 
     fn init_mem() -> [char; 256] {
         let mut mem: [char; 256] = ['\u{0000}'; 256];
+        let zero: u32 = '0' as u32;
+        let a: u32 = 'A' as u32;
         mem[0] = ' ';
         for x in 0..26 {
-            mem[x + 1] = Universal::convert_u32_to_char(('A' as u32) + x as u32);
-        }
-        for x in 0..10 {
-            mem[x + 27] = Universal::convert_u32_to_char(('0' as u32) + x as u32);
+            if x < 10 {
+                mem[x + 27] = Universal::convert_u32_to_char(zero + x as u32);
+            }
+            mem[x + 1] = Universal::convert_u32_to_char(a + x as u32);
         }
         mem[37] = '\n';
         mem

@@ -42,7 +42,7 @@ Flag Triggered, Continuing Anyway...\n\n"
     }
     if flags.version_flag {
         // TODO: Always Change Version Tag Here And At Cargo.toml
-        println!("UFB Version: v1.6.6\nFlag Triggered, Continuing Anyway...\n\n");
+        println!("UFB Version: v1.6.7\nFlag Triggered, Continuing Anyway...\n\n");
     }
     if flags.license_flag {
         println!(
