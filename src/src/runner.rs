@@ -1,6 +1,6 @@
 use crate::universal::Universal;
 
-use std::fs::{self, File};
+use std::fs::{self, File, Metadata};
 use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
 use std::path::Path;
 use std::str::Chars;
@@ -23,44 +23,44 @@ pub struct Runner {
 
 impl Runner {
     pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
-        match File::open(&file_name) {
-            Err(x) => Universal::err_exit(format!(
+        let file_res: Result<File, _> = File::open(&file_name);
+        if let Err(ref x) = file_res {
+            Universal::err_exit(format!(
                 "File Provided Does Not Exist...\n{x}\nTerminating..."
-            )),
-            Ok(x) => match x.metadata() {
-                Err(y) => Universal::err_exit(y.to_string()),
-                Ok(y) => {
-                    return Runner {
-                        file: x,
-                        file_name,
-                        file_size: y.len(),
-                        ptr: 0,
-                        mem_ind: [0; 256],
-                        mem: Self::init_mem(),
-                        byte_ind: Vec::<u64>::new(),
-                        ten_millis: Duration::from_millis(10),
-                        perfmes,
-                        nanosec,
-                        commmes,
-                    }
-                }
-            },
+            ));
         }
-        Self::new(file_name, perfmes, nanosec, commmes)
+        let file: File = file_res.unwrap();
+        let meta_res: Result<Metadata, _> = file.metadata();
+        if let Err(ref x) = meta_res {
+            Universal::err_exit(x.to_string());
+        }
+        Runner {
+            file,
+            file_name,
+            file_size: meta_res.unwrap().len(),
+            ptr: 0,
+            mem_ind: [0; 256],
+            mem: Self::init_mem(),
+            byte_ind: Vec::<u64>::new(),
+            ten_millis: Duration::from_millis(10),
+            perfmes,
+            nanosec,
+            commmes,
+        }
     }
 
     pub fn run(&mut self) {
         if self.perfmes {
+            let res_time: Result<Duration, _> = SystemTime::now().duration_since(UNIX_EPOCH);
             let start: u128;
-            match SystemTime::now().duration_since(UNIX_EPOCH) {
-                Ok(x) => {
-                    if self.nanosec {
-                        start = x.as_nanos();
-                    } else {
-                        start = x.as_millis();
-                    }
+            if let Ok(x) = res_time {
+                if self.nanosec {
+                    start = x.as_nanos();
+                } else {
+                    start = x.as_millis();
                 }
-                Err(_) => start = 0,
+            } else {
+                start = 0;
             }
             if self.commmes {
                 self.run_commands_with_time();
@@ -96,7 +96,7 @@ impl Runner {
             for ratio in 0..8 {
                 let ind: usize = i + (ratio * 32);
                 if self.mem_ind[ind] != 0 {
-                    mem_leaks = format!("{mem_leaks}\nMemory Leak At Index: {ind}");
+                    mem_leaks.push_str(&format!("\nMemory Leak At Index: {ind}"));
                 }
             }
         }
@@ -116,15 +116,14 @@ impl Runner {
     fn run_commands_with_time(&mut self) {
         while self.ptr != self.file_size {
             let start: u128;
-            match SystemTime::now().duration_since(UNIX_EPOCH) {
-                Ok(x) => {
-                    if self.nanosec {
-                        start = x.as_nanos();
-                    } else {
-                        start = x.as_millis();
-                    }
+            if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                if self.nanosec {
+                    start = x.as_nanos();
+                } else {
+                    start = x.as_millis();
                 }
-                Err(_) => start = 0,
+            } else {
+                start = 0;
             }
             if self.byte_ind.binary_search(&self.ptr).is_err() {
                 self.byte_ind.push(self.ptr);
@@ -170,40 +169,22 @@ impl Runner {
     fn wvar(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
-        let resident: &[char] = &self.rvar(&ind);
+        let resident: String = String::from_iter(self.rvar(&ind));
         let mut out: String = String::new();
         for _ in 0..arg_count {
             let ptr: u8 = self.next();
-            if ptr == ind {
-                for x in resident {
-                    out.push(*x);
-                }
-            } else {
-                for x in self.rvar(&ptr) {
-                    out.push(x);
-                }
-            }
+            out.push_str(
+                &(if ptr == ind {
+                    resident.clone()
+                } else {
+                    String::from_iter(self.rvar(&ptr))
+                }),
+            );
         }
-        out = Universal::convert_unicode(&out);
-        let mut chars: Chars = out.chars();
-        self.write_chars(&ind, &mut chars);
+        self.write_chars(&ind, &mut Universal::convert_unicode(&out).chars());
     }
     fn write_chars(&mut self, ind: &u8, chars: &mut Chars) {
-        self.nvar(ind);
-        let ind_usize: usize = *ind as usize;
-        let len: usize = chars.as_str().len();
-        for x in 0..len {
-            if x + ind_usize == 256 {
-                self.mem_ind[ind_usize] = 255;
-                return;
-            }
-            self.mem[x + ind_usize] = chars.next().unwrap();
-            if x + ind_usize == 255 {
-                self.mem_ind[ind_usize] = 255;
-                return;
-            }
-        }
-        self.mem_ind[ind_usize] = ind + (len as u8) - 1;
+        self.write_arr(ind, &chars.collect::<Vec<char>>());
     }
     fn write_arr(&mut self, ind: &u8, arr: &[char]) {
         self.nvar(ind);
@@ -226,14 +207,10 @@ impl Runner {
 
     fn rvar(&mut self, ind: &u8) -> Vec<char> {
         let ind_usize: usize = *ind as usize;
-        if self.mem_ind[ind_usize] == 0 || self.mem_ind[ind_usize] == *ind {
-            return vec![self.mem[ind_usize]];
+        if self.mem_ind[ind_usize] == 0 {
+            return self.mem[ind_usize..=ind_usize].to_vec();
         }
-        let mut out: Vec<char> = Vec::<char>::new();
-        for x in &self.mem[ind_usize..=self.mem_ind[ind_usize] as usize] {
-            out.push(*x);
-        }
-        out
+        self.mem[ind_usize..=self.mem_ind[ind_usize] as usize].to_vec()
     }
 
     fn nvar(&mut self, ind: &u8) {
@@ -350,22 +327,21 @@ impl Runner {
         }
     }
     fn skip(&mut self, com: &u16) {
-        while com != &(self.byte_ind.len() as u16) && self.ptr < self.file_size {
-            self.byte_ind.push(self.ptr);
-            let cur: u8 = self.next();
-            match cur {
-                0 => self.ptr += self.next() as u64,
-                1 => self.ptr += 1,
-                2..=8 => self.ptr += 2,
-                9 => (),
-                10..=13 => self.ptr += 4,
-                14 => self.ptr += self.next() as u64,
-                15 => self.ptr += 1,
-                16..=18 => self.ptr += self.next() as u64,
-                // TODO: Add Other Commands
-                _ => panic!("You Forgot To Add Command Number {cur} To The Skip Index..."),
-            }
+        if com == &(self.byte_ind.len() as u16) || self.ptr >= self.file_size {
+            return;
         }
+        self.byte_ind.push(self.ptr);
+        let cur: u8 = self.next();
+        match cur {
+            1 | 15 => self.ptr += 1,
+            2..=8 => self.ptr += 2,
+            9 => (),
+            10..=13 => self.ptr += 4,
+            0 | 14 | 16..=18 => self.ptr += self.next() as u64,
+            // TODO: Add Other Commands
+            _ => panic!("You Forgot To Add Command Number {cur} To The Skip Index..."),
+        }
+        self.skip(com);
     }
 
     fn print(&mut self) {
@@ -416,6 +392,7 @@ impl Runner {
         }
         out
     }
+    // The heaviest command of all:
     fn wfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
@@ -424,44 +401,39 @@ impl Runner {
         for x in self.rvar(&ind) {
             out.push(x);
         }
-        match File::open(&file_name) {
-            Err(x) => {
-                if x.kind() == ErrorKind::PermissionDenied {
+        if let Err(x) = File::open(&file_name) {
+            if x.kind() == ErrorKind::PermissionDenied {
+                Universal::err_exit(x.to_string());
+            }
+            let res1: Result<File, _> = File::create(&file_name);
+            if let Err(ref x) = res1 {
+                if x.kind() != ErrorKind::NotFound {
                     Universal::err_exit(x.to_string());
                 }
-                match File::create(&file_name) {
-                    Err(x) => match x.kind() {
-                        ErrorKind::NotFound => {
-                            if let Some(x) = Path::new(&file_name).parent() {
-                                if let Err(x) = fs::create_dir_all(x) {
-                                    Universal::err_exit(x.to_string());
-                                }
-                            }
-                            let res: Result<File, _> = File::create(&file_name);
-                            if let Err(ref x) = res {
-                                Universal::err_exit(x.to_string())
-                            }
-                            if let Err(x) = res.unwrap().write(out.as_bytes()) {
-                                Universal::err_exit(x.to_string());
-                            }
-                        }
-                        _ => Universal::err_exit(x.to_string()),
-                    },
-                    Ok(mut x) => {
-                        if let Err(x) = x.write(out.as_bytes()) {
-                            Universal::err_exit(x.to_string());
-                        }
-                    }
-                }
-            }
-            Ok(_) => match File::create(&file_name) {
-                Ok(mut x) => {
-                    if let Err(x) = x.write(out.as_bytes()) {
+                if let Some(x) = Path::new(&file_name).parent() {
+                    if let Err(x) = fs::create_dir_all(x) {
                         Universal::err_exit(x.to_string());
                     }
                 }
-                Err(x) => Universal::err_exit(x.to_string()),
-            },
+                let res: Result<File, _> = File::create(&file_name);
+                if let Err(ref x) = res {
+                    Universal::err_exit(x.to_string());
+                }
+                if let Err(x) = res.unwrap().write(out.as_bytes()) {
+                    Universal::err_exit(x.to_string());
+                }
+            } else if let Err(x) = res1.unwrap().write(out.as_bytes()) {
+                Universal::err_exit(x.to_string());
+            }
+            return;
+        }
+        match File::create(&file_name) {
+            Ok(mut x) => {
+                if let Err(x) = x.write(out.as_bytes()) {
+                    Universal::err_exit(x.to_string());
+                }
+            }
+            Err(x) => Universal::err_exit(x.to_string()),
         }
     }
 
