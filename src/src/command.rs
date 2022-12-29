@@ -602,7 +602,9 @@ impl GenericCommand for WfuncCommand {
             &HashMap::<String, u8>::new(),
             &MemoryMap::new_limited(),
         );
-        out.push(func_name.len().try_into().unwrap());
+        let func_name_len: u16 = func_name.len().try_into().unwrap();
+        out.push((func_name_len >> 8) as u8);
+        out.push((func_name_len << 8 >> 8) as u8);
         for x in func_name {
             out.push(x.parse::<u8>().unwrap());
         }
@@ -649,7 +651,9 @@ impl GenericCommand for DfuncCommand {
             &HashMap::<String, u8>::new(),
             &MemoryMap::new_limited(),
         );
-        out.push(func_name.len().try_into().unwrap());
+        let func_name_len: u16 = func_name.len().try_into().unwrap();
+        out.push((func_name_len >> 8) as u8);
+        out.push((func_name_len << 8 >> 8) as u8);
         for x in func_name {
             out.push(x.parse::<u8>().unwrap());
         }
@@ -691,7 +695,9 @@ impl GenericCommand for UfuncCommand {
             &HashMap::<String, u8>::new(),
             &MemoryMap::new_limited(),
         );
-        out.push(func_name.len().try_into().unwrap());
+        let func_name_len: u16 = func_name.len().try_into().unwrap();
+        out.push((func_name_len >> 8) as u8);
+        out.push((func_name_len << 8 >> 8) as u8);
         for x in func_name {
             out.push(x.parse::<u8>().unwrap());
         }

@@ -1,5 +1,6 @@
 use crate::universal::Universal;
 
+use std::collections::HashMap;
 use std::fs::{self, File, Metadata};
 use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
 use std::path::Path;
@@ -15,6 +16,7 @@ pub struct Runner {
     mem_ind: [u8; 256],
     mem: [char; 256],
     byte_ind: Vec<u64>,
+    funcs: HashMap<String, u64>,
     ten_millis: Duration,
     perfmes: bool,
     nanosec: bool,
@@ -42,6 +44,7 @@ impl Runner {
             mem_ind: [0; 256],
             mem: Self::init_mem(),
             byte_ind: Vec::<u64>::new(),
+            funcs: HashMap::<String, u64>::new(),
             ten_millis: Duration::from_millis(10),
             perfmes,
             nanosec,
@@ -157,7 +160,7 @@ impl Runner {
             16 => self.wfile(),
             17 => self.rfile(),
             18 => self.dfile(),
-            // 19 => self.wfunc(),
+            19 => self.wfunc(),
             // 20 => self.dfunc(),
             // 21 => self.ufunc(),
             _ => Universal::err_exit(format!(
@@ -332,21 +335,24 @@ impl Runner {
         }
         self.byte_ind.push(self.ptr);
         let cur: u8 = self.next();
-        match cur {
+        self.ptr_skip(cur);
+        self.skip(com);
+    }
+    fn ptr_skip(&mut self, com: u8) {
+        match com {
             1 | 15 => self.ptr += 1,
             2..=8 => self.ptr += 2,
             9 => (),
             10..=13 => self.ptr += 4,
             0 | 14 | 16..=18 => self.ptr += self.next() as u64,
             // TODO: Add Other Commands
-            _ => panic!("You Forgot To Add Command Number {cur} To The Skip Index..."),
+            _ => panic!("You Forgot To Add Command Number {com} To The Skip Index..."),
         }
-        self.skip(com);
     }
 
     fn print(&mut self) {
         let arg_count: u8 = self.next();
-        print!("{}", self.get_args(arg_count, true));
+        print!("{}", self.get_args(arg_count as usize, true));
         if let Err(x) = io::stdout().flush() {
             Universal::err_exit(x.to_string());
         }
@@ -365,12 +371,18 @@ impl Runner {
         self.write_chars(&ind, &mut buf.chars());
     }
 
-    fn get_args(&mut self, arg_count: u8, convert_unicode: bool) -> String {
+    fn get_indexes(&mut self, arg_count: usize) -> Vec<u8> {
+        let mut out: Vec<u8> = Vec::<u8>::new();
+        for _ in 0..arg_count {
+            out.push(self.next());
+        }
+        out
+    }
+    fn get_args(&mut self, arg_count: usize, convert_unicode: bool) -> String {
         let mut out: String = String::new();
-        for _ in 0..arg_count as usize {
-            let ind: u8 = self.next();
-            for x in self.rvar(&ind) {
-                out.push(x);
+        for x in self.get_indexes(arg_count) {
+            for y in self.rvar(&x) {
+                out.push(y);
             }
         }
         if convert_unicode {
@@ -379,7 +391,7 @@ impl Runner {
         out
     }
     fn get_file_name(&mut self, arg_count: u8) -> String {
-        let mut out: String = self.get_args(arg_count, true);
+        let mut out: String = self.get_args(arg_count as usize, true);
         if Path::new(&out).is_relative() {
             if let Some(x) = Path::new(&self.file_name)
                 .canonicalize()
@@ -458,6 +470,25 @@ impl Runner {
                 "File Provided Does Not Exist...\n{x}\nTerminating..."
             ));
         }
+    }
+
+    fn wfunc(&mut self) {
+        let ptr: u64 = self.ptr;
+        let arg_count: u16 = self.next_u16();
+        let func_name: String = self.get_args(arg_count as usize, false);
+        let arg_count2: u8 = self.next();
+        #[allow(unused_variables)]
+        let func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
+        self.funcs.insert(func_name.clone(), ptr);
+        loop {
+            let com: u8 = self.next();
+            if com == 20 {
+                break;
+            }
+            self.ptr_skip(com);
+        }
+        self.ptr += func_name.len() as u64 + 2;
+        println!("{:?}", self.funcs);
     }
 
     fn next(&mut self) -> u8 {
