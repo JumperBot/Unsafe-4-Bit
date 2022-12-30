@@ -15,6 +15,7 @@ pub struct Runner {
     ptr: u64,
     mem_ind: [u8; 256],
     mem: [char; 256],
+    mem_copy: Vec<[char; 256]>,
     byte_ind: Vec<u64>,
     funcs: HashMap<String, u64>,
     ten_millis: Duration,
@@ -43,6 +44,7 @@ impl Runner {
             ptr: 0,
             mem_ind: [0; 256],
             mem: Self::init_mem(),
+            mem_copy: Vec::<[char; 256]>::new(),
             byte_ind: Vec::<u64>::new(),
             funcs: HashMap::<String, u64>::new(),
             ten_millis: Duration::from_millis(10),
@@ -161,8 +163,8 @@ impl Runner {
             17 => self.rfile(),
             18 => self.dfile(),
             19 => self.wfunc(),
-            // 20 => self.dfunc(),
-            // 21 => self.ufunc(),
+            // 20 => self.cfunc(),
+            21 => self.ufunc(),
             _ => Universal::err_exit(format!(
                 "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
             )),
@@ -481,14 +483,33 @@ impl Runner {
         let func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
         self.funcs.insert(func_name.clone(), ptr);
         loop {
+            if self.ptr >= self.file_size {
+                return;
+            }
             let com: u8 = self.next();
             if com == 20 {
-                break;
+                let _this_arg_count: u16 = self.next_u16();
+                let this_func_name: String = self.get_args(arg_count as usize, false);
+                if this_func_name.eq(&func_name) {
+                    break;
+                }
+            } else {
+                self.ptr_skip(com);
             }
-            self.ptr_skip(com);
         }
-        self.ptr += func_name.len() as u64 + 2;
-        println!("{:?}", self.funcs);
+        self.ptr += func_name.len() as u64 + 3;
+    }
+
+    fn ufunc(&mut self) {
+        let arg_count: u16 = self.next_u16();
+        let func_name: String = self.get_args(arg_count as usize, false);
+        if let Some(x) = self.funcs.get(&func_name) {
+            self.mem_copy.push(self.mem);
+            self.mem = Self::init_mem();
+            self.ptr = *x + 3 + arg_count as u64;
+            let arg_count2: u8 = self.next();
+            let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
+        }
     }
 
     fn next(&mut self) -> u8 {

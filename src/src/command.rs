@@ -21,7 +21,8 @@ impl Command {
      * 17   -   00010001    -   rfile
      * 18   -   00010010    -   dfile
      * 19   -   00010011    -   wfunc
-     * 20   -   00010100    -   dfunc
+     * 20   -   00010100    -   cfunc
+     * 21   -   00010101    -   ufunc
      **/
     pub fn new(
         line: &[String],
@@ -37,16 +38,16 @@ impl Command {
             0 => WvarCommand::create(real_line, line),
             1 => NvarCommand::create(real_line, line),
             2 => TrimCommand::create(real_line, line),
-            (3..=8) => MathCommand::create(real_line, line),
+            3..=8 => MathCommand::create(real_line, line),
             9 => NopCommand::create(real_line, line),
-            (10..=13) => JumpCommand::create(real_line, line),
+            10..=13 => JumpCommand::create(real_line, line),
             14 => PrintCommand::create(real_line, line),
             15 => ReadCommand::create(real_line, line),
             16 => WfileCommand::create(real_line, line),
             17 => RfileCommand::create(real_line, line),
             18 => DfileCommand::create(real_line, line),
             19 => WfuncCommand::create(real_line, line),
-            20 => DfuncCommand::create(real_line, line),
+            20 => CfuncCommand::create(real_line, line),
             21 => UfuncCommand::create(real_line, line),
             _ => UnrecognizedCommand::create(real_line, line),
         };
@@ -617,14 +618,14 @@ impl GenericCommand for WfuncCommand {
     }
 }
 
-pub struct DfuncCommand {
+pub struct CfuncCommand {
     real_line: Vec<String>,
     line: Vec<String>,
 }
 
-impl GenericCommand for DfuncCommand {
+impl GenericCommand for CfuncCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: DfuncCommand = DfuncCommand {
+        let out: CfuncCommand = CfuncCommand {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
         };
@@ -701,6 +702,12 @@ impl GenericCommand for UfuncCommand {
         for x in func_name {
             out.push(x.parse::<u8>().unwrap());
         }
+        let func_args: &[String] = &self.line[2..];
+        out.push(func_args.len().try_into().unwrap());
+        for x in func_args {
+            out.push(x.parse::<u8>().unwrap());
+        }
+        println!("{:?}", out);
         out
     }
 }

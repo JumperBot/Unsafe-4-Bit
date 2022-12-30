@@ -18,16 +18,18 @@ impl MemoryMap {
         }
     }
     pub fn new_binary_map() -> MemoryMap {
+        let keys: Vec<String> = vec![
+            "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm", "jl",
+            "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "cfunc", "ufunc",
+        ]
+        .into_iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>();
         MemoryMap {
-            keys: vec![
-                "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm",
-                "jl", "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "dfunc",
-                "ufunc",
-            ]
-            .into_iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>(),
-            mems: (0..22).collect::<Vec<u64>>(),
+            keys: keys.clone(),
+            mems: (0..keys.len())
+                .map(|x| x.try_into().unwrap())
+                .collect::<Vec<u64>>(),
         }
     }
 

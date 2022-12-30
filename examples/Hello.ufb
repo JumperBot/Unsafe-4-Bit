@@ -6,9 +6,8 @@ print   "Hello, World!\n"
 // With an optional argument to be stored at memory index 38.
 wfunc hello 38
 	print "Hello!\n"
-// Delete the function block named "hello" (case-sensitive)...
-// Closes / Seals the function block.
-dfunc hello
+// Closes the function block named "hello" (case-sensitive)...
+cfunc hello
 
 // Use the function named "hello" (case-sensitive).
 ufunc hello
