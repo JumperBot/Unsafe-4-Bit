@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./assets/css/style.css?v=66cdcc4e3aee5d3afa075eefe645fde1f9070f28">
+    <link rel="stylesheet" href="./assets/css/style.css?v=8721dc54bbb83a3206246f77f52e76d955641bc1">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -32,14 +32,14 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
 <meta property="og:description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
-<link rel="canonical" href="/literacy.html" />
-<meta property="og:url" content="/literacy.html" />
+<link rel="canonical" href="/hello_world.html" />
+<meta property="og:url" content="/hello_world.html" />
 <meta property="og:site_name" content="UFB Wiki" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="UFB Wiki" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/literacy.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/hello_world.html"}</script>
 <!-- End Jekyll SEO tag -->
 
   </head>
@@ -82,47 +82,72 @@
 	.index {
 		color: orange;
 	}
+	.comment {
+		color: grey;
+	}
+  .wavy {
+		position: relative;
+  }
+  .wavy span {
+		position: relative;
+    display: inline-block;
+    animation: animate 2.5s ease-in-out infinite;
+    animation-delay: calc(0.1s * var(--i));
+  }
+  @keyframes animate {
+		0% {
+			transform: translate(0px, 0px);
+    }
+    25% {
+      transform: translate(5px, -5px);
+    }
+    75% {
+      transform: translate(-5px, 5px);
+		}
+  }
 </style>
 
 <p><br /></p>
 
-<h1 class="center_text"><a href="literacy.html">LITERACY</a></h1>
+<h1 class="center_text"><a href="hello_world.html">HELLO, WORLD!</a></h1>
 
 <p><br /></p>
 
-<h2>A UFB program can be either illiterate or literate.</h2>
+<h2>Let's start with something <i><b>comfortable</b></i>...</h2>
 
-<blockquote>
-<h6>b: able to read and write</h6>
-<h5>- <a href="https://www.merriam-webster.com/dictionary/literate">Merriam-Webster Dictionary</a></h5>
-</blockquote>
-
-<div style="display: flex;">
-<div style="width: 50%">
-<h3>This program is literate:</h3>
-<pre>
-<span class="command">wvar </span> <span class="index">38</span> <span class="string">"Hello"</span>
-<span class="command">read </span> <span class="index">50</span>
-<span class="command">print</span> <span class="string">"<span class="index">$038</span>, <span class="index">$050</span>!\n"</span>
-</pre>
-</div>
-<div style="width: 50%">
-<h3>This program is illiterate:</h3>
 <pre>
 <span class="command">print</span> <span class="string">"Hello, World!\n"</span>
-
-
 </pre>
-</div>
-</div>
 
-<h3>Literacy is the boundary between knowing more about the outside world and oneself...</h3>
-<h3>But at the cost of more work and performance inefficiency.</h3>
+<h2>Have you <span class="wavy"><span style="--i:1">n</span><span style="--i:2">o</span><span style="--i:3">t</span><span style="--i:4">i</span><span style="--i:5">c</span><span style="--i:6">e</span><span style="--i:7">d</span></span>
+something?</h2>
+
+<blockquote>It's probably the ugly formatting...</blockquote>
+
+<h3>It's the breeze of simplicity and the freedom of UFB code.</h3>
+<h4>No parentheses, tab-spacing, semicolons, curly braces, or brackets.</h4>
+<h3><b>BUT</b> there's always another way to write something so simple.</h3>
+
+<pre>
+<span class="command">wvar</span> <span class="index"> 38</span> <span class="string">"Hello World!\n"</span>
+<span class="command">print</span> <span class="index">38</span>
+
+<span class="comment">// Or...</span>
+<span class="comment">/&ast; Or... Oh... Boy... &ast;/</span>
+
+<span class="command">print</span> <span class="index">8  5  12 12 15 0  23 15 18 12 4</span>
+</pre>
+
+<blockquote>My, my... there are hundreds of different ways to do this, honestly.</blockquote>
+
+<h3>UFB is a fast, verbose and easy language.</h3>
+<h3>If you find a situation hard...</h3>
+<h3>then that only means that you made it hard for your own good.</h3>
 
 <p><br /></p>
 
-<p><a href="hello_world.html" class="arrows" style="float: left;">⏪️</a>
-<a href="variables.html" class="arrows" style="float: right;">⏩</a></p>
+<p><a href="index.html" class="arrows" style="float: left;">⏪️</a>
+<a href="literacy.html" class="arrows" style="float: right;">⏩</a></p>
 
       </section>
     </div>

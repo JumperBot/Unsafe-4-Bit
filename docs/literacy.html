@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./assets/css/style.css?v=66cdcc4e3aee5d3afa075eefe645fde1f9070f28">
+    <link rel="stylesheet" href="./assets/css/style.css?v=8721dc54bbb83a3206246f77f52e76d955641bc1">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -32,14 +32,14 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
 <meta property="og:description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
-<link rel="canonical" href="/404.html" />
-<meta property="og:url" content="/404.html" />
+<link rel="canonical" href="/literacy.html" />
+<meta property="og:url" content="/literacy.html" />
 <meta property="og:site_name" content="UFB Wiki" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="UFB Wiki" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/404.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/literacy.html"}</script>
 <!-- End Jekyll SEO tag -->
 
   </head>
@@ -62,26 +62,67 @@
 
     <div class="container">
       <section id="main_content">
-        <style type="text/css" media="screen">
-  .container {
-    margin: 10px auto;
-    max-width: 600px;
-    text-align: center;
-  }
-  h1 {
-    margin: 30px 0;
-    font-size: 4em;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
+        <style>
+	a {
+    text-decoration: none;
+		font-weight: bold;
+	}
+	.center_text {
+		text-align: center;
+	}
+	.arrows {
+		font-size: 50px;
+	}
+	.command {
+		color: red;
+	}
+	.string {
+		color: yellow;
+	}
+	.index {
+		color: orange;
+	}
 </style>
 
-<div class="container">
-  <h1>404</h1>
+<p><br /></p>
 
-  <p><strong>Page not found :(</strong></p>
-  <p>The requested page could not be found.</p>
+<h1 class="center_text"><a href="literacy.html">LITERACY</a></h1>
+
+<p><br /></p>
+
+<h2>A UFB program can be either illiterate or literate.</h2>
+
+<blockquote>
+<h6>b: able to read and write</h6>
+<h5>- <a href="https://www.merriam-webster.com/dictionary/literate">Merriam-Webster Dictionary</a></h5>
+</blockquote>
+
+<div style="display: flex;">
+<div style="width: 50%">
+<h3>This program is literate:</h3>
+<pre>
+<span class="command">wvar </span> <span class="index">38</span> <span class="string">"Hello"</span>
+<span class="command">read </span> <span class="index">50</span>
+<span class="command">print</span> <span class="string">"<span class="index">$038</span>, <span class="index">$050</span>!\n"</span>
+</pre>
 </div>
+<div style="width: 50%">
+<h3>This program is illiterate:</h3>
+<pre>
+<span class="command">print</span> <span class="string">"Hello, World!\n"</span>
+
+
+</pre>
+</div>
+</div>
+
+<h3>Literacy is the boundary between knowing more about the outside world and oneself...</h3>
+<h3>But at the cost of more work and performance inefficiency.</h3>
+
+<p><br /></p>
+
+<p><a href="hello_world.html" class="arrows" style="float: left;">⏪️</a>
+<a href="variables.html" class="arrows" style="float: right;">⏩</a></p>
 
       </section>
     </div>
