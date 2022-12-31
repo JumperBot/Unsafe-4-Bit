@@ -22,7 +22,7 @@ layout: default
 
 <br>
 
-<h1 class="center_text"><a href="./index.html">GETTING STARTED</a></h1>
+<h1 class="center_text"><a href="index.html">GETTING STARTED</a></h1>
 
 <br>
 
@@ -35,4 +35,4 @@ layout: default
 <h4>You can always come back here by clicking / tapping on the left arrow if it appears below.</h4>
 
 <!--<a href="./" class="arrows" style="float: left;">⏪️</a>-->
-<a href="./commands.html" class="arrows" style="float: right;">⏩</a>
+<a href="hello_world.html" class="arrows" style="float: right;">⏩</a>
