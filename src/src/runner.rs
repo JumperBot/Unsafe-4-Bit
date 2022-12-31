@@ -13,6 +13,7 @@ pub struct Runner {
     file_name: String,
     file_size: u64,
     ptr: u64,
+    ptr_copy: Vec<u64>,
     mem_ind: [u8; 256],
     mem: [char; 256],
     mem_copy: Vec<[char; 256]>,
@@ -42,6 +43,7 @@ impl Runner {
             file_name,
             file_size: meta_res.unwrap().len(),
             ptr: 0,
+            ptr_copy: Vec::<u64>::new(),
             mem_ind: [0; 256],
             mem: Self::init_mem(),
             mem_copy: Vec::<[char; 256]>::new(),
@@ -163,7 +165,7 @@ impl Runner {
             17 => self.rfile(),
             18 => self.dfile(),
             19 => self.wfunc(),
-            // 20 => self.cfunc(),
+            20 => self.cfunc(),
             21 => self.ufunc(),
             _ => Universal::err_exit(format!(
                 "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
@@ -497,18 +499,35 @@ impl Runner {
                 self.ptr_skip(com);
             }
         }
-        self.ptr += func_name.len() as u64 + 3;
+    }
+
+    fn cfunc(&mut self) {
+        let arg_count: u16 = self.next_u16();
+        let func_name: String = self.get_args(arg_count as usize, false);
+        if let Some(_x) = self.funcs.get(&func_name) {
+            if let Some(x) = self.ptr_copy.pop() {
+                self.ptr = x;
+            }
+            if let Some(x) = self.mem_copy.pop() {
+                self.mem = x;
+            }
+        }
     }
 
     fn ufunc(&mut self) {
         let arg_count: u16 = self.next_u16();
         let func_name: String = self.get_args(arg_count as usize, false);
+        let given_arg_count: u8 = self.next();
+        let _given_args: Vec<u8> = self.get_indexes(given_arg_count as usize);
         if let Some(x) = self.funcs.get(&func_name) {
             self.mem_copy.push(self.mem);
             self.mem = Self::init_mem();
-            self.ptr = *x + 3 + arg_count as u64;
+            self.ptr_copy.push(self.ptr);
+            self.ptr = *x;
+            self.ptr = *x + 2 + arg_count as u64;
             let arg_count2: u8 = self.next();
             let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
+            
         }
     }
 
