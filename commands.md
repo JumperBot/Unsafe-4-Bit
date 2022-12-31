@@ -18,11 +18,9 @@ layout: default
 	}
 </style>
 
-<!--<code class="language-plaintext highlighter-rouge"-->
-
 <br>
 
-<h1 class="center_text"><a href="./index.html">GETTING STARTED</a></h1>
+<h1 class="center_text"><a href="./commands.html">COMMANDS</a></h1>
 
 <br>
 
@@ -34,5 +32,5 @@ layout: default
 <h3>Afterwards, you can check out the next chapters by clicking / tapping on the right arrow below.</h3>
 <h4>You can always come back here by clicking / tapping on the left arrow if it appears below.</h4>
 
-<!--<a href="./" class="arrows" style="float: left;">⏪️</a>-->
+<a href="./index.html" class="arrows" style="float: left;">⏪️</a>
 <a href="./commands.html" class="arrows" style="float: right;">⏩</a>
