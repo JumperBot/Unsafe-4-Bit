@@ -1,7 +1,4 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: default
 ---
 
@@ -68,6 +65,7 @@ something?</h2>
 <blockquote>It's probably the ugly formatting...</blockquote>
 
 <h3>It's the breeze of simplicity and the freedom of UFB code.</h3>
+<h4>No parentheses, tab-spacing, semicolons, curly braces, or brackets.</h4>
 <h3><b>BUT</b> there's always another way to write something so simple.</h3>
 
 <pre>
