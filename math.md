@@ -29,14 +29,31 @@ layout: default
 
 <br>
 
-<h1 class="center_text"><a href="variables.html">Variables</a></h1>
+<h1 class="center_text"><a href="math.html">Math</a></h1>
 
 <br>
 
-<h2>All languages have variables built-in in their own right.</h2>
+<h2>Hold your horses!</h2>
+<h2>We're not manually solving for the total area of one dispersed floating field of magnets.</h2>
 
-<h3>UFB only has one variable type though: array of characters.</h3>
-<h3>Variables can be placed into the Read-Write Memory or the Read Only Memory.</h3>
+<h3>We can always start with the basics... and dive into whatever is next.</h3>
+
+<pre>
+<span class="comment">// It's a recurring theme...</span>
+<span class="comment">// all commands that can, will always place the output to the first given memory index.</span>
+
+<span class="comment">// Add the data in memory index 38 and 250.</span>
+<span class="command">add</span> <span class="index">38 250</span>
+
+<span class="comment">// Subtract the data in memory index 250 to the data in memory index 38.</span>
+<span class="command">sub</span> <span class="index">38 250</span>
+
+<span class="comment">// Multiply the data in memory index 250 to the data in memory index 38.</span>
+<span class="command">mul</span> <span class="index">38 250</span>
+
+<span class="comment">// Divide the data in memory index 250 to the data in memory index 38.</span>
+<span class="command">sub</span> <span class="index">38 250</span>
+</pre>
 
 <pre>
 <span class="command">ROM</span>: <span class="index"> 0 - 37 </span> = <span class="string">' ', 'A'-'Z', '0'-'9', '\n'</span>
@@ -90,4 +107,4 @@ There are many more ways of doing this, but those are the basics!
 <br>
 
 <a href="literacy.html" class="arrows" style="float: left;">⏪️</a>
-<a href="math.html" class="arrows" style="float: right;">⏩</a>
+<!--<a href="variables.html" class="arrows" style="float: right;">⏩</a>-->
