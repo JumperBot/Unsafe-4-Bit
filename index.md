@@ -31,5 +31,5 @@ layout: default
 <h3>Afterwards, you can check out the next chapters by clicking / tapping on the right arrow below.</h3>
 <h4>You can always come back here by clicking / tapping on the left arrow if it appears below.</h4>
 
-<!--<a href="./" class="arrows" style="float: left;">⏪️</a>-->
+<a href="under_construction.html" class="arrows" style="float: left;">⏪️</a>
 <a href="hello_world.html" class="arrows" style="float: right;">⏩</a>
