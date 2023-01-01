@@ -20,7 +20,7 @@
 
 UFB reminds you of its ***lower-level counterparts*** as you manage your ***"RAM"***.
 
-The [**`256 items in memory`**](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#Memory) is divided into two parts: ROM and non-ROM.
+The [**`256 items in memory`**](https://jumperbot.github.io/Unsafe-4-Bit/variables.html) is divided into two parts: ROM and non-ROM.
 
 This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
@@ -34,7 +34,7 @@ This ***"freedom"*** lets you ***"shoot yourself in the foot"***.
 
 ### [**`Download The Latest Binary`**](https://github.com/JumperBot/Unsafe-4-Bit/releases/latest)
 
-### [**`Or Clone The Repository And Get Continous Updates`**](./#or-clone-the-repository-and-get-continous-updates):
+### [**`Or Clone The Repository And Build It From Source`**](./#or-clone-the-repository-and-build-it-from-source):
 
 ```bash
 git clone https://github.com/JumperBot/Unsafe-4-Bit.git
@@ -67,9 +67,9 @@ git clone https://github.com/JumperBot/Unsafe-4-Bit.git
 
 <div align="center">
 
-# :technologist: [**`Tutorial`**](https://github.com/JumperBot/Unsafe-4-Bit/wiki) :monocle_face:
+# :technologist: [**`Tutorial`**](https://jumperbot.github.io/Unsafe-4-Bit/) :monocle_face:
 
-### Write your first program full of [**`commands`**](https://github.com/JumperBot/Unsafe-4-Bit/wiki/Z-Others#default-16).
+### Write your first program full of [**`commands`**](https://jumperbot.github.io/Unsafe-4-Bit/hello_world.html).
 
 ### 'Then [**`compile`**](https://github.com/JumperBot/Unsafe-4-Bit/releases/latest) and [**`run`**](https://github.com/JumperBot/Unsafe-4-Bit/releases/latest) the program!
 
