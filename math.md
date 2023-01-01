@@ -29,7 +29,7 @@ layout: default
 
 <br>
 
-<h1 class="center_text"><a href="math.html">Math</a></h1>
+<h1 class="center_text"><a href="math.html">MATH</a></h1>
 
 <br>
 
@@ -62,16 +62,9 @@ We're not going to solve for the total area of one dispersed floating field of m
 
 <span class="comment">// $038 / $250 (Take away the decimal numbers)| Reverse Modulus</span>
 <span class="command">rmod</span> <span class="index">38 250</span>
-
-<span class="comment">// I could not think of anything else to name it...</span>
-<span class="comment">// Let's never talk about rmod ever again, shall we?</span>
 </pre>
-
-<blockquote>
-Maybe you've got an idea of what to rename rmod to, just send me a message.
-</blockquote>
 
 <br>
 
 <a href="variables.html" class="arrows" style="float: left;">⏪️</a>
-<a href="under_construction.html" class="arrows" style="float: right;">⏩</a>
+<a href="jump.html" class="arrows" style="float: right;">⏩</a>
