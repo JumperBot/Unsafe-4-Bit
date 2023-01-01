@@ -1,7 +1,7 @@
 use crate::universal::Universal;
 
 use std::collections::HashMap;
-use std::fs::{self, File, Metadata};
+use std::fs::{self, File};
 use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
 use std::path::Path;
 use std::str::Chars;
@@ -27,21 +27,21 @@ pub struct Runner {
 
 impl Runner {
     pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
-        let file_res: Result<File, _> = File::open(&file_name);
-        if let Err(ref x) = file_res {
-            Universal::err_exit(format!(
-                "File Provided Does Not Exist...\n{x}\nTerminating..."
-            ));
-        }
-        let file: File = file_res.unwrap();
-        let meta_res: Result<Metadata, _> = file.metadata();
-        if let Err(ref x) = meta_res {
+        let file: File = File::open(&file_name).unwrap_or_else(|x| {
             Universal::err_exit(x.to_string());
-        }
+            File::open("").unwrap()
+        });
+        let file_size: u64 = file
+            .metadata()
+            .unwrap_or_else(|x| {
+                Universal::err_exit(x.to_string());
+                file.metadata().unwrap()
+            })
+            .len();
         Runner {
             file,
             file_name,
-            file_size: meta_res.unwrap().len(),
+            file_size,
             ptr: 0,
             ptr_copy: Vec::<u64>::new(),
             mem_ind: [0; 256],
@@ -395,7 +395,7 @@ impl Runner {
         out
     }
     fn get_file_name(&mut self, arg_count: u8) -> String {
-        let mut out: String = self.get_args(arg_count as usize, true);
+        let out: String = self.get_args(arg_count as usize, true);
         if Path::new(&out).is_relative() {
             if let Some(x) = Path::new(&self.file_name)
                 .canonicalize()
@@ -403,7 +403,7 @@ impl Runner {
                 .as_path()
                 .parent()
             {
-                out = format!("{}/{out}", x.display());
+                return format!("{}/{out}", x.display());
             }
         }
         out
@@ -421,35 +421,35 @@ impl Runner {
             if x.kind() == ErrorKind::PermissionDenied {
                 Universal::err_exit(x.to_string());
             }
-            let res1: Result<File, _> = File::create(&file_name);
-            if let Err(ref x) = res1 {
-                if x.kind() != ErrorKind::NotFound {
-                    Universal::err_exit(x.to_string());
-                }
-                if let Some(x) = Path::new(&file_name).parent() {
-                    if let Err(x) = fs::create_dir_all(x) {
+            if let Err(x) = File::create(&file_name)
+                .unwrap_or_else(|x| {
+                    if x.kind() != ErrorKind::NotFound {
                         Universal::err_exit(x.to_string());
                     }
-                }
-                let res: Result<File, _> = File::create(&file_name);
-                if let Err(ref x) = res {
-                    Universal::err_exit(x.to_string());
-                }
-                if let Err(x) = res.unwrap().write(out.as_bytes()) {
-                    Universal::err_exit(x.to_string());
-                }
-            } else if let Err(x) = res1.unwrap().write(out.as_bytes()) {
+                    if let Some(x) = Path::new(&file_name).parent() {
+                        if let Err(x) = fs::create_dir_all(x) {
+                            Universal::err_exit(x.to_string());
+                        }
+                    }
+                    File::create(&file_name).unwrap_or_else(|x| {
+                        Universal::err_exit(x.to_string());
+                        File::open("").unwrap()
+                    })
+                })
+                .write(out.as_bytes())
+            {
                 Universal::err_exit(x.to_string());
             }
             return;
         }
-        match File::create(&file_name) {
-            Ok(mut x) => {
-                if let Err(x) = x.write(out.as_bytes()) {
-                    Universal::err_exit(x.to_string());
-                }
-            }
-            Err(x) => Universal::err_exit(x.to_string()),
+        if let Err(x) = File::create(&file_name)
+            .unwrap_or_else(|x| {
+                Universal::err_exit(x.to_string());
+                File::open("").unwrap()
+            })
+            .write(out.as_bytes())
+        {
+            Universal::err_exit(x.to_string());
         }
     }
 
@@ -457,22 +457,22 @@ impl Runner {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
         let file_name: String = self.get_file_name(arg_count);
-        let res: Result<String, _> = fs::read_to_string(file_name);
-        if let Err(ref x) = res {
-            Universal::err_exit(format!(
-                "File Provided Does Not Exist...\n{x}\nTerminating..."
-            ));
-        }
-        self.write_chars(&ind, &mut res.unwrap().chars());
+        self.write_chars(
+            &ind,
+            &mut fs::read_to_string(file_name)
+                .unwrap_or_else(|x| {
+                    Universal::err_exit(x.to_string());
+                    String::new()
+                })
+                .chars(),
+        );
     }
 
     fn dfile(&mut self) {
         let arg_count: u8 = self.next();
         let file_name: String = self.get_file_name(arg_count);
         if let Err(x) = fs::remove_dir_all(file_name) {
-            Universal::err_exit(format!(
-                "File Provided Does Not Exist...\n{x}\nTerminating..."
-            ));
+            Universal::err_exit(x.to_string());
         }
     }
 
@@ -504,13 +504,9 @@ impl Runner {
     fn cfunc(&mut self) {
         let arg_count: u16 = self.next_u16();
         let func_name: String = self.get_args(arg_count as usize, false);
-        if let Some(_x) = self.funcs.get(&func_name) {
-            if let Some(x) = self.ptr_copy.pop() {
-                self.ptr = x;
-            }
-            if let Some(x) = self.mem_copy.pop() {
-                self.mem = x;
-            }
+        if self.funcs.get(&func_name).is_some() {
+            self.ptr = self.ptr_copy.pop().unwrap();
+            self.mem = self.mem_copy.pop().unwrap();
         }
     }
 
@@ -523,11 +519,9 @@ impl Runner {
             self.mem_copy.push(self.mem);
             self.mem = Self::init_mem();
             self.ptr_copy.push(self.ptr);
-            self.ptr = *x;
             self.ptr = *x + 2 + arg_count as u64;
             let arg_count2: u8 = self.next();
             let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
-            
         }
     }
 
@@ -546,18 +540,26 @@ impl Runner {
         ((self.next() as u16) << 8) | (self.next() as u16)
     }
 
+    const DEFAULT_MEM: [char; 256] = [
+        ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+        'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+        '9', '\n', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+    ];
     fn init_mem() -> [char; 256] {
-        let mut mem: [char; 256] = ['\u{0000}'; 256];
-        let zero: u32 = '0' as u32;
-        let a: u32 = 'A' as u32;
-        mem[0] = ' ';
-        for x in 0..26 {
-            if x < 10 {
-                mem[x + 27] = Universal::convert_u32_to_char(zero + x as u32);
-            }
-            mem[x + 1] = Universal::convert_u32_to_char(a + x as u32);
-        }
-        mem[37] = '\n';
-        mem
+        Self::DEFAULT_MEM
     }
 }
