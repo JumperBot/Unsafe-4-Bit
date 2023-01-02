@@ -32,14 +32,14 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
 <meta property="og:description" content="The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust" />
-<link rel="canonical" href="/literacy.html" />
-<meta property="og:url" content="/literacy.html" />
+<link rel="canonical" href="/files.html" />
+<meta property="og:url" content="/files.html" />
 <meta property="og:site_name" content="UFB Wiki" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="UFB Wiki" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/literacy.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"The UFB (Unsafe Four Bit) Programming Language – FAST EASY VERBOSE – Built With Rust","headline":"UFB Wiki","url":"/files.html"}</script>
 <!-- End Jekyll SEO tag -->
 
   </head>
@@ -82,47 +82,49 @@
 	.index {
 		color: orange;
 	}
+	.comment {
+		color: grey;
+	}
 </style>
 
 <p><br /></p>
 
-<h1 class="center_text"><a href="literacy.html">LITERACY</a></h1>
+<h1 class="center_text"><a href="files.html">FILES</a></h1>
 
 <p><br /></p>
 
-<h2>A UFB program can be either illiterate or literate.</h2>
+<h2>Not all languages can access your files!.. Right?</h2>
 
 <blockquote>
-<h6>b: able to read and write</h6>
-<h5>- <a href="https://www.merriam-webster.com/dictionary/literate">Merriam-Webster Dictionary</a></h5>
+🚨 This part of the language may change in the future! <a href="https://github.com/JumperBot/Unsafe-4-Bit/issues/42">#42</a>
 </blockquote>
 
-<div style="display: flex;">
-<div style="width: 50%">
-<h3>This program is literate:</h3>
+<h3>In other languages, accessing the filesystem takes too many keystrokes.</h3>
+<h4>You're quite lucky that it will only take you one line to read / write / delete a file!</h4>
+
 <pre>
-<span class="command">wvar </span> <span class="index">38</span> <span class="string">"Hello"</span>
-<span class="command">read </span> <span class="index">50</span>
-<span class="command">print</span> <span class="string">"<span class="index">$038</span>, <span class="index">$050</span>!\n"</span>
+<span class="comment">// These commands WILL crash the program if they are unsuccessful, somehow.</span>
+
+<span class="comment">// Write the data in memory index 38 into <span class="string">":PROGRAM_DIR:/foo.txt"</span>.</span>
+<span class="comment">// Automatically create the file / subdirectories if they do not exist yet.</span>
+<span class="command">wfile</span> <span class="index">38 </span><span class="string">"foo.txt"</span>
+
+<span class="comment">// Write the data in <span class="string">":PROGRAM_DIR:/foo.txt"</span> into memory index 38.</span>
+<span class="command">rfile</span> <span class="index">38 </span><span class="string">"foo.txt"</span>
+
+<span class="comment">// Delete the file / directory <span class="string">":PROGRAM_DIR:/foo.txt"</span>.</span>
+<span class="comment">// This will delete the child directories if it is a directory, so be careful!</span>
+<span class="command">dfile</span> <span class="string">"foo.txt"</span>
 </pre>
-</div>
-<div style="width: 50%">
-<h3>This program is illiterate:</h3>
-<pre>
-<span class="command">print</span> <span class="string">"Hello, World!\n"</span>
 
-
-</pre>
-</div>
-</div>
-
-<h3>Literacy is the boundary between knowing more about the outside world and oneself...</h3>
-<h3>But at the cost of more work and performance inefficiency.</h3>
+<blockquote>
+🚨 This part of the language may change in the future! <a href="https://github.com/JumperBot/Unsafe-4-Bit/issues/42">#42</a>
+</blockquote>
 
 <p><br /></p>
 
-<p><a href="hello_world.html" class="arrows" style="float: left;">⏪️</a>
-<a href="variables.html" class="arrows" style="float: right;">⏩</a></p>
+<p><a href="nothingness.html" class="arrows" style="float: left;">⏪️</a>
+<a href="under_construction.html" class="arrows" style="float: right;">⏩</a></p>
 
       </section>
     </div>
