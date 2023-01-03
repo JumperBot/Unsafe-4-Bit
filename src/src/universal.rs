@@ -7,18 +7,13 @@ pub struct Universal {}
 
 impl Universal {
     pub fn convert_u32_to_char(code: u32) -> char {
-        if let Some(x) = char::from_u32(code) {
-            return x;
-        }
-        '\u{0000}'
+        char::from_u32(code).unwrap_or('\0')
     }
 
     pub fn arr_to_string<T: std::fmt::Display>(arr: &[T]) -> String {
         let mut out: String = String::new();
-        for x in arr {
-            out.push_str(&x.to_string());
-            out.push_str(", ");
-        }
+        arr.iter()
+            .for_each(|x| out.push_str(&(x.to_string() + ",")));
         out[..out.len() - 2].to_string()
     }
 
@@ -190,6 +185,14 @@ impl Universal {
         let val: u32 = c as u32;
         val > 47 && val < 58
     }
+    pub fn quick_parse(input: String) -> u32 {
+        let mut out: u32 = 0;
+        input.chars().for_each(|x| {
+            out += x as u32 - 48;
+            out *= 10;
+        });
+        out / 10
+    }
     pub fn convert_unicode(input: &str) -> String {
         if input.len() < 6 {
             return input.to_string();
@@ -200,38 +203,33 @@ impl Universal {
             if x + 5 >= out.len() {
                 break;
             }
-            let mut place_holder: String = String::new();
-            for x2 in out[x + 2..x + 6].chars() {
-                if Self::is_digit(x2) {
-                    place_holder.push(x2);
+            let mut place_holder: String = out[x + 2..x + 6].to_string();
+            for x in place_holder.chars() {
+                if !Self::is_digit(x) {
+                    place_holder = String::new();
+                    break;
                 }
             }
-            if place_holder.len() == 4 {
+            if !place_holder.is_empty() {
                 {
                     let s1: String = out[..x].to_string();
                     let s2: String =
-                        Self::convert_u32_to_char(place_holder.parse::<u32>().unwrap()).to_string();
+                        Self::convert_u32_to_char(Self::quick_parse(place_holder)).to_string();
                     let s3: String = out[x + 6..].to_string();
                     out.clear();
-                    out.push_str(&s1);
-                    out.push_str(&s2);
-                    out.push_str(&s3);
+                    out.push_str(&(s1 + &s2 + &s3));
                 }
                 let s1: String = lowercase_out[..x].to_string();
                 let s2: String = "_".to_string();
                 let s3: String = lowercase_out[x + 6..].to_string();
                 lowercase_out.clear();
-                lowercase_out.push_str(&s1);
-                lowercase_out.push_str(&s2);
-                lowercase_out.push_str(&s3);
+                lowercase_out.push_str(&(s1 + &s2 + &s3));
             } else {
                 let s1: String = lowercase_out[..x].to_string();
                 let s2: String = "______".to_string();
                 let s3: String = lowercase_out[x + 6..].to_string();
                 lowercase_out.clear();
-                lowercase_out.push_str(&s1);
-                lowercase_out.push_str(&s2);
-                lowercase_out.push_str(&s3);
+                lowercase_out.push_str(&(s1 + &s2 + &s3));
             }
         }
         out
