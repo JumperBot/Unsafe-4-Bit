@@ -203,13 +203,11 @@ impl Universal {
             if x + 5 >= out.len() {
                 break;
             }
-            let mut place_holder: String = out[x + 2..x + 6].to_string();
-            for x in place_holder.chars() {
-                if !Self::is_digit(x) {
-                    place_holder = String::new();
-                    break;
-                }
-            }
+            let place_holder: String = {
+                let mut temp: Vec<char> = out[x + 2..x + 6].chars().collect::<Vec<char>>();
+                temp.retain(|x| Self::is_digit(*x));
+                temp.iter().collect::<String>()
+            };
             if !place_holder.is_empty() {
                 {
                     let s1: String = out[..x].to_string();
@@ -220,16 +218,14 @@ impl Universal {
                     out.push_str(&(s1 + &s2 + &s3));
                 }
                 let s1: String = lowercase_out[..x].to_string();
-                let s2: String = "_".to_string();
                 let s3: String = lowercase_out[x + 6..].to_string();
                 lowercase_out.clear();
-                lowercase_out.push_str(&(s1 + &s2 + &s3));
+                lowercase_out.push_str(&(s1 + "_" + &s3));
             } else {
                 let s1: String = lowercase_out[..x].to_string();
-                let s2: String = "______".to_string();
                 let s3: String = lowercase_out[x + 6..].to_string();
                 lowercase_out.clear();
-                lowercase_out.push_str(&(s1 + &s2 + &s3));
+                lowercase_out.push_str(&(s1 + "______" + &s3));
             }
         }
         out

@@ -408,44 +408,25 @@ impl Runner {
         }
         out
     }
-    // The heaviest command of all:
     fn wfile(&mut self) {
         let arg_count: u8 = self.next() - 1;
         let ind: u8 = self.next();
         let file_name: String = self.get_file_name(arg_count);
-        let mut out: String = String::new();
-        for x in self.rvar(&ind) {
-            out.push(x);
-        }
-        if let Err(x) = File::open(&file_name) {
-            if x.kind() == ErrorKind::PermissionDenied {
-                Universal::err_exit(x.to_string());
-            }
-            if let Err(x) = File::create(&file_name)
-                .unwrap_or_else(|x| {
-                    if x.kind() != ErrorKind::NotFound {
-                        Universal::err_exit(x.to_string());
-                    }
-                    if let Some(x) = Path::new(&file_name).parent() {
-                        if let Err(x) = fs::create_dir_all(x) {
-                            Universal::err_exit(x.to_string());
-                        }
-                    }
-                    File::create(&file_name).unwrap_or_else(|x| {
-                        Universal::err_exit(x.to_string());
-                        File::open("").unwrap()
-                    })
-                })
-                .write(out.as_bytes())
-            {
-                Universal::err_exit(x.to_string());
-            }
-            return;
-        }
+        let out: String = self.rvar(&ind).iter().cloned().collect::<String>();
         if let Err(x) = File::create(&file_name)
             .unwrap_or_else(|x| {
-                Universal::err_exit(x.to_string());
-                File::open("").unwrap()
+                if x.kind() != ErrorKind::NotFound {
+                    Universal::err_exit(x.to_string());
+                }
+                if let Some(x) = Path::new(&file_name).parent() {
+                    if let Err(x) = fs::create_dir_all(x) {
+                        Universal::err_exit(x.to_string());
+                    }
+                }
+                File::create(&file_name).unwrap_or_else(|x| {
+                    Universal::err_exit(x.to_string());
+                    File::open("").unwrap()
+                })
             })
             .write(out.as_bytes())
         {
