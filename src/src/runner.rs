@@ -148,29 +148,39 @@ impl Runner {
             }
         }
     }
+    //Vec::<Box<dyn Fn()>>::new();
     fn run_command(&mut self, com: u8) {
-        match com {
-            0 => self.wvar(),
-            1 => {
-                let ind: u8 = self.next();
-                self.nvar(&ind);
-            }
-            2 => self.trim(),
-            3..=8 => self.math(&com),
-            9 => thread::sleep(self.ten_millis),
-            10..=13 => self.jump(&com),
-            14 => self.print(),
-            15 => self.read(),
-            16 => self.wfile(),
-            17 => self.rfile(),
-            18 => self.dfile(),
-            19 => self.wfunc(),
-            20 => self.cfunc(),
-            21 => self.ufunc(),
-            _ => Universal::err_exit(format!(
+        let commands: [fn(&mut Self) -> (); 23] = [
+            Self::wvar,
+            Self::nvar,
+            Self::trim,
+            Self::add,
+            Self::sub,
+            Self::mul,
+            Self::div,
+            Self::r#mod,
+            Self::rmod,
+            Self::nop,
+            Self::jump,
+            Self::jump,
+            Self::jump,
+            Self::jump,
+            Self::print,
+            Self::read,
+            Self::wfile,
+            Self::rfile,
+            Self::dfile,
+            Self::wfunc,
+            Self::cfunc,
+            Self::ufunc,
+            Self::wvar,
+        ];
+        if com > 22 {
+            Universal::err_exit(format!(
                 "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
-            )),
+            ));
         }
+        commands[com as usize](self);
     }
 
     fn wvar(&mut self) {
@@ -194,7 +204,7 @@ impl Runner {
         self.write_arr(ind, &chars.collect::<Vec<char>>());
     }
     fn write_arr(&mut self, ind: &u8, arr: &[char]) {
-        self.nvar(ind);
+        self.nullify(ind);
         let ind_usize: usize = *ind as usize;
         let len: usize = arr.len();
         for (x, c) in arr.iter().enumerate() {
@@ -211,6 +221,10 @@ impl Runner {
         }
         self.mem_ind[ind_usize] = ind + (len as u8) - 1;
     }
+    fn nvar(&mut self) {
+        let ind: u8 = self.next();
+        self.nullify(&ind);
+    }
 
     fn rvar(&mut self, ind: &u8) -> Vec<char> {
         let ind_usize: usize = *ind as usize;
@@ -220,7 +234,7 @@ impl Runner {
         self.mem[ind_usize..=self.mem_ind[ind_usize] as usize].to_vec()
     }
 
-    fn nvar(&mut self, ind: &u8) {
+    fn nullify(&mut self, ind: &u8) {
         let ind_usize: usize = *ind as usize;
         if self.mem_ind[ind_usize] == 0 {
             return;
@@ -235,7 +249,7 @@ impl Runner {
         let ind: u8 = self.next();
         let trim_size: u8 = self.next();
         if trim_size == 0 {
-            self.nvar(&ind);
+            self.nullify(&ind);
             return;
         }
         let resident: Vec<char> = self.rvar(&ind);
@@ -245,32 +259,66 @@ impl Runner {
         self.write_arr(&ind, &resident[0..trim_size as usize]);
     }
 
-    fn math(&mut self, op: &u8) {
-        let ind1: u8 = self.next();
-        let ind2: u8 = self.next();
-        let val1: Vec<char> = self.rvar(&ind1);
-        let val2: Vec<char> = self.rvar(&ind2);
-        let num1: f64 = Self::to_num(&val1);
-        let num2: f64 = Self::to_num(&val2);
-        if num2 == 0.0 && op > &5 {
-            self.write_arr(&ind1, &['i'; 1]);
+    fn add(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        self.write_math_res(&ind, num1 + num2);
+    }
+    fn sub(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        self.write_math_res(&ind, num1 + num2);
+    }
+    fn mul(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        self.write_math_res(&ind, num1 + num2);
+    }
+    fn div(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        if Self::check_math_div_err(&num2) {
+            self.write_arr(&ind, &['i']);
             return;
         }
-        let out: f64 = match op {
-            3 => num1 + num2,
-            4 => num1 - num2,
-            5 => num1 * num2,
-            6 => num1 / num2,
-            7 => num1 % num2,
-            8 => ((num1 / num2) as i64) as f64,
-            _ => return,
-        };
-        if out % 1.0 == 0.0 {
-            self.write_chars(&ind1, &mut (out as i64).to_string().chars());
+        self.write_math_res(&ind, num1 + num2);
+    }
+    fn r#mod(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        if Self::check_math_div_err(&num2) {
+            self.write_arr(&ind, &['i']);
+            return;
+        }
+        self.write_math_res(&ind, ((num1 / num2) as i64) as f64);
+    }
+    fn rmod(&mut self) {
+        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
+        if Self::check_math_div_err(&num2) {
+            self.write_arr(&ind, &['i']);
+            return;
+        }
+        self.write_math_res(&ind, num1 + num2);
+    }
+
+    fn get_math_vals(&mut self) -> (u8, f64, f64) {
+        let ind1: u8 = self.next();
+        let ind2: u8 = self.next();
+        (
+            ind1,
+            Self::to_num(&self.rvar(&ind1)),
+            Self::to_num(&self.rvar(&ind2)),
+        )
+    }
+    fn write_math_res(&mut self, ind: &u8, res: f64) {
+        if res % 1.0 == 0.0 {
+            self.write_chars(ind, &mut (res as i64).to_string().chars());
         } else {
-            self.write_chars(&ind1, &mut out.to_string().chars());
+            self.write_chars(ind, &mut res.to_string().chars());
         }
     }
+    fn check_math_div_err(num2: &f64) -> bool {
+        if num2 == &0.0 {
+            return false;
+        }
+        true
+    }
+
     fn find_period(arr: &[char]) -> Option<usize> {
         for x in 0..arr.len() / 2 + 1 {
             if arr[x] == '.' {
@@ -315,7 +363,13 @@ impl Runner {
         hash
     }
 
-    fn jump(&mut self, op: &u8) {
+    fn nop(&mut self) {
+        thread::sleep(self.ten_millis);
+    }
+
+    fn jump(&mut self) {
+        self.ptr -= 1;
+        let op: &u8 = &self.next();
         let ind1: u8 = self.next();
         let ind2: u8 = self.next();
         let val1: &[char] = &self.rvar(&ind1);
