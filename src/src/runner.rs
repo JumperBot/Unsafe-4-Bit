@@ -8,18 +8,25 @@ use std::str::Chars;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+struct FileMeta {
+    pub file: File,
+    pub file_name: String,
+    pub file_size: u64,
+}
+
+struct RunnerData {
+    pub ptr: u64,
+    pub mem_ind: [u8; 256],
+    pub mem: [char; 256],
+    pub byte_ind: Vec<u64>,
+}
 pub struct Runner {
-    file: File,
-    file_name: String,
-    file_size: u64,
-    ptr: u64,
-    ptr_copy: Vec<u64>,
-    mem_ind: [u8; 256],
-    mem: [char; 256],
-    mem_copy: Vec<[char; 256]>,
-    byte_ind: Vec<u64>,
+    file_meta: FileMeta,
+    runner_data: RunnerData,
+    runner_data_copy: Vec<RunnerData>,
     funcs: HashMap<String, u64>,
     ten_millis: Duration,
+    comms: Vec<fn(&mut Self) -> ()>,
     perfmes: bool,
     nanosec: bool,
     commmes: bool,
@@ -39,17 +46,45 @@ impl Runner {
             })
             .len();
         Runner {
-            file,
-            file_name,
-            file_size,
-            ptr: 0,
-            ptr_copy: Vec::<u64>::new(),
-            mem_ind: [0; 256],
-            mem: Self::init_mem(),
-            mem_copy: Vec::<[char; 256]>::new(),
-            byte_ind: Vec::<u64>::new(),
+            file_meta: FileMeta {
+                file,
+                file_name,
+                file_size,
+            },
+            runner_data: RunnerData {
+                ptr: 0,
+                mem_ind: [0; 256],
+                mem: Self::init_mem(),
+                byte_ind: Vec::<u64>::new(),
+            },
+            runner_data_copy: Vec::<RunnerData>::new(),
             funcs: HashMap::<String, u64>::new(),
             ten_millis: Duration::from_millis(10),
+            comms: vec![
+                Self::wvar,
+                Self::nvar,
+                Self::trim,
+                Self::add,
+                Self::sub,
+                Self::mul,
+                Self::div,
+                Self::r#mod,
+                Self::rmod,
+                Self::nop,
+                Self::jm,
+                Self::jl,
+                Self::je,
+                Self::jne,
+                Self::print,
+                Self::read,
+                Self::wfile,
+                Self::rfile,
+                Self::dfile,
+                Self::wfunc,
+                Self::cfunc,
+                Self::ufunc,
+                Self::wvar,
+            ],
             perfmes,
             nanosec,
             commmes,
@@ -78,7 +113,7 @@ impl Runner {
             for i in 0..32 {
                 for ratio in 0..8 {
                     let ind: usize = i + (ratio * 32);
-                    if self.mem_ind[ind] != 0 {
+                    if self.runner_data.mem_ind[ind] != 0 {
                         mem_leaks = format!("{mem_leaks}\nMemory Leak At Index: {ind}");
                     }
                 }
@@ -102,7 +137,7 @@ impl Runner {
         for i in 0..32 {
             for ratio in 0..8 {
                 let ind: usize = i + (ratio * 32);
-                if self.mem_ind[ind] != 0 {
+                if self.runner_data.mem_ind[ind] != 0 {
                     mem_leaks.push_str(&format!("\nMemory Leak At Index: {ind}"));
                 }
             }
@@ -112,16 +147,21 @@ impl Runner {
         }
     }
     fn run_commands(&mut self) {
-        while self.ptr != self.file_size {
-            if self.byte_ind.binary_search(&self.ptr).is_err() {
-                self.byte_ind.push(self.ptr);
+        while self.runner_data.ptr != self.file_meta.file_size {
+            if self
+                .runner_data
+                .byte_ind
+                .binary_search(&self.runner_data.ptr)
+                .is_err()
+            {
+                self.runner_data.byte_ind.push(self.runner_data.ptr);
             }
             let com: u8 = self.next();
             self.run_command(com);
         }
     }
     fn run_commands_with_time(&mut self) {
-        while self.ptr != self.file_size {
+        while self.runner_data.ptr != self.file_meta.file_size {
             let start: u128;
             if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
                 if self.nanosec {
@@ -132,8 +172,13 @@ impl Runner {
             } else {
                 start = 0;
             }
-            if self.byte_ind.binary_search(&self.ptr).is_err() {
-                self.byte_ind.push(self.ptr);
+            if self
+                .runner_data
+                .byte_ind
+                .binary_search(&self.runner_data.ptr)
+                .is_err()
+            {
+                self.runner_data.byte_ind.push(self.runner_data.ptr);
             }
             let com: u8 = self.next();
             self.run_command(com);
@@ -148,39 +193,13 @@ impl Runner {
             }
         }
     }
-    //Vec::<Box<dyn Fn()>>::new();
     fn run_command(&mut self, com: u8) {
-        let commands: [fn(&mut Self) -> (); 23] = [
-            Self::wvar,
-            Self::nvar,
-            Self::trim,
-            Self::add,
-            Self::sub,
-            Self::mul,
-            Self::div,
-            Self::r#mod,
-            Self::rmod,
-            Self::nop,
-            Self::jump,
-            Self::jump,
-            Self::jump,
-            Self::jump,
-            Self::print,
-            Self::read,
-            Self::wfile,
-            Self::rfile,
-            Self::dfile,
-            Self::wfunc,
-            Self::cfunc,
-            Self::ufunc,
-            Self::wvar,
-        ];
-        if com > 22 {
+        if com as usize > self.comms.len() - 1 {
             Universal::err_exit(format!(
                 "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
             ));
         }
-        commands[com as usize](self);
+        self.comms[com as usize](self);
     }
 
     fn wvar(&mut self) {
@@ -210,16 +229,16 @@ impl Runner {
         for (x, c) in arr.iter().enumerate() {
             let ptr: usize = x + ind_usize;
             if ptr == 256 {
-                self.mem_ind[ind_usize] = 255;
+                self.runner_data.mem_ind[ind_usize] = 255;
                 return;
             }
-            self.mem[ptr] = *c;
+            self.runner_data.mem[ptr] = *c;
             if x + ind_usize == 255 {
-                self.mem_ind[ind_usize] = 255;
+                self.runner_data.mem_ind[ind_usize] = 255;
                 return;
             }
         }
-        self.mem_ind[ind_usize] = ind + (len as u8) - 1;
+        self.runner_data.mem_ind[ind_usize] = ind + (len as u8) - 1;
     }
     fn nvar(&mut self) {
         let ind: u8 = self.next();
@@ -228,21 +247,21 @@ impl Runner {
 
     fn rvar(&mut self, ind: &u8) -> Vec<char> {
         let ind_usize: usize = *ind as usize;
-        if self.mem_ind[ind_usize] == 0 {
-            return self.mem[ind_usize..=ind_usize].to_vec();
+        if self.runner_data.mem_ind[ind_usize] == 0 {
+            return self.runner_data.mem[ind_usize..=ind_usize].to_vec();
         }
-        self.mem[ind_usize..=self.mem_ind[ind_usize] as usize].to_vec()
+        self.runner_data.mem[ind_usize..=self.runner_data.mem_ind[ind_usize] as usize].to_vec()
     }
 
     fn nullify(&mut self, ind: &u8) {
         let ind_usize: usize = *ind as usize;
-        if self.mem_ind[ind_usize] == 0 {
+        if self.runner_data.mem_ind[ind_usize] == 0 {
             return;
         }
-        for x in ind_usize..=self.mem_ind[ind_usize] as usize {
-            self.mem[x] = '\u{0000}';
+        for x in ind_usize..=self.runner_data.mem_ind[ind_usize] as usize {
+            self.runner_data.mem[x] = '\u{0000}';
         }
-        self.mem_ind[ind_usize] = 0;
+        self.runner_data.mem_ind[ind_usize] = 0;
     }
 
     fn trim(&mut self) {
@@ -265,11 +284,11 @@ impl Runner {
     }
     fn sub(&mut self) {
         let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        self.write_math_res(&ind, num1 + num2);
+        self.write_math_res(&ind, num1 - num2);
     }
     fn mul(&mut self) {
         let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        self.write_math_res(&ind, num1 + num2);
+        self.write_math_res(&ind, num1 * num2);
     }
     fn div(&mut self) {
         let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
@@ -277,7 +296,7 @@ impl Runner {
             self.write_arr(&ind, &['i']);
             return;
         }
-        self.write_math_res(&ind, num1 + num2);
+        self.write_math_res(&ind, num1 / num2);
     }
     fn r#mod(&mut self) {
         let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
@@ -285,7 +304,7 @@ impl Runner {
             self.write_arr(&ind, &['i']);
             return;
         }
-        self.write_math_res(&ind, ((num1 / num2) as i64) as f64);
+        self.write_math_res(&ind, num1 % num2);
     }
     fn rmod(&mut self) {
         let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
@@ -293,7 +312,7 @@ impl Runner {
             self.write_arr(&ind, &['i']);
             return;
         }
-        self.write_math_res(&ind, num1 + num2);
+        self.write_math_res(&ind, ((num1 / num2) as i64) as f64);
     }
 
     fn get_math_vals(&mut self) -> (u8, f64, f64) {
@@ -314,9 +333,9 @@ impl Runner {
     }
     fn check_math_div_err(num2: &f64) -> bool {
         if num2 == &0.0 {
-            return false;
+            return true;
         }
-        true
+        false
     }
 
     fn find_period(arr: &[char]) -> Option<usize> {
@@ -367,42 +386,68 @@ impl Runner {
         thread::sleep(self.ten_millis);
     }
 
-    fn jump(&mut self) {
-        self.ptr -= 1;
-        let op: &u8 = &self.next();
-        let ind1: u8 = self.next();
-        let ind2: u8 = self.next();
-        let val1: &[char] = &self.rvar(&ind1);
-        let val2: &[char] = &self.rvar(&ind2);
-        let com: u16 = self.next_u16();
-        if (op == &10 && Self::to_num(val1) > Self::to_num(val2))
-            || (op == &11 && Self::to_num(val1) < Self::to_num(val2))
-            || (op == &12 && val1.eq(val2))
-            || (op == &13 && !val1.eq(val2))
-        {
-            if com < self.byte_ind.len() as u16 {
-                self.ptr = self.byte_ind[com as usize];
-                return;
-            }
-            self.skip(&com);
+    fn jm(&mut self) {
+        let (val1, val2, com): (f64, f64, u16) = self.get_jump_vals2();
+        if val1 > val2 {
+            self.jump_to_com(com);
         }
     }
-    fn skip(&mut self, com: &u16) {
-        if com == &(self.byte_ind.len() as u16) || self.ptr >= self.file_size {
+    fn jl(&mut self) {
+        let (val1, val2, com): (f64, f64, u16) = self.get_jump_vals2();
+        if val1 < val2 {
+            self.jump_to_com(com);
+        }
+    }
+    fn je(&mut self) {
+        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
+        if val1.eq(&val2) {
+            self.jump_to_com(com);
+        }
+    }
+    fn jne(&mut self) {
+        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
+        if val1.ne(&val2) {
+            self.jump_to_com(com);
+        }
+    }
+
+    fn get_jump_vals(&mut self) -> (Vec<char>, Vec<char>, u16) {
+        let ind1: u8 = self.next();
+        let ind2: u8 = self.next();
+        let val1: Vec<char> = self.rvar(&ind1);
+        let val2: Vec<char> = self.rvar(&ind2);
+        let com: u16 = self.next_u16();
+        (val1, val2, com)
+    }
+    fn get_jump_vals2(&mut self) -> (f64, f64, u16) {
+        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
+        (Self::to_num(&val1), Self::to_num(&val2), com)
+    }
+    fn jump_to_com(&mut self, com: u16) {
+        if com < self.runner_data.byte_ind.len() as u16 {
+            self.runner_data.ptr = self.runner_data.byte_ind[com as usize];
             return;
         }
-        self.byte_ind.push(self.ptr);
+        self.skip(&com);
+    }
+    fn skip(&mut self, com: &u16) {
+        if com == &(self.runner_data.byte_ind.len() as u16)
+            || self.runner_data.ptr >= self.file_meta.file_size
+        {
+            return;
+        }
+        self.runner_data.byte_ind.push(self.runner_data.ptr);
         let cur: u8 = self.next();
         self.ptr_skip(cur);
         self.skip(com);
     }
     fn ptr_skip(&mut self, com: u8) {
         match com {
-            1 | 15 => self.ptr += 1,
-            2..=8 => self.ptr += 2,
+            1 | 15 => self.runner_data.ptr += 1,
+            2..=8 => self.runner_data.ptr += 2,
             9 => (),
-            10..=13 => self.ptr += 4,
-            0 | 14 | 16..=18 => self.ptr += self.next() as u64,
+            10..=13 => self.runner_data.ptr += 4,
+            0 | 14 | 16..=18 => self.runner_data.ptr += self.next() as u64,
             // TODO: Add Other Commands
             _ => panic!("You Forgot To Add Command Number {com} To The Skip Index..."),
         }
@@ -451,7 +496,7 @@ impl Runner {
     fn get_file_name(&mut self, arg_count: u8) -> String {
         let out: String = self.get_args(arg_count as usize, true);
         if Path::new(&out).is_relative() {
-            if let Some(x) = Path::new(&self.file_name)
+            if let Some(x) = Path::new(&self.file_meta.file_name)
                 .canonicalize()
                 .unwrap()
                 .as_path()
@@ -512,7 +557,7 @@ impl Runner {
     }
 
     fn wfunc(&mut self) {
-        let ptr: u64 = self.ptr;
+        let ptr: u64 = self.runner_data.ptr;
         let arg_count: u16 = self.next_u16();
         let func_name: String = self.get_args(arg_count as usize, false);
         let arg_count2: u8 = self.next();
@@ -520,7 +565,7 @@ impl Runner {
         let func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
         self.funcs.insert(func_name.clone(), ptr);
         loop {
-            if self.ptr >= self.file_size {
+            if self.runner_data.ptr >= self.file_meta.file_size {
                 return;
             }
             let com: u8 = self.next();
@@ -540,8 +585,7 @@ impl Runner {
         let arg_count: u16 = self.next_u16();
         let func_name: String = self.get_args(arg_count as usize, false);
         if self.funcs.get(&func_name).is_some() {
-            self.ptr = self.ptr_copy.pop().unwrap();
-            self.mem = self.mem_copy.pop().unwrap();
+            self.runner_data = self.runner_data_copy.pop().unwrap();
         }
     }
 
@@ -551,10 +595,18 @@ impl Runner {
         let given_arg_count: u8 = self.next();
         let _given_args: Vec<u8> = self.get_indexes(given_arg_count as usize);
         if let Some(x) = self.funcs.get(&func_name) {
-            self.mem_copy.push(self.mem);
-            self.mem = Self::init_mem();
-            self.ptr_copy.push(self.ptr);
-            self.ptr = *x + 2 + arg_count as u64;
+            self.runner_data_copy.push(RunnerData {
+                ptr: self.runner_data.ptr,
+                mem: self.runner_data.mem,
+                mem_ind: self.runner_data.mem_ind,
+                byte_ind: self.runner_data.byte_ind.clone(),
+            });
+            self.runner_data = RunnerData {
+                ptr: *x + 2 + arg_count as u64,
+                mem: Self::init_mem(),
+                mem_ind: [0; 256],
+                byte_ind: Vec::<u64>::new(),
+            };
             let arg_count2: u8 = self.next();
             let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
         }
@@ -562,13 +614,13 @@ impl Runner {
 
     fn next(&mut self) -> u8 {
         let mut buf: [u8; 1] = [0; 1];
-        if let Err(x) = self.file.seek(Start(self.ptr)) {
+        if let Err(x) = self.file_meta.file.seek(Start(self.runner_data.ptr)) {
             Universal::err_exit(x.to_string());
         }
-        if let Err(x) = self.file.read_exact(&mut buf) {
+        if let Err(x) = self.file_meta.file.read_exact(&mut buf) {
             Universal::err_exit(x.to_string())
         }
-        self.ptr += 1;
+        self.runner_data.ptr += 1;
         buf[0]
     }
     fn next_u16(&mut self) -> u16 {
