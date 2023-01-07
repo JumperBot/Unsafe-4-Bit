@@ -116,9 +116,9 @@ impl Math for Runner {
     }
     fn hash(arr: &[char]) -> u32 {
         let mut hash: u32 = 0;
-        for x in arr {
+        arr.iter().for_each(|x| {
             hash = 31 * hash + (*x as u32);
-        }
+        });
         hash
     }
 }

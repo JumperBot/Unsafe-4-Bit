@@ -113,14 +113,15 @@ impl Runner {
                 self.run_commands();
             }
             let mut mem_leaks: String = String::new();
-            for i in 0..32 {
-                for ratio in 0..8 {
-                    let ind: usize = i + (ratio * 32);
-                    if self.runner_data.mem_ind[ind] != 0 {
-                        mem_leaks = format!("{mem_leaks}\nMemory Leak At Index: {ind}");
+            self.runner_data
+                .mem_ind
+                .iter()
+                .enumerate()
+                .for_each(|(ind, x)| {
+                    if x != &0 {
+                        mem_leaks.push_str(&format!("\nMemory Leak At Index: {ind}"));
                     }
-                }
-            }
+                });
             if !mem_leaks.is_empty() {
                 Universal::err_exit(mem_leaks);
             }
@@ -137,14 +138,15 @@ impl Runner {
         }
         self.run_commands();
         let mut mem_leaks: String = String::new();
-        for i in 0..32 {
-            for ratio in 0..8 {
-                let ind: usize = i + (ratio * 32);
-                if self.runner_data.mem_ind[ind] != 0 {
+        self.runner_data
+            .mem_ind
+            .iter()
+            .enumerate()
+            .for_each(|(ind, x)| {
+                if x != &0 {
                     mem_leaks.push_str(&format!("\nMemory Leak At Index: {ind}"));
                 }
-            }
-        }
+            });
         if !mem_leaks.is_empty() {
             Universal::err_exit(mem_leaks);
         }
@@ -206,19 +208,17 @@ impl Runner {
     }
 
     pub fn get_indexes(&mut self, arg_count: usize) -> Vec<u8> {
-        let mut out: Vec<u8> = Vec::<u8>::new();
-        for _ in 0..arg_count {
-            out.push(self.next());
-        }
+        let mut out: Vec<u8> = Vec::<u8>::with_capacity(arg_count);
+        (0..arg_count)
+            .into_iter()
+            .for_each(|_| out.push(self.next()));
         out
     }
     pub fn get_args(&mut self, arg_count: usize, convert_unicode: bool) -> String {
         let mut out: String = String::new();
-        for x in self.get_indexes(arg_count) {
-            for y in self.rvar(&x) {
-                out.push(y);
-            }
-        }
+        self.get_indexes(arg_count).iter().for_each(|x| {
+            self.rvar(x).iter().for_each(|y| out.push(*y));
+        });
         if convert_unicode {
             return Universal::convert_unicode(&out);
         }
@@ -240,14 +240,14 @@ impl Runner {
         ((self.next() as u16) << 8) | (self.next() as u16)
     }
 
+    const ROM: [char; 38] = [
+        ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+        'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+        '9', '\n',
+    ];
     pub fn init_mem() -> [char; 256] {
-        let rom: [char; 38] = [
-            ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6',
-            '7', '8', '9', '\n',
-        ];
         core::array::from_fn(|i| match i {
-            0..=37 => rom[i],
+            0..=37 => Self::ROM[i],
             _ => '\0',
         })
     }

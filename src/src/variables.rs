@@ -19,7 +19,7 @@ impl Variables for Runner {
         let ind: u8 = self.next();
         let resident: String = String::from_iter(self.rvar(&ind));
         let mut out: String = String::new();
-        for _ in 0..arg_count {
+        (0..arg_count).into_iter().for_each(|_| {
             let ptr: u8 = self.next();
             out.push_str(
                 &(if ptr == ind {
@@ -28,7 +28,7 @@ impl Variables for Runner {
                     String::from_iter(self.rvar(&ptr))
                 }),
             );
-        }
+        });
         self.write_chars(&ind, &mut Universal::convert_unicode(&out).chars());
     }
     fn write_chars(&mut self, ind: &u8, chars: &mut Chars) {
@@ -68,9 +68,11 @@ impl Variables for Runner {
         if self.runner_data.mem_ind[ind_usize] == 0 {
             return;
         }
-        for x in ind_usize..=self.runner_data.mem_ind[ind_usize] as usize {
-            self.runner_data.mem[x] = '\u{0000}';
-        }
+        (ind_usize..=self.runner_data.mem_ind[ind_usize] as usize)
+            .into_iter()
+            .for_each(|x| {
+                self.runner_data.mem[x] = '\u{0000}';
+            });
         self.runner_data.mem_ind[ind_usize] = 0;
     }
     fn trim(&mut self) {

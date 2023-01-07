@@ -119,9 +119,9 @@ impl Command {
     }
     pub fn check_all_if_mem_ind(real_line: &[String], line: &[String]) -> String {
         let mut out: String = String::new();
-        for x in &line[1..] {
-            out = Self::check_if_mem_ind(real_line, x.clone());
-        }
+        line[1..].iter().cloned().for_each(|x| {
+            out = Self::check_if_mem_ind(real_line, x);
+        });
         out
     }
 
@@ -149,10 +149,9 @@ impl Command {
         let mut out: String = String::new();
         let mut vec2 = vec;
         vec2.dedup();
-        for x in vec2 {
-            out.push('\n');
-            out.push_str(&x);
-        }
+        vec2.iter()
+            .cloned()
+            .for_each(|x| out.push_str(&("\n".to_string() + &x)));
         return out.trim().to_string();
     }
 }
@@ -210,9 +209,9 @@ impl GenericCommand for WvarCommand {
     }
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![0, (self.line.len() - 1).try_into().unwrap()];
-        for x in 1..self.line.len() {
-            out.push(self.line[x].parse::<u8>().unwrap());
-        }
+        (1..self.line.len())
+            .into_iter()
+            .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
 }
@@ -241,7 +240,7 @@ impl GenericCommand for NvarCommand {
         ])
     }
     fn compile(&self) -> Vec<u8> {
-        vec![1, self.line[1].parse::<u8>().unwrap()]
+        vec![1, Universal::quick_parse_u8(self.line[1].clone())]
     }
 }
 
@@ -293,8 +292,8 @@ impl GenericCommand for TrimCommand {
     fn compile(&self) -> Vec<u8> {
         vec![
             2,
-            self.line[1].parse::<u8>().unwrap(),
-            self.line[2].parse::<u8>().unwrap(),
+            Universal::quick_parse_u8(self.line[1].clone()),
+            Universal::quick_parse_u8(self.line[2].clone()),
         ]
     }
 }
@@ -335,8 +334,8 @@ impl GenericCommand for MathCommand {
     fn compile(&self) -> Vec<u8> {
         vec![
             self.ind as u8,
-            self.line[1].parse::<u8>().unwrap(),
-            self.line[2].parse::<u8>().unwrap(),
+            Universal::quick_parse_u8(self.line[1].clone()),
+            Universal::quick_parse_u8(self.line[2].clone()),
         ]
     }
 }
@@ -419,8 +418,8 @@ impl GenericCommand for JumpCommand {
         let command_num: i32 = self.line[3].parse::<i32>().unwrap();
         vec![
             self.ind as u8,
-            self.line[1].parse::<u8>().unwrap(),
-            self.line[2].parse::<u8>().unwrap(),
+            Universal::quick_parse_u8(self.line[1].clone()),
+            Universal::quick_parse_u8(self.line[2].clone()),
             (command_num >> 8) as u8,
             (command_num << 8 >> 8) as u8,
         ]
@@ -448,9 +447,10 @@ impl GenericCommand for PrintCommand {
     }
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![14, (self.line.len() - 1).try_into().unwrap()];
-        for x in &self.line[1..] {
-            out.push(x.parse::<u8>().unwrap());
-        }
+        self.line[1..]
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         out
     }
 }
@@ -479,7 +479,7 @@ impl GenericCommand for ReadCommand {
         ])
     }
     fn compile(&self) -> Vec<u8> {
-        vec![15, self.line[1].parse::<u8>().unwrap()]
+        vec![15, Universal::quick_parse_u8(self.line[1].clone())]
     }
 }
 
@@ -504,9 +504,9 @@ impl GenericCommand for WfileCommand {
     }
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![16, (self.line.len() - 1).try_into().unwrap()];
-        for x in 1..self.line.len() {
-            out.push(self.line[x].parse::<u8>().unwrap());
-        }
+        (1..self.line.len())
+            .into_iter()
+            .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
 }
@@ -533,9 +533,9 @@ impl GenericCommand for RfileCommand {
     }
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![17, (self.line.len() - 1).try_into().unwrap()];
-        for x in 1..self.line.len() {
-            out.push(self.line[x].parse::<u8>().unwrap());
-        }
+        (1..self.line.len())
+            .into_iter()
+            .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
 }
@@ -561,9 +561,9 @@ impl GenericCommand for DfileCommand {
     }
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![18, (self.line.len() - 1).try_into().unwrap()];
-        for x in 1..self.line.len() {
-            out.push(self.line[x].parse::<u8>().unwrap());
-        }
+        (1..self.line.len())
+            .into_iter()
+            .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
 }
@@ -606,14 +606,16 @@ impl GenericCommand for WfuncCommand {
         let func_name_len: u16 = func_name.len().try_into().unwrap();
         out.push((func_name_len >> 8) as u8);
         out.push((func_name_len << 8 >> 8) as u8);
-        for x in func_name {
-            out.push(x.parse::<u8>().unwrap());
-        }
+        func_name
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         let func_args: &[String] = &self.line[2..];
         out.push(func_args.len().try_into().unwrap());
-        for x in func_args {
-            out.push(x.parse::<u8>().unwrap());
-        }
+        func_args
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         out
     }
 }
@@ -655,9 +657,10 @@ impl GenericCommand for CfuncCommand {
         let func_name_len: u16 = func_name.len().try_into().unwrap();
         out.push((func_name_len >> 8) as u8);
         out.push((func_name_len << 8 >> 8) as u8);
-        for x in func_name {
-            out.push(x.parse::<u8>().unwrap());
-        }
+        func_name
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         out
     }
 }
@@ -699,15 +702,16 @@ impl GenericCommand for UfuncCommand {
         let func_name_len: u16 = func_name.len().try_into().unwrap();
         out.push((func_name_len >> 8) as u8);
         out.push((func_name_len << 8 >> 8) as u8);
-        for x in func_name {
-            out.push(x.parse::<u8>().unwrap());
-        }
+        func_name
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         let func_args: &[String] = &self.line[2..];
         out.push(func_args.len().try_into().unwrap());
-        for x in func_args {
-            out.push(x.parse::<u8>().unwrap());
-        }
-        println!("{:?}", out);
+        func_args
+            .iter()
+            .cloned()
+            .for_each(|x| out.push(Universal::quick_parse_u8(x)));
         out
     }
 }

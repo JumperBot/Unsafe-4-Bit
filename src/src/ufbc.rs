@@ -108,10 +108,10 @@ impl UFBC {
             }
             println!("{}", {
                 let mut temp: String = String::new();
-                for x in warnings {
-                    temp.push_str(&x);
-                    temp.push('\n');
-                }
+                warnings
+                    .iter()
+                    .cloned()
+                    .for_each(|x| temp.push_str(&(x + "\n")));
                 temp
             });
             if !OS.contains("windows") {
@@ -121,10 +121,10 @@ impl UFBC {
         if !errors.is_empty() {
             Universal::err_exit({
                 let mut temp: String = String::new();
-                for x in errors {
-                    temp.push_str(&x);
-                    temp.push('\n');
-                }
+                errors
+                    .iter()
+                    .cloned()
+                    .for_each(|x| temp.push_str(&(x + "\n")));
                 temp
             });
         }
@@ -150,12 +150,15 @@ impl UFBC {
         default_memory_map: &MemoryMap,
     ) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
-        for x in real_line {
+        real_line.iter().for_each(|x| {
             if x.starts_with('\"') && x.ends_with('\"') {
                 let temp: String = x[1..x.len() - 1].to_string();
-                for x2 in Universal::convert_to_mem(&temp, true, labels, default_memory_map) {
-                    out.push(x2);
-                }
+                Universal::convert_to_mem(&temp, true, labels, default_memory_map)
+                    .iter()
+                    .cloned()
+                    .for_each(|x2| {
+                        out.push(x2);
+                    });
             } else if x.starts_with("${") && x.ends_with('}') {
                 let key: String = x[2..x.len() - 1].to_string();
                 if let Some(x) = labels.get(&key) {
@@ -173,7 +176,7 @@ impl UFBC {
             } else {
                 out.push(x.to_string());
             }
-        }
+        });
         out
     }
     fn assign_labels(real_line: &Vec<String>, labels: &mut HashMap<String, u8>) {
@@ -220,16 +223,16 @@ impl UFBC {
     fn split_line(line: &str) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
         let mut buf: String = String::new();
-        for x in line.to_string().chars() {
+        line.to_string().chars().into_iter().for_each(|x| {
             if "[-|, \t]".contains(x) {
                 if !buf.is_empty() {
-                    out.push(buf);
+                    out.push(buf.clone());
                     buf = String::new();
                 }
             } else {
                 buf.push(x);
             }
-        }
+        });
         if !buf.is_empty() {
             out.push(buf);
         }
@@ -294,24 +297,17 @@ impl UFBC {
     }
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
-        for x in input.chars() {
-            if "-|, \t".contains(x) {
-                res.push_str(&Self::escape_divider(x));
-            } else {
-                res.push(x);
-            }
-        }
+        input.chars().into_iter().for_each(|x| {
+            let c: &str = &x.to_string();
+            res.push_str(match c {
+                "-" => "UU0045",
+                "|" => "UU0124",
+                "," => "UU0044",
+                " " => "UU0032",
+                "\t" => "UU0009",
+                _ => c,
+            });
+        });
         res
-    }
-    fn escape_divider(divider: char) -> String {
-        (match divider {
-            '-' => "UU0045",
-            '|' => "UU0124",
-            ',' => "UU0044",
-            ' ' => "UU0032",
-            '\t' => "UU0009",
-            _ => "UU0000",
-        })
-        .to_string()
     }
 }

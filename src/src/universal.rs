@@ -48,7 +48,7 @@ impl Universal {
         let mut back_slash: bool = false;
         let u: String = "21".to_string();
         if !contains_labels {
-            for x in input.chars() {
+            input.chars().into_iter().for_each(|x| {
                 if mem_map.contains_key(&x.to_string()) {
                     out.push(mem_map.get(&x.to_string()).to_string());
                 } else if x == '\\' {
@@ -56,9 +56,12 @@ impl Universal {
                         back_slash = false;
                         out.push(u.clone());
                         out.push(u.clone());
-                        for x2 in Self::manage_padding(('\\' as u32).to_string(), 4).chars() {
-                            out.push(mem_map.get(&x2.to_string()).to_string());
-                        }
+                        Self::manage_padding(('\\' as u32).to_string(), 4)
+                            .chars()
+                            .into_iter()
+                            .for_each(|x2| {
+                                out.push(mem_map.get(&x2.to_string()).to_string());
+                            });
                     } else {
                         back_slash = true;
                     }
@@ -68,47 +71,53 @@ impl Universal {
                         'r' => {
                             out.push(u.clone());
                             out.push(u.clone());
-                            for x2 in "0032".chars() {
+                            "0032".chars().into_iter().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            }
+                            });
                         }
                         'f' => {
                             out.push(u.clone());
                             out.push(u.clone());
-                            for x2 in "0012".chars() {
+                            "0012".chars().into_iter().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            }
+                            });
                         }
                         'b' => {
                             out.push(u.clone());
                             out.push(u.clone());
-                            for x2 in "0008".chars() {
+                            "0008".chars().into_iter().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            }
+                            });
                         }
                         _ => {
                             out.push(u.clone());
                             out.push(u.clone());
-                            for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                                out.push(mem_map.get(&x2.to_string()).to_string());
-                            }
+                            Self::manage_padding((x as u32).to_string(), 4)
+                                .chars()
+                                .into_iter()
+                                .for_each(|x2| {
+                                    out.push(mem_map.get(&x2.to_string()).to_string());
+                                });
                         }
                     }
                     back_slash = false;
                 } else {
                     out.push(u.clone());
                     out.push(u.clone());
-                    for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                        out.push(mem_map.get(&x2.to_string()).to_string());
-                    }
+                    Self::manage_padding((x as u32).to_string(), 4)
+                        .chars()
+                        .into_iter()
+                        .for_each(|x2| {
+                            out.push(mem_map.get(&x2.to_string()).to_string());
+                        });
                 }
-            }
+            });
             return out;
-        };
+        }
         let mut mem_indicator: bool = false;
         let mut is_label: bool = false;
         let mut place_holder: String = String::new();
-        for x in input.chars() {
+        input.chars().into_iter().for_each(|x| {
             if x == '$' {
                 mem_indicator = true;
                 place_holder.push(x);
@@ -138,9 +147,12 @@ impl Universal {
                     }
                 } else if !Self::is_digit(x) {
                     mem_indicator = false;
-                    for converted in Self::convert_to_mem(&place_holder, false, labels, mem_map) {
-                        out.push(converted);
-                    }
+                    Self::convert_to_mem(&place_holder, false, labels, mem_map)
+                        .iter()
+                        .cloned()
+                        .for_each(|converted| {
+                            out.push(converted);
+                        });
                     place_holder = String::new();
                 } else if place_holder.len() == 4 {
                     out.push(place_holder[1..].to_string());
@@ -154,9 +166,12 @@ impl Universal {
                     back_slash = false;
                     out.push(u.clone());
                     out.push(u.clone());
-                    for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                        out.push(mem_map.get(&x2.to_string()).to_string());
-                    }
+                    Self::manage_padding((x as u32).to_string(), 4)
+                        .chars()
+                        .into_iter()
+                        .for_each(|x2| {
+                            out.push(mem_map.get(&x2.to_string()).to_string());
+                        });
                 } else {
                     back_slash = true;
                 }
@@ -166,19 +181,25 @@ impl Universal {
                 } else {
                     out.push(u.clone());
                     out.push(u.clone());
-                    for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                        out.push(mem_map.get(&x2.to_string()).to_string());
-                    }
+                    Self::manage_padding((x as u32).to_string(), 4)
+                        .chars()
+                        .into_iter()
+                        .for_each(|x2| {
+                            out.push(mem_map.get(&x2.to_string()).to_string());
+                        });
                 }
                 back_slash = false;
             } else {
                 out.push(u.clone());
                 out.push(u.clone());
-                for x2 in Self::manage_padding((x as u32).to_string(), 4).chars() {
-                    out.push(mem_map.get(&x2.to_string()).to_string());
-                }
+                Self::manage_padding((x as u32).to_string(), 4)
+                    .chars()
+                    .into_iter()
+                    .for_each(|x2| {
+                        out.push(mem_map.get(&x2.to_string()).to_string());
+                    });
             }
-        }
+        });
         out
     }
     pub fn is_digit(c: char) -> bool {
@@ -192,6 +213,9 @@ impl Universal {
             out *= 10;
         });
         out / 10
+    }
+    pub fn quick_parse_u8(input: String) -> u8 {
+        Self::quick_parse(input) as u8
     }
     pub fn convert_unicode(input: &str) -> String {
         if input.len() < 6 {
@@ -228,6 +252,7 @@ impl Universal {
                 lowercase_out.push_str(&(s1 + "______" + &s3));
             }
         }
+        println!("{input} vs {out:?}");
         out
     }
 }
