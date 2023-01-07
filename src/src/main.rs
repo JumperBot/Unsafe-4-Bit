@@ -1,9 +1,11 @@
 mod command;
 mod flag_manager;
+mod math;
 mod memory_map;
 mod runner;
 mod ufbc;
 mod universal;
+mod variables;
 
 use flag_manager::FlagManager;
 use runner::Runner;

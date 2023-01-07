@@ -1,32 +1,33 @@
+use crate::math::Math;
 use crate::universal::Universal;
+use crate::variables::Variables;
 
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
 use std::path::Path;
-use std::str::Chars;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-struct FileMeta {
+pub struct FileMeta {
     pub file: File,
     pub file_name: String,
     pub file_size: u64,
 }
 
-struct RunnerData {
+pub struct RunnerData {
     pub ptr: u64,
     pub mem_ind: [u8; 256],
     pub mem: [char; 256],
     pub byte_ind: Vec<u64>,
 }
 pub struct Runner {
-    file_meta: FileMeta,
-    runner_data: RunnerData,
-    runner_data_copy: Vec<RunnerData>,
-    funcs: HashMap<String, u64>,
-    ten_millis: Duration,
-    comms: Vec<fn(&mut Self) -> ()>,
+    pub file_meta: FileMeta,
+    pub runner_data: RunnerData,
+    pub runner_data_copy: Vec<RunnerData>,
+    pub funcs: HashMap<String, u64>,
+    pub ten_millis: Duration,
+    pub comms: Vec<fn(&mut Self) -> ()>,
     perfmes: bool,
     nanosec: bool,
     commmes: bool,
@@ -200,186 +201,6 @@ impl Runner {
             ));
         }
         self.comms[com as usize](self);
-    }
-
-    fn wvar(&mut self) {
-        let arg_count: u8 = self.next() - 1;
-        let ind: u8 = self.next();
-        let resident: String = String::from_iter(self.rvar(&ind));
-        let mut out: String = String::new();
-        for _ in 0..arg_count {
-            let ptr: u8 = self.next();
-            out.push_str(
-                &(if ptr == ind {
-                    resident.clone()
-                } else {
-                    String::from_iter(self.rvar(&ptr))
-                }),
-            );
-        }
-        self.write_chars(&ind, &mut Universal::convert_unicode(&out).chars());
-    }
-    fn write_chars(&mut self, ind: &u8, chars: &mut Chars) {
-        self.write_arr(ind, &chars.collect::<Vec<char>>());
-    }
-    fn write_arr(&mut self, ind: &u8, arr: &[char]) {
-        self.nullify(ind);
-        let ind_usize: usize = *ind as usize;
-        let len: usize = arr.len();
-        for (x, c) in arr.iter().enumerate() {
-            let ptr: usize = x + ind_usize;
-            if ptr == 256 {
-                self.runner_data.mem_ind[ind_usize] = 255;
-                return;
-            }
-            self.runner_data.mem[ptr] = *c;
-            if x + ind_usize == 255 {
-                self.runner_data.mem_ind[ind_usize] = 255;
-                return;
-            }
-        }
-        self.runner_data.mem_ind[ind_usize] = ind + (len as u8) - 1;
-    }
-    fn nvar(&mut self) {
-        let ind: u8 = self.next();
-        self.nullify(&ind);
-    }
-
-    fn rvar(&mut self, ind: &u8) -> Vec<char> {
-        let ind_usize: usize = *ind as usize;
-        if self.runner_data.mem_ind[ind_usize] == 0 {
-            return self.runner_data.mem[ind_usize..=ind_usize].to_vec();
-        }
-        self.runner_data.mem[ind_usize..=self.runner_data.mem_ind[ind_usize] as usize].to_vec()
-    }
-
-    fn nullify(&mut self, ind: &u8) {
-        let ind_usize: usize = *ind as usize;
-        if self.runner_data.mem_ind[ind_usize] == 0 {
-            return;
-        }
-        for x in ind_usize..=self.runner_data.mem_ind[ind_usize] as usize {
-            self.runner_data.mem[x] = '\u{0000}';
-        }
-        self.runner_data.mem_ind[ind_usize] = 0;
-    }
-
-    fn trim(&mut self) {
-        let ind: u8 = self.next();
-        let trim_size: u8 = self.next();
-        if trim_size == 0 {
-            self.nullify(&ind);
-            return;
-        }
-        let resident: Vec<char> = self.rvar(&ind);
-        if trim_size as usize >= resident.len() {
-            return;
-        }
-        self.write_arr(&ind, &resident[0..trim_size as usize]);
-    }
-
-    fn add(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        self.write_math_res(&ind, num1 + num2);
-    }
-    fn sub(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        self.write_math_res(&ind, num1 - num2);
-    }
-    fn mul(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        self.write_math_res(&ind, num1 * num2);
-    }
-    fn div(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        if Self::check_math_div_err(&num2) {
-            self.write_arr(&ind, &['i']);
-            return;
-        }
-        self.write_math_res(&ind, num1 / num2);
-    }
-    fn r#mod(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        if Self::check_math_div_err(&num2) {
-            self.write_arr(&ind, &['i']);
-            return;
-        }
-        self.write_math_res(&ind, num1 % num2);
-    }
-    fn rmod(&mut self) {
-        let (ind, num1, num2): (u8, f64, f64) = self.get_math_vals();
-        if Self::check_math_div_err(&num2) {
-            self.write_arr(&ind, &['i']);
-            return;
-        }
-        self.write_math_res(&ind, ((num1 / num2) as i64) as f64);
-    }
-
-    fn get_math_vals(&mut self) -> (u8, f64, f64) {
-        let ind1: u8 = self.next();
-        let ind2: u8 = self.next();
-        (
-            ind1,
-            Self::to_num(&self.rvar(&ind1)),
-            Self::to_num(&self.rvar(&ind2)),
-        )
-    }
-    fn write_math_res(&mut self, ind: &u8, res: f64) {
-        if res % 1.0 == 0.0 {
-            self.write_chars(ind, &mut (res as i64).to_string().chars());
-        } else {
-            self.write_chars(ind, &mut res.to_string().chars());
-        }
-    }
-    fn check_math_div_err(num2: &f64) -> bool {
-        if num2 == &0.0 {
-            return true;
-        }
-        false
-    }
-
-    fn find_period(arr: &[char]) -> Option<usize> {
-        for x in 0..arr.len() / 2 + 1 {
-            if arr[x] == '.' {
-                return Some(x);
-            }
-            if arr[arr.len() - 1 - x] == '.' {
-                return Some(arr.len() - x);
-            }
-        }
-        None
-    }
-    fn to_num(arr: &[char]) -> f64 {
-        if let Some(x) = Self::find_period(arr) {
-            let mut out: [f64; 2] = [0.0; 2];
-            for y in 0..x {
-                let y2 = x + 1 + y;
-                if !(Universal::is_digit(arr[y]) || Universal::is_digit(arr[y2])) {
-                    return Self::hash(arr).into();
-                }
-                out[0] += <u32 as Into<f64>>::into(arr[y] as u32) - 48.0;
-                out[0] *= 10.0;
-                out[1] += <u32 as Into<f64>>::into(arr[y2] as u32) - 48.0;
-                out[1] /= 10.0;
-            }
-            return (out[0] / 10.0) + out[1];
-        }
-        let mut out: f64 = 0.0;
-        for x in arr {
-            if !Universal::is_digit(*x) {
-                return Self::hash(arr).into();
-            }
-            out += <u32 as Into<f64>>::into(*x as u32) - 48.0;
-            out *= 10.0;
-        }
-        out / 10.0
-    }
-    fn hash(arr: &[char]) -> u32 {
-        let mut hash: u32 = 0;
-        for x in arr {
-            hash = 31 * hash + (*x as u32);
-        }
-        hash
     }
 
     fn nop(&mut self) {
@@ -612,7 +433,7 @@ impl Runner {
         }
     }
 
-    fn next(&mut self) -> u8 {
+    pub fn next(&mut self) -> u8 {
         let mut buf: [u8; 1] = [0; 1];
         if let Err(x) = self.file_meta.file.seek(Start(self.runner_data.ptr)) {
             Universal::err_exit(x.to_string());
@@ -623,11 +444,11 @@ impl Runner {
         self.runner_data.ptr += 1;
         buf[0]
     }
-    fn next_u16(&mut self) -> u16 {
+    pub fn next_u16(&mut self) -> u16 {
         ((self.next() as u16) << 8) | (self.next() as u16)
     }
 
-    fn init_mem() -> [char; 256] {
+    pub fn init_mem() -> [char; 256] {
         let rom: [char; 38] = [
             ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
             'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6',
