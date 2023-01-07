@@ -1,12 +1,14 @@
+use crate::fileio::FileIO;
+use crate::func::Func;
+use crate::jump::Jump;
 use crate::math::Math;
+use crate::terminal::Terminal;
 use crate::universal::Universal;
 use crate::variables::Variables;
 
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{self, ErrorKind, Read, Seek, SeekFrom::Start, Write};
-use std::path::Path;
-use std::thread;
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom::Start};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub struct FileMeta {
@@ -147,7 +149,7 @@ impl Runner {
             Universal::err_exit(mem_leaks);
         }
     }
-    fn run_commands(&mut self) {
+    pub fn run_commands(&mut self) {
         while self.runner_data.ptr != self.file_meta.file_size {
             if self
                 .runner_data
@@ -161,7 +163,7 @@ impl Runner {
             self.run_command(com);
         }
     }
-    fn run_commands_with_time(&mut self) {
+    pub fn run_commands_with_time(&mut self) {
         while self.runner_data.ptr != self.file_meta.file_size {
             let start: u128;
             if let Ok(x) = SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -194,115 +196,23 @@ impl Runner {
             }
         }
     }
-    fn run_command(&mut self, com: u8) {
+    pub fn run_command(&mut self, com: u8) {
         if com as usize > self.comms.len() - 1 {
             Universal::err_exit(format!(
-                "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating...",
+                "\nCommand Index: {com} Is Not Recognized By The Interpreter...\nTerminating..."
             ));
         }
         self.comms[com as usize](self);
     }
 
-    fn nop(&mut self) {
-        thread::sleep(self.ten_millis);
-    }
-
-    fn jm(&mut self) {
-        let (val1, val2, com): (f64, f64, u16) = self.get_jump_vals2();
-        if val1 > val2 {
-            self.jump_to_com(com);
-        }
-    }
-    fn jl(&mut self) {
-        let (val1, val2, com): (f64, f64, u16) = self.get_jump_vals2();
-        if val1 < val2 {
-            self.jump_to_com(com);
-        }
-    }
-    fn je(&mut self) {
-        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
-        if val1.eq(&val2) {
-            self.jump_to_com(com);
-        }
-    }
-    fn jne(&mut self) {
-        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
-        if val1.ne(&val2) {
-            self.jump_to_com(com);
-        }
-    }
-
-    fn get_jump_vals(&mut self) -> (Vec<char>, Vec<char>, u16) {
-        let ind1: u8 = self.next();
-        let ind2: u8 = self.next();
-        let val1: Vec<char> = self.rvar(&ind1);
-        let val2: Vec<char> = self.rvar(&ind2);
-        let com: u16 = self.next_u16();
-        (val1, val2, com)
-    }
-    fn get_jump_vals2(&mut self) -> (f64, f64, u16) {
-        let (val1, val2, com): (Vec<char>, Vec<char>, u16) = self.get_jump_vals();
-        (Self::to_num(&val1), Self::to_num(&val2), com)
-    }
-    fn jump_to_com(&mut self, com: u16) {
-        if com < self.runner_data.byte_ind.len() as u16 {
-            self.runner_data.ptr = self.runner_data.byte_ind[com as usize];
-            return;
-        }
-        self.skip(&com);
-    }
-    fn skip(&mut self, com: &u16) {
-        if com == &(self.runner_data.byte_ind.len() as u16)
-            || self.runner_data.ptr >= self.file_meta.file_size
-        {
-            return;
-        }
-        self.runner_data.byte_ind.push(self.runner_data.ptr);
-        let cur: u8 = self.next();
-        self.ptr_skip(cur);
-        self.skip(com);
-    }
-    fn ptr_skip(&mut self, com: u8) {
-        match com {
-            1 | 15 => self.runner_data.ptr += 1,
-            2..=8 => self.runner_data.ptr += 2,
-            9 => (),
-            10..=13 => self.runner_data.ptr += 4,
-            0 | 14 | 16..=18 => self.runner_data.ptr += self.next() as u64,
-            // TODO: Add Other Commands
-            _ => panic!("You Forgot To Add Command Number {com} To The Skip Index..."),
-        }
-    }
-
-    fn print(&mut self) {
-        let arg_count: u8 = self.next();
-        print!("{}", self.get_args(arg_count as usize, true));
-        if let Err(x) = io::stdout().flush() {
-            Universal::err_exit(x.to_string());
-        }
-    }
-
-    fn read(&mut self) {
-        print!("=>");
-        if let Err(x) = io::stdout().flush() {
-            Universal::err_exit(x.to_string());
-        }
-        let mut buf: String = String::new();
-        if let Err(x) = io::stdin().read_line(&mut buf) {
-            Universal::err_exit(x.to_string());
-        }
-        let ind: u8 = self.next();
-        self.write_chars(&ind, &mut buf.chars());
-    }
-
-    fn get_indexes(&mut self, arg_count: usize) -> Vec<u8> {
+    pub fn get_indexes(&mut self, arg_count: usize) -> Vec<u8> {
         let mut out: Vec<u8> = Vec::<u8>::new();
         for _ in 0..arg_count {
             out.push(self.next());
         }
         out
     }
-    fn get_args(&mut self, arg_count: usize, convert_unicode: bool) -> String {
+    pub fn get_args(&mut self, arg_count: usize, convert_unicode: bool) -> String {
         let mut out: String = String::new();
         for x in self.get_indexes(arg_count) {
             for y in self.rvar(&x) {
@@ -313,124 +223,6 @@ impl Runner {
             return Universal::convert_unicode(&out);
         }
         out
-    }
-    fn get_file_name(&mut self, arg_count: u8) -> String {
-        let out: String = self.get_args(arg_count as usize, true);
-        if Path::new(&out).is_relative() {
-            if let Some(x) = Path::new(&self.file_meta.file_name)
-                .canonicalize()
-                .unwrap()
-                .as_path()
-                .parent()
-            {
-                return format!("{}/{out}", x.display());
-            }
-        }
-        out
-    }
-    fn wfile(&mut self) {
-        let arg_count: u8 = self.next() - 1;
-        let ind: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count);
-        let out: String = self.rvar(&ind).iter().cloned().collect::<String>();
-        if let Err(x) = File::create(&file_name)
-            .unwrap_or_else(|x| {
-                if x.kind() != ErrorKind::NotFound {
-                    Universal::err_exit(x.to_string());
-                }
-                if let Some(x) = Path::new(&file_name).parent() {
-                    if let Err(x) = fs::create_dir_all(x) {
-                        Universal::err_exit(x.to_string());
-                    }
-                }
-                File::create(&file_name).unwrap_or_else(|x| {
-                    Universal::err_exit(x.to_string());
-                    File::open("").unwrap()
-                })
-            })
-            .write(out.as_bytes())
-        {
-            Universal::err_exit(x.to_string());
-        }
-    }
-
-    fn rfile(&mut self) {
-        let arg_count: u8 = self.next() - 1;
-        let ind: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count);
-        self.write_chars(
-            &ind,
-            &mut fs::read_to_string(file_name)
-                .unwrap_or_else(|x| {
-                    Universal::err_exit(x.to_string());
-                    String::new()
-                })
-                .chars(),
-        );
-    }
-
-    fn dfile(&mut self) {
-        let arg_count: u8 = self.next();
-        let file_name: String = self.get_file_name(arg_count);
-        if let Err(x) = fs::remove_dir_all(file_name) {
-            Universal::err_exit(x.to_string());
-        }
-    }
-
-    fn wfunc(&mut self) {
-        let ptr: u64 = self.runner_data.ptr;
-        let arg_count: u16 = self.next_u16();
-        let func_name: String = self.get_args(arg_count as usize, false);
-        let arg_count2: u8 = self.next();
-        #[allow(unused_variables)]
-        let func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
-        self.funcs.insert(func_name.clone(), ptr);
-        loop {
-            if self.runner_data.ptr >= self.file_meta.file_size {
-                return;
-            }
-            let com: u8 = self.next();
-            if com == 20 {
-                let _this_arg_count: u16 = self.next_u16();
-                let this_func_name: String = self.get_args(arg_count as usize, false);
-                if this_func_name.eq(&func_name) {
-                    break;
-                }
-            } else {
-                self.ptr_skip(com);
-            }
-        }
-    }
-
-    fn cfunc(&mut self) {
-        let arg_count: u16 = self.next_u16();
-        let func_name: String = self.get_args(arg_count as usize, false);
-        if self.funcs.get(&func_name).is_some() {
-            self.runner_data = self.runner_data_copy.pop().unwrap();
-        }
-    }
-
-    fn ufunc(&mut self) {
-        let arg_count: u16 = self.next_u16();
-        let func_name: String = self.get_args(arg_count as usize, false);
-        let given_arg_count: u8 = self.next();
-        let _given_args: Vec<u8> = self.get_indexes(given_arg_count as usize);
-        if let Some(x) = self.funcs.get(&func_name) {
-            self.runner_data_copy.push(RunnerData {
-                ptr: self.runner_data.ptr,
-                mem: self.runner_data.mem,
-                mem_ind: self.runner_data.mem_ind,
-                byte_ind: self.runner_data.byte_ind.clone(),
-            });
-            self.runner_data = RunnerData {
-                ptr: *x + 2 + arg_count as u64,
-                mem: Self::init_mem(),
-                mem_ind: [0; 256],
-                byte_ind: Vec::<u64>::new(),
-            };
-            let arg_count2: u8 = self.next();
-            let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
-        }
     }
 
     pub fn next(&mut self) -> u8 {

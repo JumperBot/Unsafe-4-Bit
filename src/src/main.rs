@@ -1,11 +1,18 @@
 mod command;
+mod ufbc;
+
 mod flag_manager;
+
+mod fileio;
+mod func;
+mod jump;
 mod math;
 mod memory_map;
 mod runner;
-mod ufbc;
-mod universal;
+mod terminal;
 mod variables;
+
+mod universal;
 
 use flag_manager::FlagManager;
 use runner::Runner;
