@@ -48,18 +48,9 @@ impl Func for Runner {
         let given_arg_count: u8 = self.next();
         let _given_args: Vec<u8> = self.get_indexes(given_arg_count as usize);
         if let Some(x) = self.funcs.get(&func_name) {
-            self.runner_data_copy.push(RunnerData {
-                ptr: self.runner_data.ptr,
-                mem: self.runner_data.mem,
-                mem_ind: self.runner_data.mem_ind,
-                byte_ind: self.runner_data.byte_ind.clone(),
-            });
-            self.runner_data = RunnerData {
-                ptr: *x + 2 + arg_count as u64,
-                mem: Self::init_mem(),
-                mem_ind: [0; 256],
-                byte_ind: Vec::<u64>::new(),
-            };
+            self.runner_data_copy.push(self.runner_data.clone());
+            self.runner_data = RunnerData::new();
+            self.runner_data.ptr = *x + 2 + arg_count as u64;
             let arg_count2: u8 = self.next();
             let _func_args: Vec<u8> = self.get_indexes(arg_count2 as usize);
         }

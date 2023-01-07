@@ -23,6 +23,27 @@ pub struct RunnerData {
     pub mem: [char; 256],
     pub byte_ind: Vec<u64>,
 }
+impl RunnerData {
+    pub fn new() -> Self {
+        Self {
+            ptr: 0,
+            mem_ind: [0; 256],
+            mem: Runner::init_mem(),
+            byte_ind: Vec::<u64>::new(),
+        }
+    }
+}
+impl Clone for RunnerData {
+    fn clone(&self) -> Self {
+        Self {
+            ptr: self.ptr,
+            mem_ind: self.mem_ind,
+            mem: self.mem,
+            byte_ind: self.byte_ind.clone(),
+        }
+    }
+}
+
 pub struct Runner {
     pub file_meta: FileMeta,
     pub runner_data: RunnerData,
@@ -36,7 +57,7 @@ pub struct Runner {
 }
 
 impl Runner {
-    pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Runner {
+    pub fn new(file_name: String, perfmes: bool, nanosec: bool, commmes: bool) -> Self {
         let file: File = File::open(&file_name).unwrap_or_else(|x| {
             Universal::err_exit(x.to_string());
             File::open("").unwrap()
@@ -48,18 +69,13 @@ impl Runner {
                 file.metadata().unwrap()
             })
             .len();
-        Runner {
+        Self {
             file_meta: FileMeta {
                 file,
                 file_name,
                 file_size,
             },
-            runner_data: RunnerData {
-                ptr: 0,
-                mem_ind: [0; 256],
-                mem: Self::init_mem(),
-                byte_ind: Vec::<u64>::new(),
-            },
+            runner_data: RunnerData::new(),
             runner_data_copy: Vec::<RunnerData>::new(),
             funcs: HashMap::<String, u64>::new(),
             ten_millis: Duration::from_millis(10),

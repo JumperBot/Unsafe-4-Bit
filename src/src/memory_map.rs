@@ -4,8 +4,8 @@ pub struct MemoryMap {
 }
 
 impl MemoryMap {
-    pub fn new_limited() -> MemoryMap {
-        MemoryMap {
+    pub fn new_limited() -> Self {
+        Self {
             keys: vec![
                 " ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
                 "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4",
@@ -17,7 +17,7 @@ impl MemoryMap {
             mems: (0..38).collect::<Vec<u64>>(),
         }
     }
-    pub fn new_binary_map() -> MemoryMap {
+    pub fn new_binary_map() -> Self {
         let keys: Vec<String> = vec![
             "wvar", "nvar", "trim", "add", "sub", "mul", "div", "mod", "rmod", "nop", "jm", "jl",
             "je", "jne", "print", "read", "wfile", "rfile", "dfile", "wfunc", "cfunc", "ufunc",
@@ -25,7 +25,7 @@ impl MemoryMap {
         .into_iter()
         .map(|x| x.to_string())
         .collect::<Vec<String>>();
-        MemoryMap {
+        Self {
             keys: keys.clone(),
             mems: (0..keys.len())
                 .map(|x| x.try_into().unwrap())

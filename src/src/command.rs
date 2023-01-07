@@ -194,11 +194,10 @@ pub struct WvarCommand {
 
 impl GenericCommand for WvarCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: WvarCommand = WvarCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::errors_to_string(vec![
@@ -223,11 +222,10 @@ pub struct NvarCommand {
 
 impl GenericCommand for NvarCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: NvarCommand = NvarCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let length_err: String = Command::check_arg_length(&self.real_line, &self.line, 1);
@@ -251,11 +249,10 @@ pub struct TrimCommand {
 
 impl GenericCommand for TrimCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: TrimCommand = TrimCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let length_err: String = Command::check_arg_length(&self.real_line, &self.line, 2);
@@ -306,7 +303,7 @@ pub struct MathCommand {
 
 impl GenericCommand for MathCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: MathCommand = MathCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
             ind: match line[0].to_lowercase().as_str() {
@@ -318,8 +315,7 @@ impl GenericCommand for MathCommand {
                 "rmod" => 8,
                 _ => 255,
             },
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let length_err: String = Command::check_arg_length(&self.real_line, &self.line, 2);
@@ -347,11 +343,10 @@ pub struct NopCommand {
 
 impl GenericCommand for NopCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: NopCommand = NopCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::check_arg_length(&self.real_line, &self.line, 0)
@@ -369,7 +364,7 @@ pub struct JumpCommand {
 
 impl GenericCommand for JumpCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: JumpCommand = JumpCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
             ind: match line[0].to_lowercase().as_str() {
@@ -379,8 +374,7 @@ impl GenericCommand for JumpCommand {
                 "jne" => 13,
                 _ => 255,
             },
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let length_err: String = Command::check_arg_length(&self.real_line, &self.line, 3);
@@ -433,11 +427,10 @@ pub struct PrintCommand {
 
 impl GenericCommand for PrintCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: PrintCommand = PrintCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::errors_to_string(vec![
@@ -462,11 +455,10 @@ pub struct ReadCommand {
 
 impl GenericCommand for ReadCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: ReadCommand = ReadCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let length_err: String = Command::check_arg_length(&self.real_line, &self.line, 1);
@@ -490,11 +482,10 @@ pub struct WfileCommand {
 
 impl GenericCommand for WfileCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: WfileCommand = WfileCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::errors_to_string(vec![
@@ -518,11 +509,10 @@ pub struct RfileCommand {
 
 impl GenericCommand for RfileCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: RfileCommand = RfileCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::errors_to_string(vec![
@@ -547,11 +537,10 @@ pub struct DfileCommand {
 
 impl GenericCommand for DfileCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: DfileCommand = DfileCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         Command::errors_to_string(vec![
@@ -575,11 +564,10 @@ pub struct WfuncCommand {
 
 impl GenericCommand for WfuncCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: WfuncCommand = WfuncCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let func_name: &[String] = &Universal::convert_to_mem(
@@ -627,11 +615,10 @@ pub struct CfuncCommand {
 
 impl GenericCommand for CfuncCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: CfuncCommand = CfuncCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let func_name: &[String] = &Universal::convert_to_mem(
@@ -672,11 +659,10 @@ pub struct UfuncCommand {
 
 impl GenericCommand for UfuncCommand {
     fn create(real_line: &[String], line: &[String]) -> Box<Self> {
-        let out: UfuncCommand = UfuncCommand {
+        Box::new(Self {
             real_line: real_line.to_vec(),
             line: line.to_vec(),
-        };
-        Box::new(out)
+        })
     }
     fn analyze(&self) -> String {
         let func_name: &[String] = &Universal::convert_to_mem(
