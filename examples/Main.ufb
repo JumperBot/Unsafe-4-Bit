@@ -87,3 +87,13 @@ print 38
 print "\n"
 dfile "copyMe"
 nvar  38
+wfunc hello 38
+	print "Hello, $038!\n"
+	wfunc	hello	38
+		print "Hello, $038!\n"
+	cfunc	hello
+	ufunc hello 38
+cfunc hello
+wvar	150	"dude"
+ufunc hello	150
+nvar	150

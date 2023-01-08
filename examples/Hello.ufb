@@ -1,13 +1,3 @@
 print   "Hello, World!\n"
 // Old way of doing this:
 // print		8		5		12	12	15	0		23	15	18	12	4		28	37
-
-// Write a function named "hello" (case-sensitive)...
-// With an optional argument to be stored at memory index 38.
-wfunc hello 38
-	print "Hello!\n"
-// Closes the function block named "hello" (case-sensitive)...
-cfunc hello
-
-// Use the function named "hello" (case-sensitive).
-ufunc hello

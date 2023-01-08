@@ -252,7 +252,6 @@ impl Universal {
                 lowercase_out.push_str(&(s1 + "______" + &s3));
             }
         }
-        println!("{input} vs {out:?}");
         out
     }
 }

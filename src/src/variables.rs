@@ -70,9 +70,7 @@ impl Variables for Runner {
         }
         (ind_usize..=self.runner_data.mem_ind[ind_usize] as usize)
             .into_iter()
-            .for_each(|x| {
-                self.runner_data.mem[x] = '\u{0000}';
-            });
+            .for_each(|x| self.runner_data.mem[x] = '\0');
         self.runner_data.mem_ind[ind_usize] = 0;
     }
     fn trim(&mut self) {
