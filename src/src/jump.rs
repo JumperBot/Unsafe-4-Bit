@@ -72,7 +72,6 @@ impl Jump for Runner {
         }
     }
     fn ptr_skip(&mut self, com: u8) {
-        println!("{com}");
         match com {
             1 | 15 => self.runner_data.ptr += 1,
             2..=8 => self.runner_data.ptr += 2,
@@ -83,24 +82,22 @@ impl Jump for Runner {
                 let arg_count: u16 = self.next_u16();
                 let func_name: String = self.get_args(arg_count as usize, false);
                 self.runner_data.ptr += self.next() as u64;
-                loop {
-                    if self.runner_data.ptr >= self.file_meta.file_size {
-                        return;
-                    }
-                    let com: u8 = self.next();
-                    if com == 20 {
-                        self.next_u16();
-                        let this_func_name: String = self.get_args(arg_count as usize, false);
+                while self.runner_data.ptr >= self.file_meta.file_size {
+                    let command: u8 = self.next();
+                    if command == 20 {
+                        let this_func_name_len: u16 = self.next_u16();
+                        let this_func_name: String =
+                            self.get_args(this_func_name_len as usize, false);
                         if this_func_name.eq(&func_name) {
                             break;
                         }
                     } else {
-                        self.ptr_skip(com);
+                        self.ptr_skip(command);
                     }
                 }
             }
             20 => self.runner_data.ptr += self.next_u16() as u64,
-            21 => self.runner_data.ptr += self.next_u16() as u64 + self.next() as u64 + 1,
+            21 => self.runner_data.ptr += self.next_u16() as u64 + self.next() as u64,
             // TODO: Add Other Commands
             _ => panic!(
                 "You Forgot To Add Command Number {com} To The Skip Index At {} / {}...",

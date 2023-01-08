@@ -16,19 +16,16 @@ impl Func for Runner {
         let func_name: String = self.get_args(arg_count as usize, false);
         self.runner_data.ptr += self.next() as u64;
         self.funcs.insert(func_name.clone(), ptr);
-        loop {
-            if self.runner_data.ptr >= self.file_meta.file_size {
-                return;
-            }
-            let com: u8 = self.next();
-            if com == 20 {
-                self.next_u16();
-                let this_func_name: String = self.get_args(arg_count as usize, false);
+        while self.runner_data.ptr >= self.file_meta.file_size {
+            let command: u8 = self.next();
+            if command == 20 {
+                let this_func_name_len: u16 = self.next_u16();
+                let this_func_name: String = self.get_args(this_func_name_len as usize, false);
                 if this_func_name.eq(&func_name) {
                     break;
                 }
             } else {
-                self.ptr_skip(com);
+                self.ptr_skip(command);
             }
         }
     }
