@@ -1,7 +1,7 @@
-use crate::jump::Jump;
+use crate::runner::jump::Jump;
 use crate::runner::Runner;
 use crate::runner::RunnerData;
-use crate::variables::Variables;
+use crate::runner::Variables;
 
 pub trait Func {
     fn wfunc(&mut self);

@@ -1,10 +1,17 @@
-use crate::fileio::FileIO;
-use crate::func::Func;
-use crate::jump::Jump;
-use crate::math::Math;
-use crate::terminal::Terminal;
-use crate::universal::Universal;
-use crate::variables::Variables;
+mod fileio;
+mod func;
+mod jump;
+mod math;
+mod terminal;
+mod variables;
+
+use crate::Universal;
+use fileio::FileIO;
+use func::Func;
+use jump::Jump;
+use math::Math;
+use terminal::Terminal;
+use variables::Variables;
 
 use std::collections::HashMap;
 use std::fs::File;

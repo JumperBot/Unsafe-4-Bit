@@ -1,6 +1,6 @@
 use crate::runner::Runner;
-use crate::universal::Universal;
-use crate::variables::Variables;
+use crate::runner::Universal;
+use crate::runner::Variables;
 
 use std::io::{self, Write};
 use std::thread;

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::memory_map::MemoryMap;
-use crate::universal::Universal;
+use crate::ufbc::MemoryMap;
+use crate::Universal;
 
 pub struct Command {}
 

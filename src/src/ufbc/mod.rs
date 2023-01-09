@@ -1,16 +1,18 @@
+mod command;
+
 use std::collections::HashMap;
 use std::env::consts::OS;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::str::Chars;
 
-use crate::command::Command;
 use crate::memory_map::MemoryMap;
-use crate::universal::Universal;
+use crate::Universal;
+use command::Command;
 
-pub struct LineExtractionResult {
-    pub multiline_comment: bool,
-    pub res: String,
+struct LineExtractionResult {
+    multiline_comment: bool,
+    res: String,
 }
 
 pub struct UFBC {

@@ -93,7 +93,7 @@ wfunc greet 38	200
 		print	"$038, $200!\n"
 	cfunc	greet
 	ufunc greet 38	38
-cfunc hello
+cfunc greet
 wvar	100	"Yo"
 wvar	150	"dude"
 ufunc greet	100	150

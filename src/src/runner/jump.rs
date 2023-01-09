@@ -1,6 +1,6 @@
-use crate::math::Math;
+use crate::runner::Math;
 use crate::runner::Runner;
-use crate::variables::Variables;
+use crate::runner::Variables;
 
 pub trait Jump {
     fn jm(&mut self);

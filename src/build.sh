@@ -9,7 +9,8 @@ UFB_RELEASE_BIN="$UFB_RELEASE_BIN_DIR/ufb"
 UFB_RELEASE_BIN_MUSL="$UFB_RELEASE_BIN_DIR_MUSL/ufb"
 RUSTFLAGS="--remap-path-prefix $HOME=~"
 
-rustfmt src/*
+rustfmt src/*.rs
+rustfmt src/*/*.rs
 cargo clippy --fix --allow-staged --allow-dirty -- -A clippy::upper_case_acronyms -A clippy::new_ret_no_self
 rm $UFB_RELEASE_BIN_DIR/*
 rm $UFB_RELEASE_BIN_DIR_MUSL/*

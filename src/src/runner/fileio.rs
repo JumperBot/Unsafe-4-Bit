@@ -1,6 +1,6 @@
 use crate::runner::Runner;
-use crate::universal::Universal;
-use crate::variables::Variables;
+use crate::runner::Variables;
+use crate::Universal;
 
 use std::fs::{self, File};
 use std::io::{ErrorKind, Write};
