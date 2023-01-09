@@ -97,7 +97,10 @@ impl Jump for Runner {
                 }
             }
             20 => self.runner_data.ptr += self.next_u16() as u64,
-            21 => self.runner_data.ptr += self.next_u16() as u64 + self.next() as u64,
+            21 => {
+                self.runner_data.ptr += self.next_u16() as u64;
+                self.runner_data.ptr += self.next() as u64;
+            }
             // TODO: Add Other Commands
             _ => panic!(
                 "You Forgot To Add Command Number {com} To The Skip Index At {} / {}...",

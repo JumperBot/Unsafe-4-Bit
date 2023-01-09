@@ -1,6 +1,6 @@
 [package]
 name = "unsafe-4-bit"
-version = "1.6.7"
+version = "1.7.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 
