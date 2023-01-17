@@ -2,12 +2,13 @@ use crate::memory_map::MemoryMap;
 
 use std::collections::HashMap;
 use std::env::consts::OS;
+use std::mem::transmute;
 
 pub struct Universal {}
 
 impl Universal {
     pub fn convert_u32_to_char(code: u32) -> char {
-        char::from_u32(code).unwrap_or('\0')
+        unsafe { transmute(code) }
     }
 
     pub fn arr_to_string<T: std::fmt::Display>(arr: &[T]) -> String {
@@ -20,9 +21,9 @@ impl Universal {
     pub fn err_exit(err_msg: String) {
         if !OS.contains("windows") {
             println!("\u{001B}[91m{err_msg}\u{001B}[0m");
-        } else {
-            println!("{err_msg}");
+            std::process::exit(1);
         }
+        println!("{err_msg}");
         std::process::exit(1);
     }
 
@@ -229,27 +230,30 @@ impl Universal {
             }
             let place_holder: String = {
                 let mut temp: Vec<char> = out[x + 2..x + 6].chars().collect::<Vec<char>>();
-                temp.retain(|x| Self::is_digit(*x));
+                for x in &temp {
+                    if !Self::is_digit(*x) {
+                        temp.clear();
+                        break;
+                    }
+                }
                 temp.iter().collect::<String>()
             };
             if !place_holder.is_empty() {
                 {
-                    let s1: String = out[..x].to_string();
-                    let s2: String =
-                        Self::convert_u32_to_char(Self::quick_parse(place_holder)).to_string();
-                    let s3: String = out[x + 6..].to_string();
-                    out.clear();
-                    out.push_str(&(s1 + &s2 + &s3));
+                    let end: String = out[x + 6..].to_string();
+                    out = out[..x].to_string();
+                    out.push(Self::convert_u32_to_char(Self::quick_parse(place_holder)));
+                    out.push_str(&end);
                 }
-                let s1: String = lowercase_out[..x].to_string();
-                let s3: String = lowercase_out[x + 6..].to_string();
-                lowercase_out.clear();
-                lowercase_out.push_str(&(s1 + "_" + &s3));
+                let end: String = lowercase_out[x + 6..].to_string();
+                lowercase_out = lowercase_out[..x].to_string();
+                lowercase_out.push('_');
+                lowercase_out.push_str(&end);
             } else {
-                let s1: String = lowercase_out[..x].to_string();
-                let s3: String = lowercase_out[x + 6..].to_string();
-                lowercase_out.clear();
-                lowercase_out.push_str(&(s1 + "______" + &s3));
+                let end: String = lowercase_out[x + 6..].to_string();
+                lowercase_out = lowercase_out[..x].to_string();
+                lowercase_out.push_str("______");
+                lowercase_out.push_str(&end);
             }
         }
         out
