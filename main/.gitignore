@@ -1,0 +1,10 @@
+target/.rustc_info.json
+target/CACHEDIR.TAG
+target/debug
+target/release/.fingerprint
+target/release/.cargo-lock
+target/release/deps
+target/release/ufb.d
+target/release/ufb.exe
+
+cargo.lock
