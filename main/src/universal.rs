@@ -7,14 +7,17 @@ use std::mem::transmute;
 pub struct Universal {}
 
 impl Universal {
+    #[allow(clippy::transmute_int_to_char)]
     pub fn convert_u32_to_char(code: u32) -> char {
         unsafe { transmute(code) }
     }
 
     pub fn arr_to_string<T: std::fmt::Display>(arr: &[T]) -> String {
         let mut out: String = String::new();
-        arr.iter()
-            .for_each(|x| out.push_str(&(x.to_string() + ",")));
+        arr.iter().for_each(|x| {
+            out.push_str(&x.to_string());
+            out.push(',');
+        });
         out[..out.len() - 2].to_string()
     }
 
@@ -28,7 +31,7 @@ impl Universal {
     }
 
     pub fn manage_padding(input: String, padding: usize) -> String {
-        format!("{:0>width$}", input, width = padding)
+        format!("{input:0>padding$}")
     }
 
     pub fn format_error(line: &[String], input: &[&str]) -> String {
@@ -49,7 +52,7 @@ impl Universal {
         let mut back_slash: bool = false;
         let u: String = "21".to_string();
         if !contains_labels {
-            input.chars().into_iter().for_each(|x| {
+            input.chars().for_each(|x| {
                 if mem_map.contains_key(&x.to_string()) {
                     out.push(mem_map.get(&x.to_string()).to_string());
                 } else if x == '\\' {
@@ -59,7 +62,6 @@ impl Universal {
                         out.push(u.clone());
                         Self::manage_padding(('\\' as u32).to_string(), 4)
                             .chars()
-                            .into_iter()
                             .for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
                             });
@@ -67,38 +69,26 @@ impl Universal {
                         back_slash = true;
                     }
                 } else if back_slash {
-                    match x {
-                        'n' => out.push("37".to_string()),
-                        'r' => {
-                            out.push(u.clone());
-                            out.push(u.clone());
-                            "0032".chars().into_iter().for_each(|x2| {
+                    if x == 'n' {
+                        out.push("37".to_string());
+                    } else {
+                        out.push(u.clone());
+                        out.push(u.clone());
+                        match x {
+                            'r' => "0032".chars().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            });
-                        }
-                        'f' => {
-                            out.push(u.clone());
-                            out.push(u.clone());
-                            "0012".chars().into_iter().for_each(|x2| {
+                            }),
+                            'f' => "0012".chars().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            });
-                        }
-                        'b' => {
-                            out.push(u.clone());
-                            out.push(u.clone());
-                            "0008".chars().into_iter().for_each(|x2| {
+                            }),
+                            'b' => "0008".chars().for_each(|x2| {
                                 out.push(mem_map.get(&x2.to_string()).to_string());
-                            });
-                        }
-                        _ => {
-                            out.push(u.clone());
-                            out.push(u.clone());
-                            Self::manage_padding((x as u32).to_string(), 4)
+                            }),
+                            _ => Self::manage_padding((x as u32).to_string(), 4)
                                 .chars()
-                                .into_iter()
                                 .for_each(|x2| {
                                     out.push(mem_map.get(&x2.to_string()).to_string());
-                                });
+                                }),
                         }
                     }
                     back_slash = false;
@@ -107,7 +97,6 @@ impl Universal {
                     out.push(u.clone());
                     Self::manage_padding((x as u32).to_string(), 4)
                         .chars()
-                        .into_iter()
                         .for_each(|x2| {
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         });
@@ -118,7 +107,7 @@ impl Universal {
         let mut mem_indicator: bool = false;
         let mut is_label: bool = false;
         let mut place_holder: String = String::new();
-        input.chars().into_iter().for_each(|x| {
+        input.chars().for_each(|x| {
             if x == '$' {
                 mem_indicator = true;
                 place_holder.push(x);
@@ -169,7 +158,6 @@ impl Universal {
                     out.push(u.clone());
                     Self::manage_padding((x as u32).to_string(), 4)
                         .chars()
-                        .into_iter()
                         .for_each(|x2| {
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         });
@@ -184,7 +172,6 @@ impl Universal {
                     out.push(u.clone());
                     Self::manage_padding((x as u32).to_string(), 4)
                         .chars()
-                        .into_iter()
                         .for_each(|x2| {
                             out.push(mem_map.get(&x2.to_string()).to_string());
                         });
@@ -195,7 +182,6 @@ impl Universal {
                 out.push(u.clone());
                 Self::manage_padding((x as u32).to_string(), 4)
                     .chars()
-                    .into_iter()
                     .for_each(|x2| {
                         out.push(mem_map.get(&x2.to_string()).to_string());
                     });

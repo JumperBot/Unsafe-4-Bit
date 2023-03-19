@@ -15,42 +15,32 @@ struct LineExtractionResult {
     res: String,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct UFBC {
     pub file_name: String,
 }
 
 impl UFBC {
     pub fn compile(&self) {
-        let default_memory_map: MemoryMap = MemoryMap::new_limited();
-        let binary_map: MemoryMap = MemoryMap::new_binary_map();
-        let mut buffer: String = String::new();
         let mut reader: BufReader<File> = match File::open(&self.file_name) {
             Ok(x) => BufReader::<File>::new(x),
-            Err(x) => {
-                Universal::err_exit(format!(
-                    "File Provided Does Not Exist...\n{x}\nTerminating..."
-                ));
-                return;
-            }
+            Err(x) => return Universal::err_exit(x.to_string()),
         };
         let mut writer: BufWriter<File> = match File::create(format!("{}b", &self.file_name)) {
             Ok(x) => BufWriter::<File>::with_capacity(300, x),
-            Err(x) => {
-                Universal::err_exit(x.to_string());
-                return;
-            }
+            Err(x) => return Universal::err_exit(x.to_string()),
         };
-        let mut warnings: Vec<String> = Vec::<String>::new();
-        let mut errors: Vec<String> = Vec::<String>::new();
+        let (mut warnings, mut errors): (Vec<String>, Vec<String>) = (vec![], vec![]);
+        let (mut multiline_comment, mut stop_compilling_file): (bool, bool) = (false, false);
+        let (mut line_number, mut command_number): (usize, usize) = (1, 0);
         let mut labels: HashMap<String, u8> = HashMap::<String, u8>::new();
-        let mut multiline_comment: bool = false;
-        let mut line_number: usize = 1;
-        let mut command_number: usize = 0;
-        let mut stop_compilling_file = false;
+        let mut buffer: String = String::new();
+        let (default_memory_map, binary_map): (MemoryMap, MemoryMap) =
+            (MemoryMap::new_limited(), MemoryMap::new_binary_map());
         while reader.read_line(&mut buffer).unwrap() != 0 {
             let extracted: LineExtractionResult =
                 Self::extract_useful_from_line(multiline_comment, buffer.trim());
-            buffer = extracted.res.trim().to_string();
+            buffer = extracted.res;
             multiline_comment = extracted.multiline_comment;
             if !buffer.is_empty() {
                 let real_line: Vec<String> = Self::split_line(&buffer);
@@ -91,8 +81,7 @@ impl UFBC {
                                     if let Err(x) = writer.write_all(&x) {
                                         writer.flush();
                                         fs::remove_file(format!("{}b", self.file_name));
-                                        Universal::err_exit(x.to_string());
-                                        return;
+                                        return Universal::err_exit(x.to_string());
                                     }
                                 }
                             }
@@ -225,7 +214,7 @@ impl UFBC {
     fn split_line(line: &str) -> Vec<String> {
         let mut out: Vec<String> = Vec::<String>::new();
         let mut buf: String = String::new();
-        line.to_string().chars().into_iter().for_each(|x| {
+        line.to_string().chars().for_each(|x| {
             if "[-|, \t]".contains(x) {
                 if !buf.is_empty() {
                     out.push(buf.clone());
@@ -269,7 +258,9 @@ impl UFBC {
         LineExtractionResult {
             res: Self::remove_line_comment(
                 &Self::convert_dividers_in_string(&out).replace("[-|,\t]", " "),
-            ),
+            )
+            .trim()
+            .to_string(),
             multiline_comment,
         }
     }
@@ -299,7 +290,7 @@ impl UFBC {
     }
     fn escape_dividers_in_string(input: String) -> String {
         let mut res: String = String::new();
-        input.chars().into_iter().for_each(|x| {
+        input.chars().for_each(|x| {
             let c: &str = &x.to_string();
             res.push_str(match c {
                 "-" => "UU0045",

@@ -19,7 +19,7 @@ impl Variables for Runner {
         let ind: u8 = self.next();
         let resident: String = String::from_iter(self.rvar(&ind));
         let mut out: String = String::new();
-        (0..arg_count).into_iter().for_each(|_| {
+        (0..arg_count).for_each(|_| {
             let ptr: u8 = self.next();
             out.push_str(
                 &(if ptr == ind {
@@ -69,7 +69,6 @@ impl Variables for Runner {
             return;
         }
         (ind_usize..=self.runner_data.mem_ind[ind_usize] as usize)
-            .into_iter()
             .for_each(|x| self.runner_data.mem[x] = '\0');
         self.runner_data.mem_ind[ind_usize] = 0;
     }

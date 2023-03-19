@@ -24,6 +24,7 @@ impl Command {
      * 20   -   00010100    -   cfunc
      * 21   -   00010101    -   ufunc
      **/
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         line: &[String],
         real_line: &[String],
@@ -209,7 +210,6 @@ impl GenericCommand for WvarCommand {
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![0, (self.line.len() - 1).try_into().unwrap()];
         (1..self.line.len())
-            .into_iter()
             .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
@@ -496,7 +496,6 @@ impl GenericCommand for WfileCommand {
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![16, (self.line.len() - 1).try_into().unwrap()];
         (1..self.line.len())
-            .into_iter()
             .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
@@ -524,7 +523,6 @@ impl GenericCommand for RfileCommand {
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![17, (self.line.len() - 1).try_into().unwrap()];
         (1..self.line.len())
-            .into_iter()
             .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }
@@ -551,7 +549,6 @@ impl GenericCommand for DfileCommand {
     fn compile(&self) -> Vec<u8> {
         let mut out: Vec<u8> = vec![18, (self.line.len() - 1).try_into().unwrap()];
         (1..self.line.len())
-            .into_iter()
             .for_each(|x| out.push(Universal::quick_parse_u8(self.line[x].clone())));
         out
     }

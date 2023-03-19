@@ -232,9 +232,7 @@ impl Runner {
 
     pub fn get_indexes(&mut self, arg_count: usize) -> Vec<u8> {
         let mut out: Vec<u8> = Vec::<u8>::with_capacity(arg_count);
-        (0..arg_count)
-            .into_iter()
-            .for_each(|_| out.push(self.next()));
+        (0..arg_count).for_each(|_| out.push(self.next()));
         out
     }
     pub fn get_args(&mut self, arg_count: usize, convert_unicode: bool) -> String {
